@@ -13,6 +13,7 @@ import {
   ColorPreset,
   FishCanvas,
   ModeName,
+  SwarmType,
   SwimType,
   VisualConfig,
 } from "./FishCanvas";
@@ -31,6 +32,7 @@ const FISH = [
 const MODES: ModeName[] = ["MYSTIC", "SENSUAL", "EUPHORIC"];
 const COLORS: ColorPreset[] = ["CLEAN", "PUNCH", "ACID", "DEEP"];
 const SWIMS: SwimType[] = ["SCHOOL", "GLIDE", "WAVE", "FLOAT"];
+const SWARMS: SwarmType[] = ["SPIRAL", "VORTEX", "WAVE", "BLOOM"];
 const EMPTY_LEVELS: AudioLevels = { kick: 0, bass: 0, mid: 0, high: 0 };
 
 type AudioRuntime = {
@@ -96,14 +98,16 @@ function RangeControl({
 export function FishVJConsole() {
   const [mode, setMode] = useState<ModeName>("MYSTIC");
   const [colorPreset, setColorPreset] = useState<ColorPreset>("PUNCH");
-  const [colorDrive, setColorDrive] = useState(0.78);
+  const [colorDrive, setColorDrive] = useState(0.72);
   const [fishCount, setFishCount] = useState(800);
+  const [fishSize, setFishSize] = useState(1.5);
   const [speed, setSpeed] = useState(0.68);
   const [depth, setDepth] = useState(0.74);
   const [dive, setDive] = useState(false);
   const [blackout, setBlackout] = useState(false);
   const [selectedSpecies, setSelectedSpecies] = useState(0);
   const [swimType, setSwimType] = useState<SwimType>("SCHOOL");
+  const [swarm, setSwarm] = useState<SwarmType>("SPIRAL");
   const [fps, setFps] = useState(60);
   const [audioLevels, setAudioLevels] = useState<AudioLevels>(EMPTY_LEVELS);
   const [audioInput, setAudioInput] = useState("demo");
@@ -123,22 +127,26 @@ export function FishVJConsole() {
       colorPreset,
       colorDrive,
       fishCount,
+      fishSize,
       speed,
       depth,
       dive,
       selectedSpecies,
       swimType,
+      swarm,
     }),
     [
       mode,
       colorPreset,
       colorDrive,
       fishCount,
+      fishSize,
       speed,
       depth,
       dive,
       selectedSpecies,
       swimType,
+      swarm,
     ],
   );
 
@@ -287,14 +295,16 @@ export function FishVJConsole() {
   const reset = useCallback(() => {
     setMode("MYSTIC");
     setColorPreset("PUNCH");
-    setColorDrive(0.78);
+    setColorDrive(0.72);
     setFishCount(800);
+    setFishSize(1.5);
     setSpeed(0.68);
     setDepth(0.74);
     setDive(false);
     setBlackout(false);
     setSelectedSpecies(0);
     setSwimType("SCHOOL");
+    setSwarm("SPIRAL");
   }, []);
 
   const toggleFullscreen = useCallback(async () => {
@@ -405,10 +415,11 @@ export function FishVJConsole() {
           ref={outputRef}
         >
           <FishCanvas config={config} audio={audioLevels} onFps={setFps} />
-          <div className="portal-ring" aria-hidden />
           <div className="scanlines" aria-hidden />
           <div className="output-badges">
-            <span>CH 01 · {mode}</span>
+            <span>
+              CH 01 · {mode} · {swarm} · K-{mode === "MYSTIC" ? "06" : mode === "SENSUAL" ? "08" : "12"}
+            </span>
             <span>{fishCount.toLocaleString()} FISH</span>
           </div>
           {dive && (
@@ -468,6 +479,21 @@ export function FishVJConsole() {
 
         <section className="motion-section">
           <h2>MOTION</h2>
+          <div className="swarm-control">
+            <h3>SWARM</h3>
+            <div className="swarm-buttons" role="group" aria-label="Swarm structure">
+              {SWARMS.map((item) => (
+                <button
+                  key={item}
+                  className={swarm === item ? "is-active" : ""}
+                  onClick={() => setSwarm(item)}
+                  aria-pressed={swarm === item}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
           <RangeControl
             label="FISH COUNT"
             value={fishCount}
@@ -476,6 +502,15 @@ export function FishVJConsole() {
             step={50}
             display={fishCount.toLocaleString()}
             onChange={setFishCount}
+          />
+          <RangeControl
+            label="FISH SIZE"
+            value={fishSize}
+            min={0.5}
+            max={3}
+            step={0.05}
+            display={`${fishSize.toFixed(1)}x`}
+            onChange={setFishSize}
           />
           <RangeControl
             label="SPEED"

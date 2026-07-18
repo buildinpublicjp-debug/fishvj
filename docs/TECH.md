@@ -21,11 +21,24 @@
 ### 魚群（Layer 2）
 - `InstancedBufferGeometry` + 分割Plane、初期値800・上限2,000インスタンス
 - 魚数は実行時スライダーで変更し、会場マシンの60fps実測後に増やす
-- インスタンス属性: offset / phase / species / scale / motion / velocity / direction
-- 横12分割・縦2分割Planeを頂点シェーダーで尾側ほど変形
+- インスタンス属性: offset / phase（0〜2π）/ species / scale / motion / velocity（±30%）
+- 横12分割・縦2分割Planeを頂点シェーダーで尾側ほど大きく変形
 - テクスチャ: 4×2の透過8魚種スプライトアトラス
-- 動き: 奥行き配置 + curl noise フィールド + ビート位相で収縮/リリース
+- 個体進行方向は約0.11秒前との位置差から求め、数フレーム分を平均した接線方向へ追従
+- 同一層の速度を16%だけ共通ペースへ寄せ、個体差を残した簡易整列とする
+- リング間隔の約10%に相当する半径ゆらぎを個別位相で加える
+- キック時は軌道を先送りし、進行方向への押し出しと魚体の伸びを同時に加える
+- FISH SIZEは魚数と独立したuniform。0.5x〜3.0x、初期1.5xで旧表示比約2.5倍
 - Planeはカメラ視線追従とし、旋回時のedge-on消失を防ぐ
+
+### SWARM構造
+- `MODE`（感情）/ `COLOR`（配色）/ `SWARM`（群れ構造）は独立した3軸
+- SPIRAL: 6層を保った螺旋移動
+- VORTEX: 6層を半径60〜70%へ圧縮し、外周だけalpha fade
+- WAVE: 基準扇形内を横断する波状帯
+- BLOOM: 中心から外周へ放射し、外縁で消えて再生成
+- 切替時は旧座標生成器と新座標生成器の結果を1.5秒で補間
+- 4構造とも基準半扇形だけを描画し、同じ万華鏡コピーを通す
 
 ### 2.5Dカメラ
 - 汎用スプラインは作らず、時間ベースの固定 `sin/cos` とモード別パラメータだけで駆動
@@ -43,12 +56,14 @@
 - 生成リング画像の放射配置 + **万華鏡パスが実質の曼荼羅生成器**
 - 雑な魚群でも万華鏡を通すと即曼荼羅化 = 画のコスパの核
 
-### ポストFXチェーン（EffectComposer）
-1. RenderPass
-2. KaleidoPass（自作ShaderPass 約20行、分割数uniform: 6/8/12）
-3. FeedbackPass（AfterimagePassのdual-buffer構造をfork、変換付きフィードバック）
-4. UnrealBloomPass（発光）
-5. RGBShift + 彩度/色相（最終色調、モードのhue rangeここで適用）
+### 実装済みポストFXチェーン
+1. 魚と黒背景をHalfFloatのrender targetへ描画
+2. 基準半扇形をミラーし、6/8/12方向へ回転コピー
+3. 半径層ごとの差動回転と色相オフセット
+4. 8近傍・高閾値の選択的Bloom（明るい魚だけを滲ませる）
+5. 黒レベルを保つcontrast / saturation / hue / color preset
+
+時間Feedbackは将来項目として残し、Milestone 1では60fpsと魚の可読性を優先して未実装。
 
 ### FeedbackPass
 - 前フレーム用ping-pong render targetはAfterimagePassの構造を流用し、汎用フィードバック基盤は作らない

@@ -6,6 +6,7 @@ import * as THREE from "three";
 export type ModeName = "MYSTIC" | "SENSUAL" | "EUPHORIC";
 export type ColorPreset = "CLEAN" | "PUNCH" | "ACID" | "DEEP";
 export type SwimType = "SCHOOL" | "GLIDE" | "WAVE" | "FLOAT";
+export type SwarmType = "SPIRAL" | "VORTEX" | "WAVE" | "BLOOM";
 
 export type AudioLevels = {
   kick: number;
@@ -19,11 +20,13 @@ export type VisualConfig = {
   colorPreset: ColorPreset;
   colorDrive: number;
   fishCount: number;
+  fishSize: number;
   speed: number;
   depth: number;
   dive: boolean;
   selectedSpecies: number;
   swimType: SwimType;
+  swarm: SwarmType;
 };
 
 type FishCanvasProps = {
@@ -32,9 +35,10 @@ type FishCanvasProps = {
   onFps: (fps: number) => void;
 };
 
-const MAX_FISH = 2000;
+const MAX_SOURCE_FISH = 256;
+const RING_COUNT = 6;
 
-const backgroundVertex = `
+const fullscreenVertex = `
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -53,7 +57,6 @@ const backgroundFragment = `
   uniform float uDive;
   uniform float uMode;
   uniform float uDrive;
-  uniform float uColorPreset;
 
   float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -61,17 +64,8 @@ const backgroundFragment = `
     return fract(p.x * p.y);
   }
 
-  vec3 palette(float t) {
-    vec3 a = vec3(0.035, 0.055, 0.12);
-    vec3 b = vec3(0.48, 0.48, 0.56);
-    vec3 c = vec3(1.0, 1.0, 1.0);
-    vec3 d = mix(
-      vec3(0.02, 0.33, 0.68),
-      uMode < 0.5 ? vec3(0.55, 0.08, 0.82) :
-      (uMode < 1.5 ? vec3(0.95, 0.18, 0.03) : vec3(0.05, 0.82, 0.72)),
-      0.55
-    );
-    return a + b * cos(6.28318 * (c * t + d));
+  vec3 rainbow(float t) {
+    return 0.58 + 0.52 * cos(6.28318 * (t + vec3(0.0, 0.68, 0.35)));
   }
 
   void main() {
@@ -79,119 +73,276 @@ const backgroundFragment = `
     p.x *= uAspect;
     float r = length(p);
     float a = atan(p.y, p.x);
-    float travel = uTime * (0.08 + uDive * 0.85 + uBass * 0.14);
+    float travel = uTime * (0.055 + uDive * 0.46 + uBass * 0.06);
 
-    float invR = 0.12 / max(r, 0.035);
-    float tunnelBands = abs(fract(invR * 2.15 - travel) - 0.5);
-    float ring = smoothstep(0.12, 0.015, tunnelBands);
-    float spokes = pow(max(0.0, cos(a * (8.0 + uMode * 2.0) + invR * 1.8 - travel * 0.7)), 18.0);
-    float spiral = pow(max(0.0, sin(a * 5.0 + log(r + 0.03) * 8.0 - travel * 1.5)), 11.0);
+    vec3 col = vec3(0.0);
+    float core = exp(-r * (14.0 + uKick * 4.0));
+    float spiral = pow(max(0.0, sin(a * 3.0 + log(r + 0.025) * 10.0 - travel * 3.0)), 28.0);
+    spiral *= smoothstep(1.5, 0.12, r);
+    float ray = pow(max(0.0, cos(a * 4.0 - log(r + 0.035) * 4.0 + travel)), 34.0);
+    ray *= smoothstep(1.55, 0.16, r);
 
-    vec2 starCell = floor((p / max(r, 0.12) * invR + travel * vec2(0.15, 0.08)) * 75.0);
-    float starSeed = hash21(starCell);
-    float star = step(0.982, starSeed) * smoothstep(1.0, 0.1, r);
+    vec2 starUv = floor((p * (30.0 + 42.0 * r)) + travel * vec2(9.0, 4.0));
+    float starSeed = hash21(starUv);
+    float stars = step(0.987, starSeed) * smoothstep(1.5, 0.08, r);
 
-    float pulse = 1.0 + uKick * 0.65;
-    vec3 col = vec3(0.0015, 0.003, 0.015);
-    col += palette(invR * 0.45 + a / 6.28318 + travel * 0.05) * ring * (0.11 + 0.32 * uDive) * pulse;
-    col += palette(a / 6.28318 + uTime * 0.02) * spokes * (0.025 + uDrive * 0.05);
-    col += palette(invR + 0.28) * spiral * 0.035 * (0.3 + uDive);
-    col += palette(starSeed + uTime * 0.03) * star * (0.12 + uHigh * 0.75);
+    col += rainbow(a / 6.28318 + uTime * 0.02) * spiral * (0.01 + 0.045 * uDive);
+    col += rainbow(r * 0.24 + uTime * 0.015) * ray * (0.004 + 0.012 * uDrive);
+    col += rainbow(starSeed) * stars * (0.06 + uHigh * 0.45);
+    col += mix(vec3(0.0, 0.42, 1.0), vec3(1.0, 0.0, 0.58), 0.5 + 0.5 * sin(uTime * 0.55))
+      * core * (0.22 + uKick * 0.75);
 
-    float portal = exp(-r * (10.0 + 4.0 * sin(uTime * 0.5)));
-    col += mix(vec3(0.0, 0.6, 1.0), vec3(1.0, 0.0, 0.74), 0.5 + 0.5 * sin(uTime * 0.7)) * portal * (0.35 + uKick);
-
-    float vignette = smoothstep(1.5, 0.15, r);
-    col *= 0.32 + 0.85 * vignette;
-
-    if (uColorPreset > 2.5) col *= vec3(0.52, 0.66, 0.82);
-    if (uColorPreset > 0.5 && uColorPreset < 1.5) col = (col - 0.045) * 1.38 + 0.045;
-    if (uColorPreset > 1.5 && uColorPreset < 2.5) col *= 1.15 + 0.2 * sin(vec3(0.0, 2.1, 4.2) + uTime * 0.7);
-
+    float blackGate = smoothstep(0.01, 0.055, max(max(col.r, col.g), col.b));
+    col *= blackGate;
+    col *= smoothstep(1.68, 0.04, r);
     gl_FragColor = vec4(max(col, 0.0), 1.0);
-    #include <tonemapping_fragment>
-    #include <colorspace_fragment>
   }
 `;
 
 const fishVertex = `
   precision highp float;
   attribute vec3 aOffset;
+  attribute float aRing;
   attribute float aScale;
   attribute float aPhase;
   attribute float aSpecies;
   attribute float aMotion;
   attribute float aVelocity;
-  attribute float aDirection;
   varying vec2 vUv;
   varying float vSpecies;
   varying float vDepth;
   varying float vFocus;
+  varying float vLife;
   uniform float uTime;
   uniform float uAspect;
+  uniform float uSegments;
   uniform float uKick;
   uniform float uBass;
-  uniform float uHigh;
   uniform float uSpeed;
+  uniform float uFishSize;
   uniform float uDepth;
   uniform float uDive;
   uniform float uMode;
   uniform float uSelectedSpecies;
   uniform float uSwimFocus;
+  uniform float uSwarmFrom;
+  uniform float uSwarmTo;
+  uniform float uSwarmMix;
+
+  float foldSeed(float value) {
+    return abs(fract(value * 0.5) * 2.0 - 1.0);
+  }
+
+  vec2 swarmPosition(
+    float swarm,
+    float ringNorm,
+    float angleSeed,
+    float radiusJitter,
+    float seed,
+    float phase,
+    float wedge,
+    float time,
+    float speed,
+    float normalRadius,
+    float diveRadius,
+    float dive
+  ) {
+    float radius = normalRadius;
+    float angle = wedge * mix(0.055, 0.455, angleSeed);
+
+    if (swarm < 0.5) {
+      radius = mix(normalRadius, diveRadius, dive);
+      float spiralSeed = foldSeed(angleSeed + ringNorm * 0.72 + time * speed * 0.035);
+      angle = wedge * mix(0.045, 0.46, spiralSeed);
+    } else if (swarm < 1.5) {
+      float layerRadius = mix(0.1, 1.06, pow(ringNorm, 0.92));
+      float sphere = 0.91 + 0.085 * sin(phase + time * speed * 0.7 + ringNorm * 4.0);
+      radius = mix(layerRadius * sphere + radiusJitter * 0.35, diveRadius, dive * 0.82);
+      float vortexWave = sin(phase * 8.0 + time * speed * 0.82 + ringNorm * 8.0);
+      angle = wedge * clamp(0.25 + vortexWave * 0.205, 0.035, 0.465);
+    } else if (swarm < 2.5) {
+      float band = fract(seed + ringNorm * 0.19);
+      radius = mix(0.08, 1.5, band);
+      radius += radiusJitter * 0.7;
+      float waveFlow = sin(radius * 8.0 - time * speed * 1.35 + phase * 5.0);
+      angle = wedge * clamp(0.25 + waveFlow * 0.2, 0.035, 0.465);
+      radius = mix(radius, diveRadius, dive * 0.48);
+    } else {
+      float burst = fract(seed + time * speed * 0.115);
+      radius = mix(0.025, 1.56, pow(burst, 0.78));
+      float bloomSeed = foldSeed(angleSeed + phase * 0.08);
+      angle = wedge * mix(0.035, 0.47, bloomSeed);
+      radius = mix(radius, diveRadius, dive * 0.34);
+    }
+
+    return vec2(cos(angle), sin(angle)) * radius;
+  }
 
   void main() {
     vUv = uv;
     vSpecies = aSpecies;
 
-    float modeSpeed = uMode < 0.5 ? 0.56 : (uMode < 1.5 ? 0.84 : 1.25);
-    float zSpeed = (0.018 + uDive * 0.135) * uSpeed * modeSpeed * aVelocity;
-    float z = fract(aOffset.z + uTime * zSpeed);
-    z = mix(0.18, 1.0, pow(z, mix(1.35, 0.75, uDepth)));
-    vDepth = z;
+    float ringNorm = aRing / 5.0;
+    float modeSpeed = uMode < 0.5 ? 0.62 : (uMode < 1.5 ? 0.88 : 1.24);
+    float ringPace = 0.86 + aRing * 0.055;
+    float alignedVelocity = mix(aVelocity, ringPace, 0.16);
+    float motionSpeed = uSpeed * modeSpeed * alignedVelocity;
+    float kickLead = uKick * (0.035 + alignedVelocity * 0.028);
+    float motionTime = uTime + kickLead;
+    float headingWindow = 0.11;
+    float previousTime = motionTime - headingWindow;
 
-    float flow = uTime * (0.035 + 0.075 * uSpeed) * aVelocity * modeSpeed * aDirection;
-    float x = mod(aOffset.x + flow + 1.55, 3.1) - 1.55;
-    float y = aOffset.y;
+    float diveTravel = motionTime * (0.035 + uSpeed * 0.045) * modeSpeed * alignedVelocity;
+    float divePhase = fract(ringNorm + aOffset.z * 0.045 - diveTravel);
+    float previousDiveTravel = previousTime
+      * (0.035 + uSpeed * 0.045)
+      * modeSpeed
+      * alignedVelocity;
+    float previousDivePhase = fract(ringNorm + aOffset.z * 0.045 - previousDiveTravel);
 
+    float normalRadius = mix(0.12, 1.22, pow(ringNorm, 0.88)) + aOffset.y;
+    float diveRadius = mix(0.045, 1.5, pow(divePhase, mix(0.72, 1.05, uDepth)));
+    float previousDiveRadius = mix(
+      0.045,
+      1.5,
+      pow(previousDivePhase, mix(0.72, 1.05, uDepth))
+    );
+    float wedge = 6.28318530718 / uSegments;
     float school = 1.0 - step(0.5, abs(aMotion - 0.0));
     float glide = 1.0 - step(0.5, abs(aMotion - 1.0));
     float wave = 1.0 - step(0.5, abs(aMotion - 2.0));
     float floating = 1.0 - step(0.5, abs(aMotion - 3.0));
 
-    y += sin(uTime * 1.7 * aVelocity + aPhase * 9.0 + x * 3.0) * (0.018 * school + 0.008 * glide);
-    y += sin(uTime * 1.05 + aPhase * 6.0) * 0.052 * wave;
-    y += sin(uTime * 0.52 + aPhase * 4.0) * 0.07 * floating;
-    x += cos(uTime * 0.62 + aPhase * 5.0) * 0.018 * floating;
+    vec2 fromPolar = swarmPosition(
+      uSwarmFrom,
+      ringNorm,
+      aOffset.x,
+      aOffset.y,
+      aOffset.z,
+      aPhase,
+      wedge,
+      motionTime,
+      motionSpeed,
+      normalRadius,
+      diveRadius,
+      uDive
+    );
+    vec2 toPolar = swarmPosition(
+      uSwarmTo,
+      ringNorm,
+      aOffset.x,
+      aOffset.y,
+      aOffset.z,
+      aPhase,
+      wedge,
+      motionTime,
+      motionSpeed,
+      normalRadius,
+      diveRadius,
+      uDive
+    );
+    vec2 fromPrevious = swarmPosition(
+      uSwarmFrom,
+      ringNorm,
+      aOffset.x,
+      aOffset.y,
+      aOffset.z,
+      aPhase,
+      wedge,
+      previousTime,
+      motionSpeed,
+      normalRadius,
+      previousDiveRadius,
+      uDive
+    );
+    vec2 toPrevious = swarmPosition(
+      uSwarmTo,
+      ringNorm,
+      aOffset.x,
+      aOffset.y,
+      aOffset.z,
+      aPhase,
+      wedge,
+      previousTime,
+      motionSpeed,
+      normalRadius,
+      previousDiveRadius,
+      uDive
+    );
+    vec2 centerPolar = mix(fromPolar, toPolar, smoothstep(0.0, 1.0, uSwarmMix));
+    vec2 previousPolar = mix(
+      fromPrevious,
+      toPrevious,
+      smoothstep(0.0, 1.0, uSwarmMix)
+    );
 
-    float radialScale = mix(0.045, 1.18, pow(z, 1.6));
-    x *= radialScale;
-    y *= radialScale;
+    float radialWobble = sin(
+      motionTime * (1.1 + alignedVelocity * 0.72)
+      + aPhase
+      + aRing * 0.63
+    ) * 0.026;
+    float previousWobble = sin(
+      previousTime * (1.1 + alignedVelocity * 0.72)
+      + aPhase
+      + aRing * 0.63
+    ) * 0.026;
+    centerPolar += normalize(centerPolar + vec2(0.00001)) * radialWobble;
+    previousPolar += normalize(previousPolar + vec2(0.00001)) * previousWobble;
 
-    float orbit = aPhase * 6.28318 + uTime * (0.08 + 0.35 * uDive) * aDirection;
-    float ox = cos(orbit) * abs(aOffset.x) * radialScale;
-    float oy = sin(orbit) * abs(aOffset.y) * radialScale;
-    x = mix(x, ox, uDive * 0.86);
-    y = mix(y, oy, uDive * 0.86);
+    vec2 velocity = centerPolar - previousPolar;
+    vec2 velocityDirection = normalize(velocity + vec2(0.00001, 0.0));
+    centerPolar += velocityDirection * uKick * (0.018 + ringNorm * 0.016);
+    float radius = length(centerPolar);
+    radius *= 1.0 + uBass * (0.012 + ringNorm * 0.018);
+    centerPolar = normalize(centerPolar + vec2(0.00001)) * radius;
+    vDepth = clamp(radius / 1.5, 0.0, 1.0);
+    float bloomFrom = step(2.5, uSwarmFrom);
+    float bloomTo = step(2.5, uSwarmTo);
+    float bloomAmount = mix(bloomFrom, bloomTo, uSwarmMix);
+    vLife = mix(1.0, 1.0 - smoothstep(0.82, 1.0, vDepth), bloomAmount);
+    float vortexFrom = 1.0 - step(0.5, abs(uSwarmFrom - 1.0));
+    float vortexTo = 1.0 - step(0.5, abs(uSwarmTo - 1.0));
+    float vortexAmount = mix(vortexFrom, vortexTo, uSwarmMix);
+    float vortexEdgeFade = 1.0 - smoothstep(0.96, 1.12, radius);
+    vLife *= mix(1.0, vortexEdgeFade, vortexAmount);
+    vec2 centerClip = vec2(centerPolar.x / uAspect, centerPolar.y);
 
     float speciesFocus = 1.0 - step(0.4, abs(aSpecies - uSelectedSpecies));
     float motionFocus = 1.0 - step(0.4, abs(aMotion - uSwimFocus));
     vFocus = max(speciesFocus, motionFocus * 0.72);
 
-    float perspective = mix(0.12, 1.58, pow(z, 1.58));
-    float bodyScale = aScale * perspective * (0.7 + vFocus * 0.74);
-    bodyScale *= 1.0 + uKick * (0.09 + school * 0.08);
+    float perspective = mix(0.22, 1.78, pow(vDepth, 1.22));
+    float bodyScale = aScale * perspective * (0.72 + vFocus * 0.52);
+    bodyScale *= 1.0 + uKick * (0.04 + school * 0.07);
 
     vec2 local = position.xy;
-    float swimWave = sin((uv.x * 7.0 - uTime * (3.0 + uSpeed * 4.0) * aVelocity) + aPhase * 12.0);
-    local.y += swimWave * (1.0 - uv.x) * (0.012 + wave * 0.045 + school * 0.018);
-    local.x *= aDirection;
+    float tailWeight = pow(clamp(1.0 - uv.x, 0.0, 1.0), 1.65);
+    float tailAmplitude =
+      0.026
+      + school * 0.024
+      + glide * 0.009
+      + wave * 0.062
+      + floating * 0.018;
+    float swimWave = sin(
+      motionTime * (5.2 + uSpeed * 4.8) * alignedVelocity
+      + aPhase
+      - uv.x * (7.0 + wave * 3.5)
+    );
+    local.y += swimWave * tailWeight * tailAmplitude;
+    local.x *= 1.0 + uKick * (0.08 + school * 0.12);
 
-    float width = 0.14 * bodyScale;
-    vec2 clipSize = vec2(width, width * uAspect / 0.89);
-    vec2 clipPos = vec2(x, y) + local * clipSize;
+    float orientation = atan(velocityDirection.y, velocityDirection.x);
 
-    clipPos += normalize(vec2(x, y) + vec2(0.0001)) * uBass * uDive * 0.018;
-    gl_Position = vec4(clipPos, z * 0.8, 1.0);
+    float fishWidth = 0.192 * uFishSize * bodyScale;
+    vec2 localPolar = vec2(local.x * fishWidth, local.y * fishWidth / 0.89);
+    mat2 rotateFish = mat2(
+      cos(orientation), -sin(orientation),
+      sin(orientation), cos(orientation)
+    );
+    localPolar = rotateFish * localPolar;
+
+    vec2 clipPos = centerClip + vec2(localPolar.x / uAspect, localPolar.y);
+    gl_Position = vec4(clipPos, vDepth * 0.75, 1.0);
   }
 `;
 
@@ -201,6 +352,7 @@ const fishFragment = `
   varying float vSpecies;
   varying float vDepth;
   varying float vFocus;
+  varying float vLife;
   uniform sampler2D uAtlas;
   uniform float uTime;
   uniform float uHigh;
@@ -218,42 +370,149 @@ const fishFragment = `
     float species = floor(vSpecies + 0.5);
     float column = mod(species, 4.0);
     float row = floor(species / 4.0);
-    vec2 atlasUv = vec2((vUv.x + column) / 4.0, (vUv.y + (1.0 - row)) / 2.0);
+    vec2 atlasUv = vec2(
+      (vUv.x + column) / 4.0,
+      (vUv.y + (1.0 - row)) / 2.0
+    );
     vec4 texel = texture2D(uAtlas, atlasUv);
     if (texel.a < 0.035) discard;
 
     vec3 color = texel.rgb;
     float lum = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    float contrast = 1.0 + uDrive * (uColorPreset > 0.5 && uColorPreset < 1.5 ? 0.72 : 0.34);
-    color = (color - 0.5) * contrast + 0.5;
-    color = mix(vec3(dot(color, vec3(0.299, 0.587, 0.114))), color, 1.0 + uDrive * 0.48);
+    color = max(color - 0.025, 0.0);
+    color = mix(vec3(lum), color, 1.04 + uDrive * 0.38);
 
     if (uColorPreset > 1.5 && uColorPreset < 2.5) {
-      color = hueShift(color, sin(uTime * 0.6 + vSpecies) * 0.52 + uDrive * 0.25);
+      color = hueShift(color, sin(uTime * 0.5 + vSpecies) * 0.38);
     }
     if (uColorPreset > 2.5) {
-      color *= vec3(0.58, 0.82, 1.18);
-      color = mix(color, color * color * 1.35, 0.35);
+      color *= vec3(0.62, 0.78, 1.02);
     }
     if (uMode > 1.5) {
-      color = hueShift(color, sin(uTime * 0.16 + vSpecies) * 0.22);
+      color = hueShift(color, sin(uTime * 0.13 + vSpecies) * 0.16);
     }
 
-    color += color * uHigh * (0.12 + max(lum - 0.5, 0.0) * 0.55);
-    float focusAlpha = mix(0.28, 0.84, vFocus);
-    float depthFade = smoothstep(0.12, 0.32, vDepth);
-    float edgeGlow = smoothstep(0.05, 0.45, texel.a) * (0.35 + uDrive * 0.2);
-    float alpha = texel.a * focusAlpha * depthFade;
-    color *= 0.58 + edgeGlow * 0.62 + vFocus * 0.16;
+    color += color * uHigh * smoothstep(0.58, 0.95, lum) * 0.42;
+    float focusAlpha = mix(0.52, 0.94, vFocus);
+    float depthFade = smoothstep(0.03, 0.2, vDepth);
+    float alpha = texel.a * focusAlpha * depthFade * vLife;
+    color *= 0.82 + vFocus * 0.22;
 
     gl_FragColor = vec4(max(color, 0.0), alpha);
-    #include <tonemapping_fragment>
-    #include <colorspace_fragment>
   }
 `;
 
+const KaleidoShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    uTime: { value: 0 },
+    uAspect: { value: 16 / 9 },
+    uSegments: { value: 6 },
+    uDive: { value: 0 },
+    uDrive: { value: 0.72 },
+    uColorPreset: { value: 1 },
+    uMode: { value: 0 },
+    uKick: { value: 0 },
+    uResolution: { value: new THREE.Vector2(1, 1) },
+  },
+  vertexShader: fullscreenVertex,
+  fragmentShader: `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D tDiffuse;
+    uniform float uTime;
+    uniform float uAspect;
+    uniform float uSegments;
+    uniform float uDive;
+    uniform float uDrive;
+    uniform float uColorPreset;
+    uniform float uMode;
+    uniform float uKick;
+    uniform vec2 uResolution;
+
+    vec3 hueShift(vec3 color, float angle) {
+      const vec3 k = vec3(0.577350269);
+      float c = cos(angle);
+      return color * c + cross(k, color) * sin(angle) + k * dot(k, color) * (1.0 - c);
+    }
+
+    void main() {
+      vec2 p = vUv * 2.0 - 1.0;
+      p.x *= uAspect;
+      float radius = length(p);
+      float angle = atan(p.y, p.x);
+
+      float layer = clamp(floor(radius / 0.245), 0.0, 5.0);
+      float layerNorm = layer / 5.0;
+      float direction = mod(layer, 2.0) < 1.0 ? 1.0 : -1.0;
+      float differential = mix(0.26, 0.045, layerNorm);
+      angle += direction * uTime * differential * (0.28 + uMode * 0.16);
+      angle += direction * uDive * (1.0 - layerNorm) * (0.42 + 0.18 * sin(uTime * 0.7));
+
+      float wedge = 6.28318530718 / uSegments;
+      angle = mod(angle + wedge * 0.5, wedge) - wedge * 0.5;
+      angle = abs(angle);
+
+      vec2 sourcePolar = radius * vec2(cos(angle), sin(angle));
+      vec2 sourceUv = vec2(sourcePolar.x / uAspect, sourcePolar.y) * 0.5 + 0.5;
+      vec3 color = texture2D(tDiffuse, sourceUv).rgb;
+
+      vec2 pixel = 1.0 / max(uResolution, vec2(1.0));
+      vec3 glow = vec3(0.0);
+      vec2 bloomStep = pixel * (2.5 + uDrive * 2.0);
+      vec3 sampleA = texture2D(tDiffuse, sourceUv + vec2(bloomStep.x, 0.0)).rgb;
+      vec3 sampleB = texture2D(tDiffuse, sourceUv - vec2(bloomStep.x, 0.0)).rgb;
+      vec3 sampleC = texture2D(tDiffuse, sourceUv + vec2(0.0, bloomStep.y)).rgb;
+      vec3 sampleD = texture2D(tDiffuse, sourceUv - vec2(0.0, bloomStep.y)).rgb;
+      vec3 sampleE = texture2D(tDiffuse, sourceUv + bloomStep).rgb;
+      vec3 sampleF = texture2D(tDiffuse, sourceUv - bloomStep).rgb;
+      vec3 sampleG = texture2D(tDiffuse, sourceUv + vec2(bloomStep.x, -bloomStep.y)).rgb;
+      vec3 sampleH = texture2D(tDiffuse, sourceUv + vec2(-bloomStep.x, bloomStep.y)).rgb;
+      float threshold = 0.68;
+      glow += sampleA * smoothstep(threshold, 0.96, dot(sampleA, vec3(0.2126, 0.7152, 0.0722)));
+      glow += sampleB * smoothstep(threshold, 0.96, dot(sampleB, vec3(0.2126, 0.7152, 0.0722)));
+      glow += sampleC * smoothstep(threshold, 0.96, dot(sampleC, vec3(0.2126, 0.7152, 0.0722)));
+      glow += sampleD * smoothstep(threshold, 0.96, dot(sampleD, vec3(0.2126, 0.7152, 0.0722)));
+      glow += sampleE * smoothstep(threshold, 0.96, dot(sampleE, vec3(0.2126, 0.7152, 0.0722)));
+      glow += sampleF * smoothstep(threshold, 0.96, dot(sampleF, vec3(0.2126, 0.7152, 0.0722)));
+      glow += sampleG * smoothstep(threshold, 0.96, dot(sampleG, vec3(0.2126, 0.7152, 0.0722)));
+      glow += sampleH * smoothstep(threshold, 0.96, dot(sampleH, vec3(0.2126, 0.7152, 0.0722)));
+      color += glow * (0.085 + uDrive * 0.055);
+
+      float ringHue = layer * (0.24 + uDrive * 0.22);
+      color = hueShift(color, ringHue + uMode * 0.15);
+
+      float lum = dot(color, vec3(0.2126, 0.7152, 0.0722));
+      float contrast = 1.08 + uDrive * (uColorPreset > 0.5 && uColorPreset < 1.5 ? 0.82 : 0.48);
+      color = max((color - vec3(0.025)) * contrast, 0.0);
+      float gradedLum = dot(color, vec3(0.2126, 0.7152, 0.0722));
+      color = mix(vec3(gradedLum), color, 1.02 + uDrive * 0.58);
+
+      if (uColorPreset > 1.5 && uColorPreset < 2.5) {
+        color = hueShift(color, sin(layer * 1.7 + uTime * 0.32) * 0.46);
+      }
+      if (uColorPreset > 2.5) {
+        color *= vec3(0.48, 0.68, 0.96);
+      }
+
+      color *= 1.0 + uKick * smoothstep(0.35, 0.9, lum) * 0.46;
+      float blackGate = smoothstep(0.008, 0.065, max(max(color.r, color.g), color.b));
+      color *= blackGate;
+      color *= smoothstep(1.72, 0.02, radius);
+
+      gl_FragColor = vec4(max(color, 0.0), 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }
+  `,
+};
+
 function modeValue(mode: ModeName) {
   return mode === "MYSTIC" ? 0 : mode === "SENSUAL" ? 1 : 2;
+}
+
+function segmentValue(mode: ModeName) {
+  return mode === "MYSTIC" ? 6 : mode === "SENSUAL" ? 8 : 12;
 }
 
 function colorValue(color: ColorPreset) {
@@ -262,6 +521,10 @@ function colorValue(color: ColorPreset) {
 
 function swimValue(swim: SwimType) {
   return swim === "SCHOOL" ? 0 : swim === "GLIDE" ? 1 : swim === "WAVE" ? 2 : 3;
+}
+
+function swarmValue(swarm: SwarmType) {
+  return swarm === "SPIRAL" ? 0 : swarm === "VORTEX" ? 1 : swarm === "WAVE" ? 2 : 3;
 }
 
 export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
@@ -292,10 +555,10 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       powerPreference: "high-performance",
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
-    renderer.setClearColor(0x01020a, 1);
+    renderer.setClearColor(0x000000, 1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.15;
     renderer.domElement.className = "fish-canvas";
     renderer.domElement.setAttribute("aria-label", "Live FishVJ visual output");
     host.appendChild(renderer.domElement);
@@ -306,18 +569,19 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     const sharedUniforms = {
       uTime: { value: 0 },
       uAspect: { value: 16 / 9 },
+      uSegments: { value: 6 },
       uKick: { value: 0 },
       uBass: { value: 0 },
       uHigh: { value: 0 },
       uDive: { value: 0 },
       uMode: { value: 0 },
-      uDrive: { value: 0.65 },
+      uDrive: { value: 0.72 },
       uColorPreset: { value: 1 },
     };
 
     const backgroundGeometry = new THREE.PlaneGeometry(2, 2);
     const backgroundMaterial = new THREE.ShaderMaterial({
-      vertexShader: backgroundVertex,
+      vertexShader: fullscreenVertex,
       fragmentShader: backgroundFragment,
       uniforms: sharedUniforms,
       depthTest: false,
@@ -333,40 +597,39 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     fishGeometry.setAttribute("position", baseGeometry.getAttribute("position"));
     fishGeometry.setAttribute("uv", baseGeometry.getAttribute("uv"));
 
-    const offsets = new Float32Array(MAX_FISH * 3);
-    const scales = new Float32Array(MAX_FISH);
-    const phases = new Float32Array(MAX_FISH);
-    const species = new Float32Array(MAX_FISH);
-    const motions = new Float32Array(MAX_FISH);
-    const velocities = new Float32Array(MAX_FISH);
-    const directions = new Float32Array(MAX_FISH);
-    const speciesScales = [0.7, 1.14, 0.94, 1.2, 0.86, 1.24, 0.94, 0.82];
+    const offsets = new Float32Array(MAX_SOURCE_FISH * 3);
+    const rings = new Float32Array(MAX_SOURCE_FISH);
+    const scales = new Float32Array(MAX_SOURCE_FISH);
+    const phases = new Float32Array(MAX_SOURCE_FISH);
+    const species = new Float32Array(MAX_SOURCE_FISH);
+    const motions = new Float32Array(MAX_SOURCE_FISH);
+    const velocities = new Float32Array(MAX_SOURCE_FISH);
+    const speciesScales = [0.72, 1.1, 0.92, 1.14, 0.82, 1.2, 0.9, 0.8];
     const speciesMotions = [0, 1, 3, 1, 3, 2, 3, 0];
 
-    for (let i = 0; i < MAX_FISH; i += 1) {
-      const speciesIndex = i % 8;
-      const spiralBand = i % 23;
-      const angle = (spiralBand / 23) * Math.PI * 2 + Math.random() * 0.3;
-      const radius = 0.18 + Math.pow(Math.random(), 0.68) * 1.28;
-      offsets[i * 3] = Math.cos(angle) * radius;
-      offsets[i * 3 + 1] = Math.sin(angle) * radius * 0.74;
-      offsets[i * 3 + 2] = (i / MAX_FISH + Math.random() * 0.09) % 1;
-      scales[i] = speciesScales[speciesIndex] * (0.5 + Math.random() * 0.78);
-      phases[i] = Math.random();
-      species[i] = speciesIndex;
-      motions[i] = speciesMotions[speciesIndex];
-      velocities[i] = 0.62 + Math.random() * 0.86;
-      directions[i] = Math.random() > 0.18 ? 1 : -1;
+    for (let index = 0; index < MAX_SOURCE_FISH; index += 1) {
+      const speciesIndex = index % 8;
+      const ringIndex = index % RING_COUNT;
+      const motif = Math.floor(index / RING_COUNT) % 5;
+      offsets[index * 3] = (motif + 0.5) / 5;
+      offsets[index * 3 + 1] = (Math.random() - 0.5) * (0.012 + ringIndex * 0.012);
+      offsets[index * 3 + 2] = Math.random();
+      rings[index] = ringIndex;
+      scales[index] =
+        speciesScales[speciesIndex] * (0.72 + Math.random() * 0.5);
+      phases[index] = Math.random() * Math.PI * 2;
+      species[index] = speciesIndex;
+      motions[index] = speciesMotions[speciesIndex];
+      velocities[index] = 0.7 + Math.random() * 0.6;
     }
 
     fishGeometry.setAttribute("aOffset", new THREE.InstancedBufferAttribute(offsets, 3));
+    fishGeometry.setAttribute("aRing", new THREE.InstancedBufferAttribute(rings, 1));
     fishGeometry.setAttribute("aScale", new THREE.InstancedBufferAttribute(scales, 1));
     fishGeometry.setAttribute("aPhase", new THREE.InstancedBufferAttribute(phases, 1));
     fishGeometry.setAttribute("aSpecies", new THREE.InstancedBufferAttribute(species, 1));
     fishGeometry.setAttribute("aMotion", new THREE.InstancedBufferAttribute(motions, 1));
     fishGeometry.setAttribute("aVelocity", new THREE.InstancedBufferAttribute(velocities, 1));
-    fishGeometry.setAttribute("aDirection", new THREE.InstancedBufferAttribute(directions, 1));
-    fishGeometry.instanceCount = configRef.current.fishCount;
 
     const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png");
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -377,10 +640,14 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     const fishUniforms = {
       ...sharedUniforms,
       uAtlas: { value: texture },
-      uSpeed: { value: 0.7 },
-      uDepth: { value: 0.72 },
+      uSpeed: { value: 0.68 },
+      uFishSize: { value: 1.5 },
+      uDepth: { value: 0.74 },
       uSelectedSpecies: { value: 0 },
       uSwimFocus: { value: 0 },
+      uSwarmFrom: { value: swarmValue(configRef.current.swarm) },
+      uSwarmTo: { value: swarmValue(configRef.current.swarm) },
+      uSwarmMix: { value: 1 },
     };
 
     const fishMaterial = new THREE.ShaderMaterial({
@@ -398,6 +665,29 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     fishMesh.renderOrder = 1;
     scene.add(fishMesh);
 
+    const renderTarget = new THREE.WebGLRenderTarget(1, 1, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
+      depthBuffer: false,
+      stencilBuffer: false,
+    });
+    const postScene = new THREE.Scene();
+    const postCamera = new THREE.Camera();
+    const postGeometry = new THREE.PlaneGeometry(2, 2);
+    const postUniforms = THREE.UniformsUtils.clone(KaleidoShader.uniforms);
+    postUniforms.tDiffuse.value = renderTarget.texture;
+    const postMaterial = new THREE.ShaderMaterial({
+      uniforms: postUniforms,
+      vertexShader: KaleidoShader.vertexShader,
+      fragmentShader: KaleidoShader.fragmentShader,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const postMesh = new THREE.Mesh(postGeometry, postMaterial);
+    postScene.add(postMesh);
+
     let width = 1;
     let height = 1;
     const resize = () => {
@@ -405,7 +695,10 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       width = Math.max(1, Math.floor(bounds.width));
       height = Math.max(1, Math.floor(bounds.height));
       renderer.setSize(width, height, false);
+      renderTarget.setSize(width, height);
       sharedUniforms.uAspect.value = width / height;
+      postUniforms.uAspect.value = width / height;
+      postUniforms.uResolution.value.set(width, height);
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(host);
@@ -415,11 +708,14 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     let lastFrame = performance.now();
     let fpsAccumulator = 0;
     let fpsFrames = 0;
-    let displayFps = 60;
     let currentDive = configRef.current.dive ? 1 : 0;
     let smoothKick = 0;
     let smoothBass = 0;
     let smoothHigh = 0;
+    let observedSwarm = configRef.current.swarm;
+    let swarmFrom = swarmValue(observedSwarm);
+    let swarmTo = swarmFrom;
+    let swarmTransitionStart = startTime - 1500;
 
     const render = () => {
       const now = performance.now();
@@ -428,8 +724,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       fpsAccumulator += deltaMs;
       fpsFrames += 1;
       if (fpsAccumulator >= 650) {
-        displayFps = Math.round((fpsFrames * 1000) / fpsAccumulator);
-        onFpsRef.current(displayFps);
+        onFpsRef.current(Math.round((fpsFrames * 1000) / fpsAccumulator));
         fpsAccumulator = 0;
         fpsFrames = 0;
       }
@@ -437,28 +732,65 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       const cfg = configRef.current;
       const levels = audioRef.current;
       const elapsed = (now - startTime) / 1000;
-      currentDive += ((cfg.dive ? 1 : 0) - currentDive) * Math.min(1, deltaMs / 620);
+      const mode = modeValue(cfg.mode);
+      const segments = segmentValue(cfg.mode);
+      if (cfg.swarm !== observedSwarm) {
+        const previousMix = Math.min(1, (now - swarmTransitionStart) / 1500);
+        swarmFrom = previousMix >= 0.5 ? swarmTo : swarmFrom;
+        swarmTo = swarmValue(cfg.swarm);
+        observedSwarm = cfg.swarm;
+        swarmTransitionStart = now;
+      }
+      const swarmMix = Math.min(1, (now - swarmTransitionStart) / 1500);
+      currentDive +=
+        ((cfg.dive ? 1 : 0) - currentDive) * Math.min(1, deltaMs / 760);
       smoothKick += (levels.kick - smoothKick) * 0.2;
       smoothBass += (levels.bass - smoothBass) * 0.14;
       smoothHigh += (levels.high - smoothHigh) * 0.18;
 
       sharedUniforms.uTime.value = elapsed;
+      sharedUniforms.uSegments.value = segments;
       sharedUniforms.uKick.value = smoothKick;
       sharedUniforms.uBass.value = smoothBass;
       sharedUniforms.uHigh.value = smoothHigh;
       sharedUniforms.uDive.value = currentDive;
-      sharedUniforms.uMode.value = modeValue(cfg.mode);
+      sharedUniforms.uMode.value = mode;
       sharedUniforms.uDrive.value = cfg.colorDrive;
       sharedUniforms.uColorPreset.value = colorValue(cfg.colorPreset);
+
       fishUniforms.uSpeed.value = cfg.speed;
+      fishUniforms.uFishSize.value = cfg.fishSize;
       fishUniforms.uDepth.value = cfg.depth;
       fishUniforms.uSelectedSpecies.value = cfg.selectedSpecies;
       fishUniforms.uSwimFocus.value = swimValue(cfg.swimType);
-      fishGeometry.instanceCount = Math.min(MAX_FISH, Math.max(1, cfg.fishCount));
-      renderer.toneMappingExposure =
-        cfg.colorPreset === "DEEP" ? 0.82 : cfg.colorPreset === "PUNCH" ? 1.2 : 1.04;
+      fishUniforms.uSwarmFrom.value = swarmFrom;
+      fishUniforms.uSwarmTo.value = swarmTo;
+      fishUniforms.uSwarmMix.value = swarmMix;
+      fishGeometry.instanceCount = Math.min(
+        MAX_SOURCE_FISH,
+        Math.max(24, Math.ceil(cfg.fishCount / (segments * 2))),
+      );
 
+      postUniforms.uTime.value = elapsed;
+      postUniforms.uSegments.value = segments;
+      postUniforms.uDive.value = currentDive;
+      postUniforms.uDrive.value = cfg.colorDrive;
+      postUniforms.uColorPreset.value = colorValue(cfg.colorPreset);
+      postUniforms.uMode.value = mode;
+      postUniforms.uKick.value = smoothKick;
+      renderer.toneMappingExposure =
+        cfg.colorPreset === "DEEP"
+          ? 0.86
+          : cfg.colorPreset === "PUNCH"
+            ? 1.24
+            : 1.1;
+
+      renderer.setRenderTarget(renderTarget);
+      renderer.clear();
       renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+      renderer.clear();
+      renderer.render(postScene, postCamera);
       animationId = requestAnimationFrame(render);
     };
 
@@ -474,6 +806,10 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       fishGeometry.dispose();
       fishMaterial.dispose();
       texture.dispose();
+      postScene.remove(postMesh);
+      postGeometry.dispose();
+      postMaterial.dispose();
+      renderTarget.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };

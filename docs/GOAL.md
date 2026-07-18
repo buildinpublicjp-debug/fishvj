@@ -12,10 +12,11 @@
 - [ ] BPM自動推定を音声ファイル再生へ接続する（現在は138 BPM基準位相）
 - [x] キー1〜3でモード切替できる
 - [ ] モード切替の2秒クロスフェード
-- [ ] Feedback + 万華鏡が効いている
+- [x] 6/8/12分割のミラー万華鏡が効いている
+- [ ] 時間フィードバック（前フレーム残像）
 - [x] 生成した透過魚アトラスがFISH DECKへ追加される
 - [ ] 実行中の画像生成結果がクリップ棚へ追加される
-- [ ] デモURLが存在する
+- [ ] デモURLが存在する（最終公開処理中）
 
 ## P1
 
@@ -23,6 +24,9 @@
 - [x] 音声ファイル入力
 - [x] 2,000匹個別GPUアニメーション
 - [x] SCHOOL / GLIDE / WAVE / FLOAT
+- [x] SPIRAL / VORTEX / WAVE / BLOOM + 1.5秒モーフ
+- [x] 個体別位相・速度差・尾のうねり・速度ベクトル追従
+- [x] FISH SIZE 0.5x〜3.0x（魚数と独立）
 - [x] CLEAN / PUNCH / ACID / DEEP + COLOR DRIVE
 - [x] INFINITE DIVE + EXIT DIVE
 - [x] BLACKOUT / RESET / FULLSCREEN
