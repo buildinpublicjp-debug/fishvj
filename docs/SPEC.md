@@ -36,6 +36,7 @@
 - 各レイヤー: opacity + blend mode (add / screen)
 - グローバルポストFX: RGBシフト / ブラー / 万華鏡(kaleidoscope) / フィードバック
   - 万華鏡は実装極小で「曼荼羅化」できる飛び道具
+  - 変換付きFeedbackは前フレームをzoom / rotate / 微hueshiftして有界合成し、無限トンネル/吸い込みを作る
 - ヒーロー魚GLBは事前完成・ブラウザ読込確認済みのseedだけを使う。未完成なら関連機能を無条件dropし、ライブimage-to-3Dは行わない
 
 ## 音声解析
@@ -73,7 +74,7 @@
 - 4拍: 曼荼羅リング1段回転
 - 16拍(4小節): ブレンド切替 + 棚から新素材投入
 - ビルドアップ検出（エネルギー持続上昇）: 渦収縮 + 彩度上昇
-- ドロップ検出（急落→急上昇）: 万華鏡全開 + 曼荼羅開花
+- ドロップ検出（急落→急上昇）: 万華鏡全開 + Feedback zoom深化 + 曼荼羅開花
 - UI: BPM表示 + タップテンポ
 
 ## 3モード（マクロプリセット、キー1/2/3、遷移2秒lerp）
@@ -82,6 +83,7 @@
 - 色相 220-260（藍〜紫）/ 彩度中 / 魚速度 0.3x
 - 曼荼羅回転ゆっくり / 万華鏡6分割 / blend: screen
 - カメラ: ゆっくり沈降（深海へ降りる）
+- Feedback: 浅いzoom + 遅い回転/色相変化
 - 生成プロンプト: "deep sea, mandala, bioluminescent fish, indigo"
 
 ### SENSUAL
@@ -89,16 +91,19 @@
 - 魚の動き流体的（curl noise強）/ opacityがBPMの1/2周期で呼吸
 - 万華鏡8分割
 - カメラ: 固定 `sin/cos` による緩いうねり旋回
+- Feedback: zoomは中程度、回転を強める
 - 生成プロンプト: "warm amber, flowing silk, fish scales glowing"
 
 ### EUPHORIC
 - 色相フルレンジ回転 / 彩度最大 / 魚速度 1.5x
 - ドロップでパーティクル爆発 / 万華鏡12分割 / blend: add
 - カメラ: 急上昇 + 魚群中心へ突入 + 曼荼羅への吸引。ドロップで加速
+- Feedback: 深いzoom + 速い色相回転。ドロップで一時的に深化
 - 生成プロンプト: "golden explosion, radial fish mandala, supernova"
 
 - 3h版のカメラパスは固定数式のみ、実装10分timebox。`camera motion` OFFで即座に静止カメラへ戻せること
 - 奥行き配置した魚Planeはカメラ視線追従。スプライン/汎用カメラシステムは対象外
+- FeedbackPassは実装10分timebox。`feedbackEnabled` OFFまたはstock AfterimagePassへ即時復帰できること
 - stretch goal: コア完成・本番URL・デモ動画確保後のみ「Describe the journey」を実装。GPT-5.6が自然言語を演出設計JSON（色・形・速度・展開）へ変換 + 生成プロンプトに反映
 
 ## 解像度
@@ -111,7 +116,7 @@
 
 ## 実装優先順位（3h）
 
-1. レイヤー構造 + 音解析 + 万華鏡 + 解像度/魚数スライダー + 2.5Dカメラ（10分timebox）
+1. レイヤー構造 + 音解析 + 万華鏡 + 変換付きFeedback + 解像度/魚数スライダー + 2.5Dカメラ（カメラ/Feedback各10分timebox）
 2. 3モードマクロ
 3. 生成画像 → 棚 → レイヤー流し込み（OpenAI賞の核）
 4. ResolumeライクなダークUI装飾（BPM表示・opacityスライダー等）→ Codexに「Resolume-like dark UI」指定で安く
@@ -128,7 +133,7 @@
 2. ビルドアップ → 渦収縮
 3. ドロップ① → EUPHORIC、カメラ加速、曼荼羅開花。事前確認済みの場合だけヒーロー魚GLBが中心を突き抜ける
 4. ブレイク（チャント）→ vocal/lead proxyで中央開花デモ
-5. ドロップ② → 万華鏡全開
+5. ドロップ② → 万華鏡 + 変換付きFeedback全開で無限トンネル
 6. マイク入力が事前確認済みでUIがgreenの場合だけ切替 → 会場スピーカー音で動く瞬間を見せる（最大10秒）。不安定なら本編では切り替えず質疑用へ回す
 
 ## プレゼン構成（3分）
@@ -164,6 +169,7 @@
 - [ ] 当日: 会場の音出し可否・プロジェクタ解像度を確認。1080p/2,000体からスライダーで60fps上限を探る
 - [ ] マイク許可・入力デバイス・フィードバックを開始前に確認し、UIのgreen状態を確認
 - [ ] `camera motion` OFFで静止カメラへ即時復帰できることを確認
+- [ ] `feedbackEnabled` OFFとstock AfterimagePassへの復帰を確認
 - [ ] ヒーロー魚GLBの見た目とブラウザ読込を事前確認。未完成なら関連実装を無条件drop
 - [ ] フォールバック: mp3同梱 + file input
 

@@ -2,6 +2,7 @@
 
 > 対象: `docs/SPEC.md` / `docs/TECH.md`
 > 最終更新: 2026-07-18
+> 設計フェーズ: completed
 > 採否ルール: 設計管理者は起票と推奨まで行い、プロジェクトオーナーの確認なしに `adopted` へ変更しない。
 
 ## Status
@@ -33,7 +34,7 @@
 | R-009 | adopted | P2 | WebGPU移行時にカスタムGLSL/ポストFXが大半そのまま生存する保証はない | adopt |
 | R-010 | adopted | P1 | 3モードへ2.5Dカメラパスを追加する | adopt（範囲限定） |
 | R-011 | adopted | P2 | ヒーロー魚GLBを1体seed同梱する | adopt（事前完了条件） |
-| R-012 | open | P1 | AfterimagePassを変換付きFeedbackPassへ差し替える | adopt（範囲限定） |
+| R-012 | adopted | P1 | AfterimagePassを変換付きFeedbackPassへ差し替える | adopt（範囲限定） |
 
 ## 指摘詳細
 
@@ -191,15 +192,16 @@
 
 ### R-012 — AfterimagePassを変換付きFeedbackPassへ差し替える
 
-- status: `open`
+- status: `adopted`
 - source: 外部レビュー（Claude）
 - priority: P1
-- 対象候補: `SPEC.md`「3モード」「デモ設計」、`TECH.md`「ポストFXチェーン」「3hタイムライン」「リスクと対策」
+- 対象: `SPEC.md`「レイヤースタック」「BPM同期」「3モード」「実装優先順位」「デモ設計」「事前準備チェックリスト」、`TECH.md`「ポストFXチェーン」「3hタイムライン」「リスクと対策」
 - 提案: 前フレームをzoom 0.97〜0.99、rotate 0.2〜0.5度、微hueshiftしてから現フレームへ合成し、ビート位相とドロップで変換量を駆動する。MYSTIC=浅く遅く、SENSUAL=回転強め、EUPHORIC=深いzoom + 速い色相回転。
 - 評価: 無限トンネル/吸い込みは90秒デモのトリップ感に直結し、AfterimagePassの前フレーム用ping-pong構造を流用すれば差し替えコストを抑えられる。ただし単純なShaderPassだけでは前フレーム保持にならず、`current + previous * 0.95` の加算も定常的な白飛びを保証なく防げない。
 - 推奨: `adopt（範囲限定）`。AfterimagePassのdual-buffer構造をforkし、旧フレームUVへzoom/rotate、色相へ小変換を加える。合成はboundedなmix/max + clampで行い、モード別固定uniformとビート接続だけに限定する。10分timebox、`feedbackEnabled` OFF、超過/不安定時はstock AfterimagePassへ戻す。
 - 理由: 安定合成と即時fallbackを条件にすれば、工数純増を抑えながらカメラパスと相乗する強い吸い込み表現を得られる。
-- 反映先: 未反映（判断待ち）
+- 採用内容: 推奨どおり採用。有界mix/max+clamp、10分timebox、OFFフラグ、stock AfterimagePass fallbackを実装契約とする。
+- 反映先: `SPEC.md`「レイヤースタック」「BPM同期」「3モード」「実装優先順位」「デモ設計」「事前準備チェックリスト」、`TECH.md`「ポストFXチェーン」「FeedbackPass」「3hタイムライン」「リスクと対策」
 - 棄却理由: —
 
 ## 判断履歴
@@ -211,3 +213,5 @@
 | 2026-07-18 | R-010〜R-011 | 起票 | Claude追加レビュー。条件付きadopt推奨、オーナー判断待ち |
 | 2026-07-18 | R-010〜R-011 | adopted | 条件付き採用。R-010は10分timebox/OFF/固定数式、R-011は事前未完了なら無条件drop |
 | 2026-07-18 | R-012 | 起票 | Claude追加レビュー。範囲限定adopt推奨、オーナー判断待ち |
+| 2026-07-18 | R-012 | adopted | 推奨どおり採用。有界mix/max+clamp、10分timebox、OFF、stock Afterimage fallback |
+| 2026-07-18 | 設計フェーズ | completed | R-001〜R-012の判断・反映完了。`docs/GOAL.md` を実装開始ゲートとして作成 |

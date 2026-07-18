@@ -46,9 +46,17 @@
 ### ポストFXチェーン（EffectComposer）
 1. RenderPass
 2. KaleidoPass（自作ShaderPass 約20行、分割数uniform: 6/8/12）
-3. AfterimagePass（フィードバック/残像）
+3. FeedbackPass（AfterimagePassのdual-buffer構造をfork、変換付きフィードバック）
 4. UnrealBloomPass（発光）
 5. RGBShift + 彩度/色相（最終色調、モードのhue rangeここで適用）
+
+### FeedbackPass
+- 前フレーム用ping-pong render targetはAfterimagePassの構造を流用し、汎用フィードバック基盤は作らない
+- 旧フレームUVへzoom 0.97〜0.99 / rotate 0.2〜0.5度、色へ微hueshiftを適用
+- 旧フレームへdecayを掛けた後、`clamp(max(current, mix(current, feedback, amount)), 0, 1)` の有界構成で合成。無制限の加算合成は禁止
+- ビート位相でzoom/rotationを脈動させ、ドロップ時だけzoomを一時的に深くする
+- MYSTIC=浅く遅く / SENSUAL=回転強め / EUPHORIC=深いzoom + 速い色相回転
+- 実装10分timebox。`feedbackEnabled` で即時OFF、超過/不安定時はstock AfterimagePassへ復帰
 
 ### パフォーマンス / 8K
 - 初期値は1920x1080、devicePixelRatio上限1、魚2,000体
@@ -122,7 +130,7 @@ fishvj/
 | 時間 | 作業 |
 |---|---|
 | 0:00-0:20 | スキャフォールド: Vite+TS+Three、レンダーループ、mp3再生、Analyser骨格、BeatState型凍結 |
-| 0:20-1:05 | コア映像: 背景シェーダー + 魚群Instanced + 万華鏡/Bloom + 性能スライダー + 2.5Dカメラ（最大10分）。事前疎通済みならヒーロー魚GLB |
+| 0:20-1:05 | コア映像: 背景シェーダー + 魚群Instanced + 万華鏡/Bloom + 性能スライダー + 2.5Dカメラ/Feedback差し替え（各最大10分）。事前疎通済みならヒーロー魚GLB |
 | 1:05-1:30 | ビートエンジン: 5帯域/オンセット/BPM/位相 + 楽器マッピング接続 |
 | 1:30-1:55 | 3モード + 2秒lerpクロスフェード + Resolume風UIパネル |
 | 1:55-2:20 | 2系統生成パイプライン + クリップ棚 + 16拍自動投入 |
@@ -138,6 +146,7 @@ fishvj/
 - 会場マイク事故 → 開始前に許可と入力を確認し、UIがgreenの場合だけ切替。mp3直結が本線
 - 4K+Bloomでfps落ち → 1080p/2,000体開始 + Bloom半解像度 + 解像度/魚数スライダー
 - 2.5Dカメラで画面酔い/Plane消失/時間超過 → 振幅制限 + billboard + 10分timebox + `cameraMotionEnabled` OFF
+- Feedback白飛び/実装超過 → 有界mix/max+clamp + 10分timebox + `feedbackEnabled` OFF + stock AfterimagePass復帰
 - ヒーロー魚GLB未完成/読込失敗 → 機能全体を無条件drop。本線レイヤーへ依存させない
 - 並列CCマージ事故 → ファイル境界 + BeatState先行凍結
 - Vercelデプロイ詰まり → ローカル `vite preview` + ngrok系を最終フォールバックに
