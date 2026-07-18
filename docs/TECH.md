@@ -8,9 +8,9 @@
 | 領域 | 採用 | 理由 |
 |---|---|---|
 | 描画 | Three.js | InstancedMesh / EffectComposer / Codex学習量。3hで事故らない |
-| アプリ | Vite + vanilla TS | 状態が少なくReactは過剰。描画ループとDOM UIを分離 |
+| アプリ | Vinext + React + TypeScript | Sites配布互換のVite基盤を使い、描画ループはReact外のThree.jsへ分離 |
 | UI | DOMオーバーレイ（Resolume風ダークCSS） | r3f混在リスク回避 |
-| デプロイ | Vercel（静的 + /api serverless） | HTTPS自動（getUserMedia要件）、APIキー秘匿 |
+| デプロイ | OpenAI Sites（Cloudflare Worker互換） | HTTPSと公開導線を確保。画像生成API追加時もサーバールートでキーを秘匿 |
 | 画像生成 | 素材種別による2系統ルーティング via /api/generate-image | 魚=`gpt-image-1.5`透明、曼荼羅/背景=`gpt-image-2`指定アスペクト |
 | 演出設計 | GPT-5.6 via /api/journey（stretch goal） | 自然言語 → 演出JSON（structured output）。本番URL/録画確保後のみ |
 | 音解析 | Web Audio 素書き | 5帯域+オンセットは自前で書ける量 |
@@ -19,11 +19,11 @@
 ## 描画詳細
 
 ### 魚群（Layer 2）
-- `InstancedMesh` + PlaneGeometry、初期値2,000インスタンス
+- `InstancedBufferGeometry` + 分割Plane、初期値800・上限2,000インスタンス
 - 魚数は実行時スライダーで変更し、会場マシンの60fps実測後に増やす
-- インスタンス属性: phase / speciesIndex / scale / hueShift
-- 頂点シェーダーで泳ぎのうねり（sin波 + phase）
-- テクスチャ: スプライトアトラス（魚種 = アトラス内index）
+- インスタンス属性: offset / phase / species / scale / motion / velocity / direction
+- 横12分割・縦2分割Planeを頂点シェーダーで尾側ほど変形
+- テクスチャ: 4×2の透過8魚種スプライトアトラス
 - 動き: 奥行き配置 + curl noise フィールド + ビート位相で収縮/リリース
 - Planeはカメラ視線追従とし、旋回時のedge-on消失を防ぐ
 
@@ -59,7 +59,8 @@
 - 実装10分timebox。`feedbackEnabled` で即時OFF、超過/不安定時はstock AfterimagePassへ復帰
 
 ### パフォーマンス / 8K
-- 初期値は1920x1080、devicePixelRatio上限1、魚2,000体
+- 初期値は出力領域サイズ、devicePixelRatio上限1、魚800体
+- 2,000体 + INFINITE DIVEで60fpsをローカル実測済み
 - canvas解像度はプロジェクタ実解像度を上限キャップ
 - 解像度スケールと魚数を実行時スライダーで調整
 - Bloomは半解像度レンダーターゲット
