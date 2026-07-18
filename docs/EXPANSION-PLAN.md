@@ -89,4 +89,4 @@ seed CUE:
 - [x] Space FXレイヤーが通常キーと衝突しない
 - [x] ESCでAUTO / FX / 保持キーを全解除できる
 - [x] 本番ビルドとサーバーレンダーテストが成功する
-- [ ] GitHubと公開URLへ反映する
+- [x] GitHubと公開URLへ反映する
