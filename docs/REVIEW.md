@@ -408,6 +408,15 @@
 - 反映先: `TECH.md`「SCENE / FREE SWIM」、実装UI
 - 棄却理由: —
 
+### R-029 — 魚種ごとの速度と揺れが同じテンポに見える
+
+- status: `adopted`
+- source: プロジェクトオーナーの公開版E2Eレビュー
+- priority: P1
+- 採用内容: 移動速度と尾振り周期を分離し、SCHOOLは速い小刻みな尾振り、GLIDEは直進中心、WAVEは大きな全身うねり、FLOATは遅い上下漂流へ調整。MYSTIC / SENSUAL / EUPHORICの全体速度差、4遊泳スタイル、RUSH、2,000匹最速状態をブラウザE2Eで確認する。
+- 反映先: `TECH.md`「魚群」、魚頂点シェーダー
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -429,3 +438,4 @@
 | 2026-07-18 | Milestone 1 | implemented | 透過8魚種アトラス、最大2,000個体、4泳動、4色プリセット、音声入力、INFINITE DIVE、ライブ操作UIを実装 |
 | 2026-07-18 | R-025〜R-027 | adopted / implemented | 装飾円削除、4 SWARMモーフ、個体泳動、独立FISH SIZE、VORTEX層圧縮を実装し、2,000匹 + DIVEで60fpsを確認 |
 | 2026-07-18 | R-028 | adopted / implemented | MANDALA / FREE SWIM、自由遊泳4スタイル、SCHOOL RUSHを実装し、2,000匹で60fpsを確認 |
+| 2026-07-18 | R-029 | adopted / implemented | 魚種別の移動速度・尾振り周期・上下揺れを分離し、4スタイルと2,000匹最速状態をE2E確認 |

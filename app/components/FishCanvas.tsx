@@ -200,11 +200,12 @@ const fishVertex = `
   }
 
   float freeSwimProgress(float time, float speed, float seed, float angleSeed) {
-    return fract(seed + angleSeed * 0.11 + time * (0.04 + speed * 0.032));
+    return fract(seed + angleSeed * 0.11 + time * (0.016 + speed * 0.072));
   }
 
   vec2 freeSwimPosition(
     float style,
+    float motion,
     float ringNorm,
     float angleSeed,
     float seed,
@@ -219,9 +220,16 @@ const fishVertex = `
     float x = mix(-aspect - 0.28, aspect + 0.28, directedProgress);
     float lane = fract(ringNorm * 0.73 + angleSeed * 0.47 + seed * 0.61);
     float y = mix(-0.82, 0.82, lane);
+    float school = 1.0 - step(0.5, abs(motion - 0.0));
+    float glide = 1.0 - step(0.5, abs(motion - 1.0));
+    float wave = 1.0 - step(0.5, abs(motion - 2.0));
+    float floating = 1.0 - step(0.5, abs(motion - 3.0));
+    float swayRate = school * 1.18 + glide * 0.56 + wave * 0.84 + floating * 0.4;
+    float swayAmount = school * 0.026 + glide * 0.01 + wave * 0.064 + floating * 0.082;
     float bodyDrift = sin(
-      time * (0.62 + speed * 0.52) + phase + x * 1.15
-    ) * (0.035 + 0.025 * sin(phase * 1.7));
+      time * (0.62 + speed * 0.52) * swayRate + phase + x * 1.15
+    ) * swayAmount;
+    bodyDrift += floating * sin(time * 0.26 + phase * 1.3) * 0.04;
 
     if (style < 0.5) {
       // CRUISE: relaxed, layered lanes with small unsynchronised deviations.
@@ -257,7 +265,10 @@ const fishVertex = `
     float modeSpeed = uMode < 0.5 ? 0.62 : (uMode < 1.5 ? 0.88 : 1.24);
     float ringPace = 0.86 + aRing * 0.055;
     float alignedVelocity = mix(aVelocity, ringPace, 0.16);
-    float motionSpeed = uSpeed * modeSpeed * alignedVelocity;
+    float travelPace = aMotion < 0.5
+      ? 1.16
+      : (aMotion < 1.5 ? 1.02 : (aMotion < 2.5 ? 0.76 : 0.58));
+    float motionSpeed = uSpeed * modeSpeed * alignedVelocity * travelPace;
     motionSpeed *= mix(1.0, 2.1, uSceneMix * uDive);
     float kickLead = uKick * (0.035 + alignedVelocity * 0.028);
     float motionTime = uTime + kickLead;
@@ -386,6 +397,7 @@ const fishVertex = `
 
     vec2 freeFrom = freeSwimPosition(
       uSwarmFrom,
+      aMotion,
       ringNorm,
       aOffset.x,
       aOffset.z,
@@ -396,6 +408,7 @@ const fishVertex = `
     );
     vec2 freeTo = freeSwimPosition(
       uSwarmTo,
+      aMotion,
       ringNorm,
       aOffset.x,
       aOffset.z,
@@ -406,6 +419,7 @@ const fishVertex = `
     );
     vec2 freeFromPrevious = freeSwimPosition(
       uSwarmFrom,
+      aMotion,
       ringNorm,
       aOffset.x,
       aOffset.z,
@@ -416,6 +430,7 @@ const fishVertex = `
     );
     vec2 freeToPrevious = freeSwimPosition(
       uSwarmTo,
+      aMotion,
       ringNorm,
       aOffset.x,
       aOffset.z,
@@ -476,13 +491,18 @@ const fishVertex = `
     vec2 local = position.xy;
     float tailWeight = pow(clamp(1.0 - uv.x, 0.0, 1.0), 1.65);
     float tailAmplitude =
-      0.026
-      + school * 0.024
-      + glide * 0.009
-      + wave * 0.062
-      + floating * 0.018;
+      0.014
+      + school * 0.033
+      + glide * 0.004
+      + wave * 0.09
+      + floating * 0.02;
+    float tailRate =
+      school * 1.25
+      + glide * 0.55
+      + wave * 0.86
+      + floating * 0.42;
     float swimWave = sin(
-      motionTime * (5.2 + uSpeed * 4.8) * alignedVelocity
+      motionTime * (5.2 + uSpeed * 4.8) * alignedVelocity * tailRate
       + aPhase
       - uv.x * (7.0 + wave * 3.5)
     );
