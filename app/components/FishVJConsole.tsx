@@ -12,6 +12,7 @@ import {
   AudioLevels,
   ColorPreset,
   FishCanvas,
+  FxState,
   ModeName,
   PerformanceState,
   SceneMode,
@@ -46,6 +47,156 @@ const FREE_SWIM_STYLES: Record<SwarmType, string> = {
   BLOOM: "DRIFT",
 };
 const EMPTY_LEVELS: AudioLevels = { kick: 0, bass: 0, mid: 0, high: 0 };
+
+const FX_DEFS: ReadonlyArray<{
+  id: keyof FxState;
+  label: string;
+  hint: string;
+  symbol: string;
+}> = [
+  { id: "feedback", label: "FEEDBACK", hint: "TIME TRAIL", symbol: "∞" },
+  { id: "twist", label: "TWIST", hint: "POLAR WARP", symbol: "↻" },
+  { id: "chroma", label: "CHROMA", hint: "RGB SPLIT", symbol: "◒" },
+  { id: "pixel", label: "PIXEL", hint: "GRID CRUSH", symbol: "▦" },
+  { id: "ripple", label: "RIPPLE", hint: "WATER WAVE", symbol: "≋" },
+  { id: "glitch", label: "GLITCH", hint: "BLOCK SHIFT", symbol: "⌁" },
+  { id: "zoom", label: "ZOOM", hint: "BEAT PULSE", symbol: "◎" },
+  { id: "mirror", label: "MIRROR", hint: "QUAD FOLD", symbol: "◇" },
+];
+
+const INITIAL_FX: FxState = {
+  feedback: 0,
+  twist: 0,
+  chroma: 0,
+  pixel: 0,
+  ripple: 0,
+  glitch: 0,
+  zoom: 0,
+  mirror: 0,
+};
+
+type ControlView = "CORE" | "FX" | "CUES";
+
+type CuePreset = {
+  name: string;
+  scene: SceneMode;
+  modeBlend: number;
+  colorPreset: ColorPreset;
+  colorDrive: number;
+  fishSize: number;
+  speed: number;
+  depth: number;
+  swimType: SwimType;
+  swarm: SwarmType;
+  fx: FxState;
+};
+
+const DEFAULT_CUES: CuePreset[] = [
+  {
+    name: "RITUAL",
+    scene: "MANDALA",
+    modeBlend: 0,
+    colorPreset: "PUNCH",
+    colorDrive: 0.72,
+    fishSize: 1.5,
+    speed: 0.68,
+    depth: 0.74,
+    swimType: "SCHOOL",
+    swarm: "SPIRAL",
+    fx: { ...INITIAL_FX },
+  },
+  {
+    name: "ABYSS",
+    scene: "MANDALA",
+    modeBlend: 0.45,
+    colorPreset: "DEEP",
+    colorDrive: 0.58,
+    fishSize: 1.75,
+    speed: 0.42,
+    depth: 0.94,
+    swimType: "FLOAT",
+    swarm: "VORTEX",
+    fx: { ...INITIAL_FX, feedback: 0.72, ripple: 0.22, zoom: 0.16 },
+  },
+  {
+    name: "ACID",
+    scene: "MANDALA",
+    modeBlend: 1.35,
+    colorPreset: "ACID",
+    colorDrive: 0.96,
+    fishSize: 1.42,
+    speed: 0.94,
+    depth: 0.62,
+    swimType: "WAVE",
+    swarm: "WAVE",
+    fx: { ...INITIAL_FX, chroma: 0.7, ripple: 0.52, twist: 0.28 },
+  },
+  {
+    name: "OPEN SEA",
+    scene: "FREE_SWIM",
+    modeBlend: 0.72,
+    colorPreset: "CLEAN",
+    colorDrive: 0.4,
+    fishSize: 1.9,
+    speed: 0.58,
+    depth: 0.48,
+    swimType: "GLIDE",
+    swarm: "SPIRAL",
+    fx: { ...INITIAL_FX, ripple: 0.16, feedback: 0.18 },
+  },
+  {
+    name: "VORTEX",
+    scene: "MANDALA",
+    modeBlend: 1.78,
+    colorPreset: "PUNCH",
+    colorDrive: 0.88,
+    fishSize: 1.24,
+    speed: 1.25,
+    depth: 0.96,
+    swimType: "SCHOOL",
+    swarm: "VORTEX",
+    fx: { ...INITIAL_FX, feedback: 0.48, twist: 0.68, zoom: 0.72 },
+  },
+  {
+    name: "DIGITAL",
+    scene: "FREE_SWIM",
+    modeBlend: 1.12,
+    colorPreset: "ACID",
+    colorDrive: 0.82,
+    fishSize: 1.62,
+    speed: 0.9,
+    depth: 0.38,
+    swimType: "GLIDE",
+    swarm: "WAVE",
+    fx: { ...INITIAL_FX, pixel: 0.78, glitch: 0.66, chroma: 0.34 },
+  },
+  {
+    name: "BLOOM DROP",
+    scene: "MANDALA",
+    modeBlend: 2,
+    colorPreset: "PUNCH",
+    colorDrive: 1,
+    fishSize: 2.15,
+    speed: 1.38,
+    depth: 0.78,
+    swimType: "SCHOOL",
+    swarm: "BLOOM",
+    fx: { ...INITIAL_FX, feedback: 0.36, zoom: 0.86, ripple: 0.35 },
+  },
+  {
+    name: "PRISM",
+    scene: "MANDALA",
+    modeBlend: 1.56,
+    colorPreset: "ACID",
+    colorDrive: 0.92,
+    fishSize: 1.38,
+    speed: 0.78,
+    depth: 0.66,
+    swimType: "WAVE",
+    swarm: "SPIRAL",
+    fx: { ...INITIAL_FX, mirror: 0.88, chroma: 0.76, twist: 0.46 },
+  },
+];
 
 type OneShotPad = "strobe" | "rush" | "scatter" | "hueFlip" | "kaleidoBurst";
 
@@ -126,6 +277,45 @@ function modeFromBlend(value: number): ModeName {
 function segmentsFromBlend(value: number) {
   const blend = clamp(value, 0, 2);
   return blend <= 1 ? 6 + blend * 2 : 8 + (blend - 1) * 4;
+}
+
+function sanitizeCue(value: unknown, fallback: CuePreset): CuePreset {
+  if (!value || typeof value !== "object") return fallback;
+  const cue = value as Partial<CuePreset>;
+  const number = (candidate: unknown, safe: number, min: number, max: number) =>
+    typeof candidate === "number" && Number.isFinite(candidate)
+      ? clamp(candidate, min, max)
+      : safe;
+  const savedFx =
+    cue.fx && typeof cue.fx === "object"
+      ? cue.fx as Partial<FxState>
+      : {};
+  const nextFx = Object.fromEntries(
+    FX_DEFS.map(({ id }) => [
+      id,
+      number(savedFx[id], fallback.fx[id], 0, 1),
+    ]),
+  ) as FxState;
+
+  return {
+    name: typeof cue.name === "string" ? cue.name.slice(0, 18) : fallback.name,
+    scene: SCENES.some(({ id }) => id === cue.scene) ? cue.scene as SceneMode : fallback.scene,
+    modeBlend: number(cue.modeBlend, fallback.modeBlend, 0, 2),
+    colorPreset: COLORS.includes(cue.colorPreset as ColorPreset)
+      ? cue.colorPreset as ColorPreset
+      : fallback.colorPreset,
+    colorDrive: number(cue.colorDrive, fallback.colorDrive, 0, 1),
+    fishSize: number(cue.fishSize, fallback.fishSize, 0.5, 3),
+    speed: number(cue.speed, fallback.speed, 0.2, 1.6),
+    depth: number(cue.depth, fallback.depth, 0.15, 1),
+    swimType: SWIMS.includes(cue.swimType as SwimType)
+      ? cue.swimType as SwimType
+      : fallback.swimType,
+    swarm: SWARMS.includes(cue.swarm as SwarmType)
+      ? cue.swarm as SwarmType
+      : fallback.swarm,
+    fx: nextFx,
+  };
 }
 
 type AudioRuntime = {
@@ -213,6 +403,17 @@ export function FishVJConsole() {
   const [activePads, setActivePads] = useState(INITIAL_ACTIVE_PADS);
   const [holdBlackout, setHoldBlackout] = useState(false);
   const [heldFaderKeys, setHeldFaderKeys] = useState<string[]>([]);
+  const [fx, setFx] = useState<FxState>(INITIAL_FX);
+  const [controlView, setControlView] = useState<ControlView>("CORE");
+  const [selectedFx, setSelectedFx] = useState<keyof FxState>("feedback");
+  const [cues, setCues] = useState<CuePreset[]>(DEFAULT_CUES);
+  const [activeCue, setActiveCue] = useState(0);
+  const [cueMorphTime, setCueMorphTime] = useState(2.4);
+  const [autoPilot, setAutoPilot] = useState(false);
+  const [autoBeats, setAutoBeats] = useState<4 | 8 | 16>(8);
+  const [spaceLayer, setSpaceLayer] = useState(false);
+  const [fxAdjusting, setFxAdjusting] = useState(0);
+  const [cueStatus, setCueStatus] = useState("F1–F8 RECALL · SHIFT SAVE");
   const outputRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioRuntimeRef = useRef<AudioRuntime | null>(null);
@@ -220,8 +421,30 @@ export function FishVJConsole() {
   const beatStartRef = useRef(performance.now());
   const padTimersRef = useRef<Partial<Record<OneShotPad, ReturnType<typeof setTimeout>>>>({});
   const heldFaderKeysRef = useRef(new Set<string>());
+  const fxDirectionRef = useRef(0);
+  const spaceLayerRef = useRef(false);
+  const selectedFxRef = useRef<keyof FxState>("feedback");
+  const cueTransitionFrameRef = useRef(0);
+  const recallCueRef = useRef<(index: number) => void>(() => {});
+  const cuesRef = useRef<CuePreset[]>(DEFAULT_CUES);
+  const liveSnapshotRef = useRef<CuePreset>(DEFAULT_CUES[0]);
   const mode = modeFromBlend(modeBlend);
   const kaleidoSegments = segmentsFromBlend(modeBlend);
+  selectedFxRef.current = selectedFx;
+  cuesRef.current = cues;
+  liveSnapshotRef.current = {
+    name: cues[activeCue]?.name ?? "LIVE",
+    scene,
+    modeBlend,
+    colorPreset,
+    colorDrive,
+    fishSize,
+    speed,
+    depth,
+    swimType,
+    swarm,
+    fx: { ...fx },
+  };
 
   const config = useMemo<VisualConfig>(
     () => ({
@@ -240,6 +463,7 @@ export function FishVJConsole() {
       swimType,
       swarm,
       performance: performanceState,
+      fx,
     }),
     [
       scene,
@@ -257,7 +481,25 @@ export function FishVJConsole() {
       swimType,
       swarm,
       performanceState,
+      fx,
     ],
+  );
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("fishvj-cues-v2");
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed) || parsed.length !== DEFAULT_CUES.length) return;
+      setCues(parsed.map((cue, index) => sanitizeCue(cue, DEFAULT_CUES[index])));
+    } catch {
+      window.localStorage.removeItem("fishvj-cues-v2");
+    }
+  }, []);
+
+  useEffect(
+    () => () => cancelAnimationFrame(cueTransitionFrameRef.current),
+    [],
   );
 
   const stopAudio = useCallback(() => {
@@ -432,8 +674,80 @@ export function FishVJConsole() {
 
   const releaseFaders = useCallback(() => {
     heldFaderKeysRef.current.clear();
+    fxDirectionRef.current = 0;
+    setFxAdjusting(0);
     setHeldFaderKeys([]);
   }, []);
+
+  const recallCue = useCallback((index: number) => {
+    const target = cuesRef.current[index];
+    if (!target) return;
+    cancelAnimationFrame(cueTransitionFrameRef.current);
+    const from = liveSnapshotRef.current;
+    const startedAt = performance.now();
+    const duration = cueMorphTime * 1000;
+
+    setActiveCue(index);
+    setCueStatus(`MORPHING → F${index + 1} ${target.name}`);
+    setScene(target.scene);
+    setColorPreset(target.colorPreset);
+    setSwimType(target.swimType);
+    setSwarm(target.swarm);
+    setDive(false);
+
+    const animate = (now: number) => {
+      const progress = clamp((now - startedAt) / duration, 0, 1);
+      const eased = progress * progress * (3 - 2 * progress);
+      const mix = (start: number, end: number) => start + (end - start) * eased;
+
+      setModeBlend(mix(from.modeBlend, target.modeBlend));
+      setColorDrive(mix(from.colorDrive, target.colorDrive));
+      setFishSize(mix(from.fishSize, target.fishSize));
+      setSpeed(mix(from.speed, target.speed));
+      setDepth(mix(from.depth, target.depth));
+      setFx(Object.fromEntries(
+        FX_DEFS.map(({ id }) => [id, mix(from.fx[id], target.fx[id])]),
+      ) as FxState);
+
+      if (progress < 1) {
+        cueTransitionFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        setCueStatus(`LIVE · F${index + 1} ${target.name}`);
+      }
+    };
+
+    cueTransitionFrameRef.current = requestAnimationFrame(animate);
+  }, [cueMorphTime]);
+
+  useEffect(() => {
+    recallCueRef.current = recallCue;
+  }, [recallCue]);
+
+  const saveCue = useCallback((index: number) => {
+    cancelAnimationFrame(cueTransitionFrameRef.current);
+    const current = liveSnapshotRef.current;
+    const saved: CuePreset = {
+      ...current,
+      name: cuesRef.current[index]?.name ?? `CUE ${index + 1}`,
+      fx: { ...current.fx },
+    };
+    const next = cuesRef.current.map((cue, cueIndex) =>
+      cueIndex === index ? saved : cue
+    );
+    cuesRef.current = next;
+    setCues(next);
+    setActiveCue(index);
+    setCueStatus(`SAVED · F${index + 1} ${saved.name}`);
+    window.localStorage.setItem("fishvj-cues-v2", JSON.stringify(next));
+  }, []);
+
+  useEffect(() => {
+    if (!autoPilot) return;
+    const interval = window.setTimeout(() => {
+      recallCueRef.current((activeCue + 1) % DEFAULT_CUES.length);
+    }, (60000 / bpm) * autoBeats);
+    return () => window.clearTimeout(interval);
+  }, [activeCue, autoBeats, autoPilot, bpm]);
 
   useEffect(() => {
     let frame = 0;
@@ -467,6 +781,17 @@ export function FishVJConsole() {
       if (sizeAxis) {
         setFishSize((value) => clamp(value + sizeAxis * delta * 0.9, 0.5, 3));
       }
+      if (fxDirectionRef.current) {
+        const fxId = selectedFxRef.current;
+        setFx((current) => ({
+          ...current,
+          [fxId]: clamp(
+            current[fxId] + fxDirectionRef.current * delta * 0.62,
+            0,
+            1,
+          ),
+        }));
+      }
 
       frame = requestAnimationFrame(animateFaders);
     };
@@ -483,8 +808,12 @@ export function FishVJConsole() {
   );
 
   const reset = useCallback(() => {
+    cancelAnimationFrame(cueTransitionFrameRef.current);
     clearPerformance();
     releaseFaders();
+    spaceLayerRef.current = false;
+    setSpaceLayer(false);
+    setFxAdjusting(0);
     setScene("MANDALA");
     setModeBlend(0);
     setColorPreset("PUNCH");
@@ -498,6 +827,12 @@ export function FishVJConsole() {
     setSelectedSpecies([0]);
     setSwimType("SCHOOL");
     setSwarm("SPIRAL");
+    setFx(INITIAL_FX);
+    setControlView("CORE");
+    setSelectedFx("feedback");
+    setActiveCue(0);
+    setAutoPilot(false);
+    setCueStatus("INTRO SAFE · ALL FX CLEAR");
   }, [clearPerformance, releaseFaders]);
 
   const toggleFullscreen = useCallback(async () => {
@@ -525,6 +860,47 @@ export function FishVJConsole() {
         return;
       }
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      if (event.code === "Space") {
+        event.preventDefault();
+        spaceLayerRef.current = true;
+        setSpaceLayer(true);
+        return;
+      }
+      const cueMatch = /^F([1-8])$/.exec(event.key);
+      if (cueMatch) {
+        event.preventDefault();
+        if (event.repeat) return;
+        const cueIndex = Number(cueMatch[1]) - 1;
+        if (event.shiftKey) saveCue(cueIndex);
+        else recallCue(cueIndex);
+        setControlView("CUES");
+        return;
+      }
+      if (spaceLayerRef.current) {
+        if (/^[1-8]$/.test(event.key)) {
+          event.preventDefault();
+          const fxIndex = Number(event.key) - 1;
+          const fxId = FX_DEFS[fxIndex].id;
+          selectedFxRef.current = fxId;
+          setSelectedFx(fxId);
+          setControlView("FX");
+          return;
+        }
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          event.preventDefault();
+          const direction = event.key === "ArrowLeft" ? -1 : 1;
+          fxDirectionRef.current = direction;
+          setFxAdjusting(direction);
+          return;
+        }
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          const fxId = selectedFxRef.current;
+          const value = event.key === "ArrowDown" ? 0 : 1;
+          setFx((current) => ({ ...current, [fxId]: value }));
+          return;
+        }
+      }
       const faderKey = normalizeFaderKey(event.key);
       if (faderKey) {
         event.preventDefault();
@@ -541,6 +917,14 @@ export function FishVJConsole() {
       if (key === "h") triggerPerformance("scatter");
       if (key === "j") triggerPerformance("hueFlip");
       if (key === "k") triggerPerformance("kaleidoBurst");
+      if (key === "p") {
+        setAutoPilot((value) => !value);
+        setControlView("CUES");
+      }
+      if (key === "o") {
+        setAutoBeats((value) => value === 4 ? 8 : value === 8 ? 16 : 4);
+        setControlView("CUES");
+      }
       if (event.key === "1") setModeBlend(0);
       if (event.key === "2") setModeBlend(1);
       if (event.key === "3") setModeBlend(2);
@@ -556,6 +940,17 @@ export function FishVJConsole() {
       if (key === "f") void toggleFullscreen();
     };
     const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        spaceLayerRef.current = false;
+        fxDirectionRef.current = 0;
+        setSpaceLayer(false);
+        setFxAdjusting(0);
+      }
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        fxDirectionRef.current = 0;
+        setFxAdjusting(0);
+      }
       const faderKey = normalizeFaderKey(event.key);
       if (faderKey) {
         event.preventDefault();
@@ -571,6 +966,8 @@ export function FishVJConsole() {
     const releaseHolds = () => {
       setSlowMo(false);
       setHoldBlackout(false);
+      spaceLayerRef.current = false;
+      setSpaceLayer(false);
       releaseFaders();
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -581,7 +978,16 @@ export function FishVJConsole() {
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", releaseHolds);
     };
-  }, [releaseFaders, reset, scene, setSlowMo, toggleFullscreen, triggerPerformance]);
+  }, [
+    recallCue,
+    releaseFaders,
+    reset,
+    saveCue,
+    scene,
+    setSlowMo,
+    toggleFullscreen,
+    triggerPerformance,
+  ]);
 
   const toggleSpecies = useCallback((index: number, motion: SwimType) => {
     setSelectedSpecies((current) => {
@@ -612,6 +1018,7 @@ export function FishVJConsole() {
     100,
     Math.round((audioLevels.kick * 0.34 + audioLevels.mid * 0.28 + audioLevels.high * 0.38) * 118),
   );
+  const activeFxCount = FX_DEFS.filter(({ id }) => fx[id] > 0.015).length;
   const keyboardFaders: Array<{
     id: KeyboardFader;
     keys: string[];
@@ -720,6 +1127,7 @@ export function FishVJConsole() {
           <span>0 SCENE · 1–3 MODE · D DIVE · B LOCK · F OUTPUT</span>
           <span>T STROBE · G RUSH · H SCATTER · J HUE · K KALEIDO</span>
           <span>Z/X MODE · C/V COLOR · ↑↓ SPEED · ←→ DEPTH · [ ] SIZE</span>
+          <span>SPACE+1–8 FX · SPACE+←→ LEVEL · F1–F8 CUE · P AUTO</span>
           <span>HOLD TO FADE · ⇧ SLOW · TAB BLACK · ESC INTRO</span>
         </p>
       </aside>
@@ -737,7 +1145,10 @@ export function FishVJConsole() {
                 ? `CH 01 · MANDALA · ${mode} · ${swarm} · K-${kaleidoSegments.toFixed(1)}`
                 : `CH 01 · FREE SWIM · ${mode} · ${FREE_SWIM_STYLES[swarm]}`}
             </span>
-            <span>{fishCount.toLocaleString()} FISH</span>
+            <span>
+              {fishCount.toLocaleString()} FISH · FX {activeFxCount}
+              {autoPilot ? ` · AUTO ${autoBeats}` : ""}
+            </span>
           </div>
           {dive && (
             <div className="dive-badge">
@@ -825,6 +1236,24 @@ export function FishVJConsole() {
       </section>
 
       <aside className="control-panel panel" aria-label="Live controls">
+        <div className="control-tabs" role="tablist" aria-label="Control view">
+          {(["CORE", "FX", "CUES"] as ControlView[]).map((view) => (
+            <button
+              key={view}
+              role="tab"
+              className={controlView === view ? "is-active" : ""}
+              aria-selected={controlView === view}
+              onClick={() => setControlView(view)}
+            >
+              {view}
+              {view === "FX" && <small>{activeFxCount}</small>}
+              {view === "CUES" && autoPilot && <small className="is-live">●</small>}
+            </button>
+          ))}
+        </div>
+        <div className={`control-view control-view-${controlView.toLowerCase()}`}>
+        {controlView === "CORE" && (
+          <>
         <section className="scene-section">
           <h2>SCENE</h2>
           <div className="scene-buttons" role="group" aria-label="Scene mode">
@@ -962,6 +1391,135 @@ export function FishVJConsole() {
           >
             {scene === "MANDALA" ? "EXIT DIVE" : "ONE SHOT · G"}
           </button>
+        </div>
+          </>
+        )}
+
+        {controlView === "FX" && (
+          <section className="fx-rack" aria-label="FX Rack">
+            <div className="rack-heading">
+              <div>
+                <h2>FX RACK</h2>
+                <small>{spaceLayer ? "SPACE LAYER ACTIVE" : "SPACE + 1–8 SELECT"}</small>
+              </div>
+              <button
+                className="rack-clear"
+                onClick={() => setFx(INITIAL_FX)}
+              >
+                CLEAR ALL
+              </button>
+            </div>
+            <div className="fx-controls">
+              {FX_DEFS.map((item, index) => (
+                <label
+                  key={item.id}
+                  className={`fx-control ${selectedFx === item.id ? "is-selected" : ""} ${
+                    selectedFx === item.id && fxAdjusting ? "is-adjusting" : ""
+                  }`}
+                  onPointerDown={() => {
+                    selectedFxRef.current = item.id;
+                    setSelectedFx(item.id);
+                  }}
+                >
+                  <span className="fx-control-head">
+                    <kbd>{index + 1}</kbd>
+                    <b>{item.symbol}</b>
+                    <span>
+                      <strong>{item.label}</strong>
+                      <small>{item.hint}</small>
+                    </span>
+                    <output>{Math.round(fx[item.id] * 100)}%</output>
+                  </span>
+                  <input
+                    aria-label={item.label}
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={fx[item.id]}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      setFx((current) => ({ ...current, [item.id]: value }));
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="rack-help">
+              <span>SPACE + 1–8 SELECT FX</span>
+              <span>SPACE + ← → FADE · ↓ 0% · ↑ 100%</span>
+            </p>
+          </section>
+        )}
+
+        {controlView === "CUES" && (
+          <section className="cue-bank" aria-label="Cue Bank">
+            <div className="rack-heading">
+              <div>
+                <h2>CUE BANK</h2>
+                <small>{cueStatus}</small>
+              </div>
+              <button
+                className={`auto-button ${autoPilot ? "is-active" : ""}`}
+                onClick={() => setAutoPilot((value) => !value)}
+                aria-pressed={autoPilot}
+              >
+                {autoPilot ? "● AUTO ON" : "AUTO OFF"}
+              </button>
+            </div>
+            <div className="cue-grid">
+              {cues.map((cue, index) => (
+                <button
+                  key={`${index}-${cue.name}`}
+                  className={activeCue === index ? "is-active" : ""}
+                  onClick={(event) => {
+                    if (event.shiftKey) saveCue(index);
+                    else recallCue(index);
+                  }}
+                  aria-label={`F${index + 1} ${cue.name}`}
+                >
+                  <kbd>F{index + 1}</kbd>
+                  <strong>{cue.name}</strong>
+                  <small>
+                    {cue.scene === "MANDALA" ? "MANDALA" : "FREE"} · FX{" "}
+                    {FX_DEFS.filter(({ id }) => cue.fx[id] > 0.015).length}
+                  </small>
+                </button>
+              ))}
+            </div>
+            <RangeControl
+              label="MORPH TIME"
+              value={cueMorphTime}
+              min={0.5}
+              max={8}
+              step={0.1}
+              display={`${cueMorphTime.toFixed(1)}s`}
+              onChange={setCueMorphTime}
+            />
+            <div className="auto-controls">
+              <div>
+                <span>AUTO PILOT</span>
+                <strong>{autoPilot ? "RUNNING" : "STANDBY"}</strong>
+              </div>
+              <div className="beat-length" role="group" aria-label="Auto pilot beat length">
+                {([4, 8, 16] as const).map((beats) => (
+                  <button
+                    key={beats}
+                    className={autoBeats === beats ? "is-active" : ""}
+                    onClick={() => setAutoBeats(beats)}
+                    aria-pressed={autoBeats === beats}
+                  >
+                    {beats} BEAT
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="cue-help">
+              F1–F8 RECALL · SHIFT + F1–F8 SAVE<br />
+              P AUTO ON/OFF · O BEAT LENGTH
+            </p>
+          </section>
+        )}
         </div>
       </aside>
 

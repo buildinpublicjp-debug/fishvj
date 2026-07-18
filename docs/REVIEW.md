@@ -1,8 +1,8 @@
 # FishVJ Design Review Board
 
 > 対象: `docs/SPEC.md` / `docs/TECH.md`
-> 最終更新: 2026-07-18
-> 設計フェーズ: completed（R-013〜R-027判断済み。実装ゲート開放）
+> 最終更新: 2026-07-19
+> 設計フェーズ: completed（R-001〜R-033判断済み。実装ゲート開放）
 > 採否ルール: 設計管理者は起票と推奨まで行い、プロジェクトオーナーの確認なしに `adopted` へ変更しない。
 
 ## Status
@@ -50,6 +50,12 @@
 | R-025 | adopted | P0 | 装飾円を除き、群れ構造を独立切替できる必要がある | adopt（4 SWARM） |
 | R-026 | adopted | P0 | 剛体回転ではなく個体が泳いで見える運動が必要 | adopt（個体GPU泳動） |
 | R-027 | adopted | P1 | 魚の可読サイズとVORTEXの密度を現場調整できない | adopt（独立SIZE + 層圧縮） |
+| R-028 | adopted | P0 | 曼荼羅と自由遊泳を独立したシーンとして演奏したい | adopt（2 SCENE） |
+| R-029 | adopted | P0 | 魚種ごとの速度・揺れ・尾振り差が不足している | adopt（泳動差） |
+| R-030 | adopted | P0 | 調整UIだけでなく瞬間発動できる演奏パッドが必要 | adopt（PERFORM） |
+| R-031 | adopted | P1 | 複数魚種を同時に群れへ投入できない | adopt（複数選択） |
+| R-032 | adopted | P1 | キーボード操作が段階切替に偏っている | adopt（連続フェーダー） |
+| R-033 | adopted | P1 | 映像バリエーションを保存・展開する演奏記憶が不足 | adopt（FX / CUE / AUTO） |
 
 ## 指摘詳細
 
@@ -435,6 +441,15 @@
 - 反映先: `TECH.md`「PERFORM / 複数魚種選択」、実装UI、ショートカット一覧
 - 棄却理由: —
 
+### R-033 — 映像バリエーションを保存・展開する演奏記憶が不足
+
+- status: `adopted`
+- source: プロジェクトオーナーの `/goal` 指示
+- priority: P1
+- 採用内容: 既存ポスト処理を再利用した8 FX、8枠のCUE保存・呼出し、0.5〜8秒モーフ、BPM基準4/8/16拍AUTO PILOT、SpaceキーのFX操作レイヤーを追加した。FEEDBACKだけ低解像度履歴を使用し、他のFXは単一ポストシェーダーへ統合する。
+- 反映先: `docs/EXPANSION-PLAN.md`、`TECH.md`「FX RACK / CUE BANK / AUTO PILOT」、実装UI
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -459,3 +474,4 @@
 | 2026-07-18 | R-029 | adopted / implemented | 魚種別の移動速度・尾振り周期・上下揺れを分離し、4スタイルと2,000匹最速状態をE2E確認 |
 | 2026-07-18 | R-030〜R-031 | adopted / implemented | 5ワンショット + 2ホールドのPERFORM、同時押し、再トリガー、ESC復帰、複数魚種選択を実装 |
 | 2026-07-19 | R-032 | adopted / implemented | MODE / COLOR / SPEED / DEPTH / SIZEのキーボード長押しフェーダーと連続MODEモーフを実装 |
+| 2026-07-19 | R-033 | adopted / implemented | 8 FX、8 CUE、拍同期AUTO PILOT、Space FXレイヤーを実装し、代表CUEを60fpsでE2E確認 |

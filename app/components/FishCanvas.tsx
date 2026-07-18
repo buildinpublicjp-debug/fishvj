@@ -18,6 +18,17 @@ export type PerformanceState = {
   slowMo: boolean;
 };
 
+export type FxState = {
+  feedback: number;
+  twist: number;
+  chroma: number;
+  pixel: number;
+  ripple: number;
+  glitch: number;
+  zoom: number;
+  mirror: number;
+};
+
 export type AudioLevels = {
   kick: number;
   bass: number;
@@ -41,6 +52,7 @@ export type VisualConfig = {
   swimType: SwimType;
   swarm: SwarmType;
   performance: PerformanceState;
+  fx: FxState;
 };
 
 type FishCanvasProps = {
@@ -622,6 +634,7 @@ const fishFragment = `
 const KaleidoShader = {
   uniforms: {
     tDiffuse: { value: null },
+    uHistory: { value: null },
     uTime: { value: 0 },
     uAspect: { value: 16 / 9 },
     uSegments: { value: 6 },
@@ -634,6 +647,14 @@ const KaleidoShader = {
     uStrobe: { value: 0 },
     uHueFlip: { value: 0 },
     uKaleidoBurst: { value: 0 },
+    uFeedback: { value: 0 },
+    uTwist: { value: 0 },
+    uChroma: { value: 0 },
+    uPixel: { value: 0 },
+    uRipple: { value: 0 },
+    uGlitch: { value: 0 },
+    uZoom: { value: 0 },
+    uMirror: { value: 0 },
     uResolution: { value: new THREE.Vector2(1, 1) },
   },
   vertexShader: fullscreenVertex,
@@ -641,6 +662,7 @@ const KaleidoShader = {
     precision highp float;
     varying vec2 vUv;
     uniform sampler2D tDiffuse;
+    uniform sampler2D uHistory;
     uniform float uTime;
     uniform float uAspect;
     uniform float uSegments;
@@ -653,6 +675,14 @@ const KaleidoShader = {
     uniform float uStrobe;
     uniform float uHueFlip;
     uniform float uKaleidoBurst;
+    uniform float uFeedback;
+    uniform float uTwist;
+    uniform float uChroma;
+    uniform float uPixel;
+    uniform float uRipple;
+    uniform float uGlitch;
+    uniform float uZoom;
+    uniform float uMirror;
     uniform vec2 uResolution;
 
     vec3 hueShift(vec3 color, float angle) {
@@ -661,11 +691,37 @@ const KaleidoShader = {
       return color * c + cross(k, color) * sin(angle) + k * dot(k, color) * (1.0 - c);
     }
 
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+
     void main() {
       vec2 p = vUv * 2.0 - 1.0;
       p.x *= uAspect;
+      if (uGlitch > 0.001) {
+        float glitchFrame = floor(uTime * (9.0 + uGlitch * 18.0));
+        float glitchBand = floor(vUv.y * mix(8.0, 34.0, uGlitch));
+        float glitchSeed = hash21(vec2(glitchBand, glitchFrame));
+        float glitchGate = step(0.82 - uGlitch * 0.3, glitchSeed);
+        p.x += (glitchSeed - 0.5) * uGlitch * glitchGate * 0.34;
+      }
+      if (uZoom > 0.001) {
+        p *= 1.0 - uZoom * (0.025 + uKick * 0.11);
+      }
       float radius = length(p);
       float angle = atan(p.y, p.x);
+      if (uTwist > 0.001) {
+        angle += uTwist
+          * (1.0 - smoothstep(0.0, 1.8, radius))
+          * (1.15 + 0.22 * sin(uTime * 0.7));
+      }
+      if (uRipple > 0.001) {
+        radius += sin(radius * 25.0 - uTime * 4.2 + angle * 2.0)
+          * uRipple
+          * (0.012 + uKick * 0.018);
+      }
 
       float layer = clamp(floor(radius / 0.245), 0.0, 5.0);
       float layerNorm = layer / 5.0;
@@ -687,7 +743,38 @@ const KaleidoShader = {
       vec2 sourcePolar = radius * vec2(cos(angle), sin(angle));
       vec2 kaleidoUv = vec2(sourcePolar.x / uAspect, sourcePolar.y) * 0.5 + 0.5;
       vec2 sourceUv = mix(vUv, kaleidoUv, mandalaAmount);
-      vec3 color = texture2D(tDiffuse, sourceUv).rgb;
+      if (uPixel > 0.001) {
+        vec2 pixelGrid = mix(
+          max(uResolution, vec2(1.0)),
+          vec2(54.0, 32.0),
+          pow(uPixel, 0.72)
+        );
+        sourceUv = mix(
+          sourceUv,
+          (floor(sourceUv * pixelGrid) + 0.5) / pixelGrid,
+          uPixel
+        );
+      }
+      vec3 centerColor = texture2D(tDiffuse, sourceUv).rgb;
+      if (uMirror > 0.001) {
+        vec2 mirrorUv = abs(fract(sourceUv) * 2.0 - 1.0);
+        vec3 mirroredColor = texture2D(tDiffuse, mirrorUv).rgb;
+        centerColor = max(centerColor, mirroredColor * uMirror);
+      }
+      vec3 color = centerColor;
+      if (uChroma > 0.001) {
+        vec2 chromaAxis = normalize(
+          (sourceUv - 0.5) * vec2(uAspect, 1.0) + vec2(0.0001)
+        );
+        vec2 chromaOffset = vec2(chromaAxis.x / uAspect, chromaAxis.y)
+          * uChroma
+          * (0.004 + uKick * 0.009);
+        color = vec3(
+          texture2D(tDiffuse, sourceUv + chromaOffset).r,
+          centerColor.g,
+          texture2D(tDiffuse, sourceUv - chromaOffset).b
+        );
+      }
 
       vec2 pixel = 1.0 / max(uResolution, vec2(1.0));
       vec3 glow = vec3(0.0);
@@ -735,9 +822,43 @@ const KaleidoShader = {
       float mandalaVignette = smoothstep(1.72, 0.02, radius);
       float waterVignette = smoothstep(2.12, 1.62, radius);
       color *= mix(mandalaVignette, waterVignette, uSceneMix);
+      if (uFeedback > 0.001) {
+        vec2 historyUv = vUv - 0.5;
+        float historyAngle = (0.002 + uMode * 0.0015) * uFeedback;
+        mat2 historyRotation = mat2(
+          cos(historyAngle), -sin(historyAngle),
+          sin(historyAngle), cos(historyAngle)
+        );
+        historyUv = historyRotation * historyUv;
+        historyUv *= 1.0 - uFeedback * (0.008 + uKick * 0.012);
+        historyUv += 0.5;
+        vec3 history = texture2D(uHistory, historyUv).rgb;
+        history = hueShift(history, uFeedback * 0.012);
+        color = max(color, history * uFeedback * 0.965);
+      }
       color = mix(color, vec3(1.0), uStrobe);
 
-      gl_FragColor = vec4(max(color, 0.0), 1.0);
+      gl_FragColor = vec4(clamp(color, 0.0, 8.0), 1.0);
+      #ifdef DIRECT_OUTPUT
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      #endif
+    }
+  `,
+};
+
+const CopyShader = {
+  uniforms: {
+    tMap: { value: null },
+  },
+  vertexShader: fullscreenVertex,
+  fragmentShader: `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D tMap;
+
+    void main() {
+      gl_FragColor = texture2D(tMap, vUv);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }
@@ -926,11 +1047,14 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       depthBuffer: false,
       stencilBuffer: false,
     });
+    let historyRead = renderTarget.clone();
+    let historyWrite = renderTarget.clone();
     const postScene = new THREE.Scene();
     const postCamera = new THREE.Camera();
     const postGeometry = new THREE.PlaneGeometry(2, 2);
     const postUniforms = THREE.UniformsUtils.clone(KaleidoShader.uniforms);
     postUniforms.tDiffuse.value = renderTarget.texture;
+    postUniforms.uHistory.value = historyRead.texture;
     const postMaterial = new THREE.ShaderMaterial({
       uniforms: postUniforms,
       vertexShader: KaleidoShader.vertexShader,
@@ -938,8 +1062,30 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       depthTest: false,
       depthWrite: false,
     });
+    const directPostMaterial = new THREE.ShaderMaterial({
+      uniforms: postUniforms,
+      vertexShader: KaleidoShader.vertexShader,
+      fragmentShader: KaleidoShader.fragmentShader,
+      defines: { DIRECT_OUTPUT: 1 },
+      depthTest: false,
+      depthWrite: false,
+    });
     const postMesh = new THREE.Mesh(postGeometry, postMaterial);
     postScene.add(postMesh);
+    const copyScene = new THREE.Scene();
+    const copyCamera = new THREE.Camera();
+    const copyGeometry = new THREE.PlaneGeometry(2, 2);
+    const copyUniforms = THREE.UniformsUtils.clone(CopyShader.uniforms);
+    copyUniforms.tMap.value = historyWrite.texture;
+    const copyMaterial = new THREE.ShaderMaterial({
+      uniforms: copyUniforms,
+      vertexShader: CopyShader.vertexShader,
+      fragmentShader: CopyShader.fragmentShader,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const copyMesh = new THREE.Mesh(copyGeometry, copyMaterial);
+    copyScene.add(copyMesh);
 
     let width = 1;
     let height = 1;
@@ -949,9 +1095,18 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       height = Math.max(1, Math.floor(bounds.height));
       renderer.setSize(width, height, false);
       renderTarget.setSize(width, height);
+      const historyWidth = Math.max(1, Math.ceil(width * 0.68));
+      const historyHeight = Math.max(1, Math.ceil(height * 0.68));
+      historyRead.setSize(historyWidth, historyHeight);
+      historyWrite.setSize(historyWidth, historyHeight);
       sharedUniforms.uAspect.value = width / height;
       postUniforms.uAspect.value = width / height;
       postUniforms.uResolution.value.set(width, height);
+      renderer.setRenderTarget(historyRead);
+      renderer.clear();
+      renderer.setRenderTarget(historyWrite);
+      renderer.clear();
+      renderer.setRenderTarget(null);
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(host);
@@ -971,6 +1126,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     let swarmTo = swarmFrom;
     let swarmTransitionStart = startTime - 1500;
     let currentScene = sceneValue(configRef.current.scene);
+    let feedbackWasActive = false;
 
     const render = () => {
       const now = performance.now();
@@ -1098,6 +1254,14 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       postUniforms.uStrobe.value = strobe;
       postUniforms.uHueFlip.value = hueFlip;
       postUniforms.uKaleidoBurst.value = kaleidoBurst;
+      postUniforms.uFeedback.value = cfg.fx.feedback;
+      postUniforms.uTwist.value = cfg.fx.twist;
+      postUniforms.uChroma.value = cfg.fx.chroma;
+      postUniforms.uPixel.value = cfg.fx.pixel;
+      postUniforms.uRipple.value = cfg.fx.ripple;
+      postUniforms.uGlitch.value = cfg.fx.glitch;
+      postUniforms.uZoom.value = cfg.fx.zoom;
+      postUniforms.uMirror.value = cfg.fx.mirror;
       renderer.toneMappingExposure =
         cfg.colorPreset === "DEEP"
           ? 0.86
@@ -1108,9 +1272,31 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       renderer.setRenderTarget(renderTarget);
       renderer.clear();
       renderer.render(scene, camera);
-      renderer.setRenderTarget(null);
-      renderer.clear();
-      renderer.render(postScene, postCamera);
+      const feedbackActive = cfg.fx.feedback > 0.001;
+      if (feedbackActive) {
+        if (!feedbackWasActive) {
+          renderer.setRenderTarget(historyRead);
+          renderer.clear();
+          renderer.setRenderTarget(historyWrite);
+          renderer.clear();
+        }
+        postUniforms.uHistory.value = historyRead.texture;
+        postMesh.material = postMaterial;
+        renderer.setRenderTarget(historyWrite);
+        renderer.clear();
+        renderer.render(postScene, postCamera);
+        copyUniforms.tMap.value = historyWrite.texture;
+        renderer.setRenderTarget(null);
+        renderer.clear();
+        renderer.render(copyScene, copyCamera);
+        [historyRead, historyWrite] = [historyWrite, historyRead];
+      } else {
+        postMesh.material = directPostMaterial;
+        renderer.setRenderTarget(null);
+        renderer.clear();
+        renderer.render(postScene, postCamera);
+      }
+      feedbackWasActive = feedbackActive;
       animationId = requestAnimationFrame(render);
     };
 
@@ -1129,7 +1315,13 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       postScene.remove(postMesh);
       postGeometry.dispose();
       postMaterial.dispose();
+      directPostMaterial.dispose();
+      copyScene.remove(copyMesh);
+      copyGeometry.dispose();
+      copyMaterial.dispose();
       renderTarget.dispose();
+      historyRead.dispose();
+      historyWrite.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };

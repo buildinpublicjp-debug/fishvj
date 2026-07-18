@@ -6,6 +6,17 @@
 
 音に反応するレイヤー式AI VJ「FishVJ」を、Vercelで動くURLとして完成させる。
 
+## Milestone 2 — Performance Expansion
+
+- [x] CORE / FX / CUESの3ビュー
+- [x] FEEDBACK / TWIST / CHROMA / PIXEL / RIPPLE / GLITCH / ZOOM / MIRROR
+- [x] 8 CUEの保存・呼出し
+- [x] 0.5〜8秒のCUEクロスフェード
+- [x] 4 / 8 / 16拍AUTO PILOT
+- [x] Space + キーのFX操作レイヤー
+- [x] FX込みのESC安全復帰
+- 詳細契約: `docs/EXPANSION-PLAN.md`
+
 ## P0受け入れ条件
 
 - [x] 音声ファイル再生と5帯域リアクションが動く
