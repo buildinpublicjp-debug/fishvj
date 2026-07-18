@@ -11,15 +11,16 @@
 | アプリ | Vite + vanilla TS | 状態が少なくReactは過剰。描画ループとDOM UIを分離 |
 | UI | DOMオーバーレイ（Resolume風ダークCSS） | r3f混在リスク回避 |
 | デプロイ | Vercel（静的 + /api serverless） | HTTPS自動（getUserMedia要件）、APIキー秘匿 |
-| 画像生成 | gpt-image-1 via /api/generate-image | **background: "transparent" で魚スプライト直生成** |
-| 演出設計 | GPT-5.6 via /api/journey | 自然言語 → 演出JSON（structured output） |
-| 音解析 | Web Audio 素書き | 4バンド+オンセットは自前で書ける量 |
+| 画像生成 | 素材種別による2系統ルーティング via /api/generate-image | 魚=`gpt-image-1.5`透明、曼荼羅/背景=`gpt-image-2`指定アスペクト |
+| 演出設計 | GPT-5.6 via /api/journey（stretch goal） | 自然言語 → 演出JSON（structured output）。本番URL/録画確保後のみ |
+| 音解析 | Web Audio 素書き | 5帯域+オンセットは自前で書ける量 |
 | 保険lib | Meyda / realtime-bpm-analyzer | 詰まったら30分で差し替え可 |
 
 ## 描画詳細
 
 ### 魚群（Layer 2）
-- `InstancedMesh` + PlaneGeometry、5,000〜10,000インスタンス
+- `InstancedMesh` + PlaneGeometry、初期値2,000インスタンス
+- 魚数は実行時スライダーで変更し、会場マシンの60fps実測後に増やす
 - インスタンス属性: phase / speciesIndex / scale / hueShift
 - 頂点シェーダーで泳ぎのうねり（sin波 + phase）
 - テクスチャ: スプライトアトラス（魚種 = アトラス内index）
@@ -37,22 +38,29 @@
 5. RGBShift + 彩度/色相（最終色調、モードのhue rangeここで適用）
 
 ### パフォーマンス / 8K
-- canvas解像度は上限キャップ（プロジェクタ実解像度 x devicePixelRatio）
+- 初期値は1920x1080、devicePixelRatio上限1、魚2,000体
+- canvas解像度はプロジェクタ実解像度を上限キャップ
+- 解像度スケールと魚数を実行時スライダーで調整
 - Bloomは半解像度レンダーターゲット
-- M系Macなら1万インスタンス + 4K canvasは余裕圏
+- 60fps実測後だけ解像度と魚数を段階的に上げる。4K/8K性能はハッカソン後に検証
 
 ## 生成パイプライン
 
 ```
-[client] 生成リクエスト（モード別プロンプト or journey入力）
-   → POST /api/generate-image { prompt, transparent: true }
-   → [vercel fn] OpenAI Images (gpt-image-1, background: "transparent", 1024px)
-   → PNG返却 → createImageBitmap → THREE.Texture
+[client] 生成リクエスト（kind + モード別プロンプト or journey入力）
+   → POST /api/generate-image { kind, prompt, projectorAspect }
+   → [vercel fn] kindで固定ルーティング
+      ├─ fish: gpt-image-1.5 / background:"transparent" / 1024x1024
+      └─ mandala|background: gpt-image-2 / API制約内でprojectorAspectに合わせたsize
+   → 画像返却 → createImageBitmap → THREE.Texture
    → クリップ棚に追加（サムネイル + クリックでLayer 3/4へ）
    → 16拍ごとに棚から自動投入も
 ```
 
-- レイテンシ 10〜20s/枚 → クライアントはキュー管理 + 生成中表示（「新しい魚が生まれています…」）
+- `gpt-image-2` のsizeは最大辺3840px、両辺16pxの倍数、縦横比3:1以内、総画素数655,360〜8,294,400の範囲でプロジェクタ比率へ丸める
+- 生成は複雑なプロンプトで最大2分を見込む。クライアントは同時1リクエスト、キュー/タイムアウト表示、失敗後もseed再生継続
+- Vercelの4.5MB応答上限対策: 1枚/リクエスト、3h版はlow quality、`gpt-image-2` は圧縮形式を優先し、本番経路で応答サイズを実測
+- `gpt-image-1.5` は透明背景要件のため採用するがDeprecated。開始前の利用可否確認を必須とし、停止時は透明seedのみで継続
 - **最重要保険: シード素材同梱**
   - 事前生成の魚スプライト15〜20枚 + 曼荼羅リング数枚をrepoに同梱
   - 起動直後からリッチ、API生成は「棚が増える演出」として上乗せ
@@ -61,10 +69,12 @@
 ## 音解析詳細
 
 - AudioContext: mp3直結（本線） / getUserMedia（constraints全false）
-- AnalyserNode fftSize 2048 → 4バンド（SPEC参照）
+- AnalyserNode fftSize 2048 → 5帯域（kick 30-100Hz / bass 100-250Hz / mid 250Hz-2kHz / high 2k-6kHz / hihat 6k-12kHz）
 - オンセット: バンドエネルギーの移動平均比 + 閾値
 - BPM: キックオンセット間隔の中央値、70-180クランプ、倍/半分補正
+- 本線mp3は既知BPM（予定138）を保持。推定安定前または信頼度低下時は既知値、手動復旧はタップテンポ
 - 位相: 直近オンセット時刻 + BPM から 0-1 を毎フレーム算出
+- `vocalLead`: 200Hz-3kHzの持続エネルギーによるproxy。汎用歌声分離ではなくデモ曲向け閾値
 - 詰まったら: Meyda(spectralFlux) / realtime-bpm-analyzer に差し替え
 
 ## リポジトリ構成（並列CC境界）
@@ -92,24 +102,28 @@ fishvj/
 ```
 
 - 並列CCは2セッションまで。src/audio と src/render で境界分離、同一ファイル同時編集禁止
-- audio→render のインターフェースは `BeatState { bpm, phase, kick, snare, hihat, vocal, energy, bands }` を最初に型で凍結
+- audio→render のインターフェースは `BeatState { bpm, phase, kick, snare, hihat, vocalLead, energy, bands }` を最初に型で凍結。`bands` は kick/bass/mid/high/hihat の5帯域
 
 ## 3hタイムライン
 
 | 時間 | 作業 |
 |---|---|
 | 0:00-0:20 | スキャフォールド: Vite+TS+Three、レンダーループ、mp3再生、Analyser骨格、BeatState型凍結 |
-| 0:20-1:10 | コア映像: 背景シェーダー + 魚群Instanced + 万華鏡/Bloom（「本気の映像」ライン） |
-| 1:10-1:40 | ビートエンジン: オンセット/BPM/位相 + 楽器マッピング接続 |
-| 1:40-2:10 | 3モード + 2秒lerpクロスフェード + Resolume風UIパネル |
-| 2:10-2:40 | 生成パイプライン + クリップ棚 + 16拍自動投入 |
-| 2:40-3:00 | Vercelデプロイ / README / デモ動画キャプチャ |
+| 0:20-1:05 | コア映像: 背景シェーダー + 魚群Instanced + 万華鏡/Bloom + 性能スライダー |
+| 1:05-1:30 | ビートエンジン: 5帯域/オンセット/BPM/位相 + 楽器マッピング接続 |
+| 1:30-1:55 | 3モード + 2秒lerpクロスフェード + Resolume風UIパネル |
+| 1:55-2:20 | 2系統生成パイプライン + クリップ棚 + 16拍自動投入 |
+| 2:20-3:00 | **機能凍結**。Vercelデプロイ / README / デモ動画キャプチャ / 提出 |
+
+- `Describe the journey` はコア完成・本番URL・デモ動画確保後に時間が残った場合だけ着手
 
 ## リスクと対策
 
-- 生成APIレート/遅延 → シード同梱で無害化
-- 会場マイク事故 → mp3直結が本線、マイクは加点デモ
-- 4K+Bloomでfps落ち → Bloom半解像度 + 解像度スケールのスライダーを仕込む
+- `gpt-image-1.5` Deprecated/利用停止 → 事前疎通 + 透明seedへ自動フォールバック
+- 生成APIレート/最大2分遅延/Organization Verification → 本番アカウント事前疎通 + 同時1件 + seed同梱
+- Vercel 4.5MB応答上限 → low quality/圧縮形式/1枚ずつ + 本番経路でサイズ実測
+- 会場マイク事故 → 開始前に許可と入力を確認し、UIがgreenの場合だけ切替。mp3直結が本線
+- 4K+Bloomでfps落ち → 1080p/2,000体開始 + Bloom半解像度 + 解像度/魚数スライダー
 - 並列CCマージ事故 → ファイル境界 + BeatState先行凍結
 - Vercelデプロイ詰まり → ローカル `vite preview` + ngrok系を最終フォールバックに
 
@@ -129,7 +143,7 @@ fishvj/
 
 ## 8Kロードマップ（ハッカソン後）
 
-1. **WebGPU移行**（ブラウザ継続）: Three.js WebGPURenderer差し替えでコード大半が生存。compute shaderで8K級負荷に対応
+1. **WebGPU移行**（ブラウザ継続）: アプリ状態・音解析・シーン設計は再利用。WebGL向けGLSL/ShaderPass/EffectComposerはTSL/WGSL等への移植検証対象。compute shaderで8K級負荷に対応
 2. **Syphon連携**（プロ現場合流）: macOSフレーム共有規格Syphonに出力 → FishVJをResolumeのソースとして流し込める。競合ではなく「AI生成レイヤー」として上流部品化。※ブラウザから直接不可の可能性大 → Electron化 or ネイティブ薄ラッパー要検証
 3. **Metalネイティブ**（最終形）: Swift/Metal + GLSL移植 = VDMXと同構成。8K/60fpsの最確実路線。魚曼荼羅レイヴ実開催の段で着手
 
