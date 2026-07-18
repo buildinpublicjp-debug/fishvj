@@ -28,6 +28,7 @@ export type AudioLevels = {
 export type VisualConfig = {
   scene: SceneMode;
   mode: ModeName;
+  modeBlend: number;
   colorPreset: ColorPreset;
   colorDrive: number;
   fishCount: number;
@@ -278,7 +279,8 @@ const fishVertex = `
     vSpecies = aSpecies;
 
     float ringNorm = aRing / 5.0;
-    float modeSpeed = uMode < 0.5 ? 0.62 : (uMode < 1.5 ? 0.88 : 1.24);
+    float modeSpeed = mix(0.62, 0.88, clamp(uMode, 0.0, 1.0));
+    modeSpeed = mix(modeSpeed, 1.24, clamp(uMode - 1.0, 0.0, 1.0));
     float ringPace = 0.86 + aRing * 0.055;
     float alignedVelocity = mix(aVelocity, ringPace, 0.16);
     float travelPace = aMotion < 0.5
@@ -600,9 +602,12 @@ const fishFragment = `
     if (uColorPreset > 2.5) {
       color *= vec3(0.62, 0.78, 1.02);
     }
-    if (uMode > 1.5) {
-      color = hueShift(color, sin(uTime * 0.13 + vSpecies) * 0.16);
-    }
+    color = hueShift(
+      color,
+      sin(uTime * 0.13 + vSpecies)
+        * 0.16
+        * smoothstep(1.0, 2.0, uMode)
+    );
 
     color += color * uHigh * smoothstep(0.58, 0.95, lum) * 0.42;
     float focusAlpha = mix(0.52, 0.94, vFocus);
@@ -739,12 +744,11 @@ const KaleidoShader = {
   `,
 };
 
-function modeValue(mode: ModeName) {
-  return mode === "MYSTIC" ? 0 : mode === "SENSUAL" ? 1 : 2;
-}
-
-function segmentValue(mode: ModeName) {
-  return mode === "MYSTIC" ? 6 : mode === "SENSUAL" ? 8 : 12;
+function segmentValue(modeBlend: number) {
+  const blend = Math.min(2, Math.max(0, modeBlend));
+  return blend <= 1
+    ? 6 + blend * 2
+    : 8 + (blend - 1) * 4;
 }
 
 function colorValue(color: ColorPreset) {
@@ -984,8 +988,8 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       const levels = audioRef.current;
       visualTime += (deltaMs / 1000) * (cfg.performance.slowMo ? 0.3 : 1);
       const elapsed = visualTime;
-      const mode = modeValue(cfg.mode);
-      const segments = segmentValue(cfg.mode);
+      const mode = cfg.modeBlend;
+      const segments = segmentValue(cfg.modeBlend);
       const targetScene = sceneValue(cfg.scene);
       const since = (startedAt: number) => now - startedAt;
       const strobeElapsed = since(cfg.performance.strobeStartedAt);

@@ -209,3 +209,6 @@ fishvj/
 - RUSHとSCATTERは既存の個体座標・速度方向を変形し、HUE FLIP / STROBE / KALEIDO BURSTは既存ポストFXへ合成する。新しい描画パスやCPU個体更新は増やさない。
 - `Shift`のSLOW-MOは描画時間のみ0.3倍、`Tab`のBLACKOUTは保持中のみ表示を遮断する。keyup / window blur / ESCで必ず解除する。
 - ESCはパッドタイマーを全破棄し、INTRO（MANDALA / MYSTIC / PUNCH / 800匹 / SPIRAL）へ即時復帰する。
+- Z/X・C/V・矢印・角括弧はkeydown中だけ毎フレーム値を積分する連続フェーダー。更新量はdelta time基準で、フレームレートに依存しない。
+- MODEは0〜2の連続値として保持し、0/1/2をMYSTIC/SENSUAL/EUPHORICの基準点にする。魚の速度、色相処理、万華鏡分割数を同じ値から補間し、1〜3キーは従来どおり各基準点へ即時ジャンプする。
+- window blur / ESCでは保持キーを全解除し、キー取りこぼしによる値の暴走を防ぐ。

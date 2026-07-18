@@ -26,6 +26,11 @@ live performance bank.
 - hold `Shift`: 0.3x SLOW-MO
 - hold `Tab`: momentary BLACKOUT
 - `Esc`: cancel all effects and restore the safe INTRO state
+- hold `Z` / `X`: continuously morph MYSTIC → SENSUAL → EUPHORIC
+- hold `C` / `V`: continuously decrease / increase COLOR DRIVE
+- hold `↓` / `↑`: continuously decrease / increase swimming SPEED
+- hold `←` / `→`: continuously decrease / increase DEPTH
+- hold `[` / `]`: continuously decrease / increase FISH SIZE
 - FISH DECK: add or remove multiple species; at least one always remains active
 - SCHOOL / GLIDE / WAVE / FLOAT: focus a movement system
 - SPIRAL / VORTEX / WAVE / BLOOM: morph the school structure over 1.5 seconds
@@ -63,6 +68,8 @@ granted.
   INFINITE DIVE transition
 - timestamp-driven, composable one-shot effects that restart safely when
   re-triggered, plus hold-only slow motion and blackout
+- frame-rate-independent keyboard faders with continuous on-screen level meters;
+  MODE also interpolates color, motion speed, and kaleidoscope divisions
 - safe initial load of 800 fish; tested at 2,000 fish plus INFINITE DIVE and
   2,000 fish plus SCHOOL RUSH at 60 FPS in the local 1080-class preview
 

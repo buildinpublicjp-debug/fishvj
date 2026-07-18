@@ -426,6 +426,15 @@
 - 反映先: `TECH.md`「PERFORM / 複数魚種選択」、実装UI、ショートカット一覧
 - 棄却理由: —
 
+### R-032 — キーボード操作が段階切替に偏っている
+
+- status: `adopted`
+- source: プロジェクトオーナーの公開版改善指示
+- priority: P1
+- 採用内容: Z/XでMODE、C/VでCOLOR DRIVE、上下でSPEED、左右でDEPTH、角括弧でFISH SIZEを連続増減するキーボードフェーダーを追加。MODEは3プリセット間の0〜2連続値となり、動き・色・万華鏡分割を滑らかに補間する。現在値はPERFORM下部の5本のグラデーションバーへ常時表示する。
+- 反映先: `TECH.md`「PERFORM / 複数魚種選択」、実装UI、ショートカット一覧
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -449,3 +458,4 @@
 | 2026-07-18 | R-028 | adopted / implemented | MANDALA / FREE SWIM、自由遊泳4スタイル、SCHOOL RUSHを実装し、2,000匹で60fpsを確認 |
 | 2026-07-18 | R-029 | adopted / implemented | 魚種別の移動速度・尾振り周期・上下揺れを分離し、4スタイルと2,000匹最速状態をE2E確認 |
 | 2026-07-18 | R-030〜R-031 | adopted / implemented | 5ワンショット + 2ホールドのPERFORM、同時押し、再トリガー、ESC復帰、複数魚種選択を実装 |
+| 2026-07-19 | R-032 | adopted / implemented | MODE / COLOR / SPEED / DEPTH / SIZEのキーボード長押しフェーダーと連続MODEモーフを実装 |

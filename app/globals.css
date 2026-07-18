@@ -301,6 +301,10 @@ select:focus-visible {
   color: #77869a;
 }
 
+.shortcut-note span:nth-child(3) {
+  color: #7abed2;
+}
+
 .shortcut-note span:last-child {
   color: #96a7bb;
 }
@@ -340,6 +344,7 @@ select:focus-visible {
 .perform-panel {
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-rows: auto auto;
   gap: 8px;
   min-width: 0;
   padding: 7px;
@@ -351,6 +356,7 @@ select:focus-visible {
 
 .perform-heading {
   display: grid;
+  grid-row: 1 / 3;
   align-content: center;
   gap: 4px;
   padding-left: 7px;
@@ -481,6 +487,90 @@ select:focus-visible {
   border-color: var(--red);
   background: rgba(64, 3, 12, 0.98);
   box-shadow: 0 0 26px rgba(255, 56, 81, 0.66);
+}
+
+.keyboard-faders {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.keyboard-fader {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 4px;
+  gap: 3px 6px;
+  align-items: center;
+  min-width: 0;
+  padding: 3px 5px 4px;
+  border: 1px solid rgba(127, 153, 187, 0.18);
+  border-radius: 4px;
+  background: rgba(5, 10, 17, 0.72);
+  transition: 90ms linear;
+}
+
+.fader-keys {
+  display: flex;
+  gap: 2px;
+}
+
+.keyboard-fader kbd {
+  display: grid;
+  min-width: 13px;
+  height: 13px;
+  place-items: center;
+  border: 1px solid rgba(190, 212, 239, 0.28);
+  border-radius: 2px;
+  color: #aab9cb;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 6px;
+  line-height: 1;
+}
+
+.keyboard-fader strong {
+  overflow: hidden;
+  color: #8d9db0;
+  font-size: 6px;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyboard-fader output {
+  color: #c5d4e5;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 6px;
+}
+
+.keyboard-fader > i {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(92, 113, 139, 0.18);
+}
+
+.keyboard-fader > i b {
+  display: block;
+  width: var(--level);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--cyan), var(--violet) 52%, var(--magenta));
+  box-shadow: 0 0 8px rgba(64, 174, 255, 0.65);
+  transition: width 35ms linear;
+}
+
+.keyboard-fader.is-active {
+  border-color: rgba(122, 224, 255, 0.75);
+  background: rgba(8, 34, 51, 0.92);
+  box-shadow: 0 0 14px rgba(9, 217, 255, 0.22);
+}
+
+.keyboard-fader.is-active kbd,
+.keyboard-fader.is-active strong,
+.keyboard-fader.is-active output {
+  color: #fff;
 }
 
 .live-output:fullscreen {
@@ -1133,6 +1223,10 @@ select:focus-visible {
   .perform-grid button {
     min-height: 50px;
   }
+
+  .keyboard-fader {
+    padding-block: 2px 3px;
+  }
 }
 
 @media (max-width: 1039px) {
@@ -1172,6 +1266,7 @@ select:focus-visible {
 
   .perform-heading {
     display: flex;
+    grid-row: auto;
     justify-content: space-between;
     padding: 2px 4px 7px;
     border-right: 0;
@@ -1180,6 +1275,10 @@ select:focus-visible {
 
   .perform-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .keyboard-faders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .control-panel,

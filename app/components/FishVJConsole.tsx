@@ -95,6 +95,39 @@ const ONE_SHOT_PADS: ReadonlyArray<{
   { id: "kaleidoBurst", keyLabel: "K", label: "KALEIDO", symbol: "✺" },
 ];
 
+type KeyboardFader = "mode" | "color" | "speed" | "depth" | "size";
+
+const FADER_KEYS = new Set([
+  "z",
+  "x",
+  "c",
+  "v",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "[",
+  "]",
+]);
+
+function normalizeFaderKey(key: string) {
+  const normalized = key.length === 1 ? key.toLowerCase() : key;
+  return FADER_KEYS.has(normalized) ? normalized : null;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function modeFromBlend(value: number): ModeName {
+  return MODES[Math.round(clamp(value, 0, 2))];
+}
+
+function segmentsFromBlend(value: number) {
+  const blend = clamp(value, 0, 2);
+  return blend <= 1 ? 6 + blend * 2 : 8 + (blend - 1) * 4;
+}
+
 type AudioRuntime = {
   context: AudioContext;
   analyser: AnalyserNode;
@@ -157,7 +190,7 @@ function RangeControl({
 
 export function FishVJConsole() {
   const [scene, setScene] = useState<SceneMode>("MANDALA");
-  const [mode, setMode] = useState<ModeName>("MYSTIC");
+  const [modeBlend, setModeBlend] = useState(0);
   const [colorPreset, setColorPreset] = useState<ColorPreset>("PUNCH");
   const [colorDrive, setColorDrive] = useState(0.72);
   const [fishCount, setFishCount] = useState(800);
@@ -179,17 +212,22 @@ export function FishVJConsole() {
   const [performanceState, setPerformanceState] = useState<PerformanceState>(INITIAL_PERFORMANCE);
   const [activePads, setActivePads] = useState(INITIAL_ACTIVE_PADS);
   const [holdBlackout, setHoldBlackout] = useState(false);
+  const [heldFaderKeys, setHeldFaderKeys] = useState<string[]>([]);
   const outputRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioRuntimeRef = useRef<AudioRuntime | null>(null);
   const demoFrameRef = useRef(0);
   const beatStartRef = useRef(performance.now());
   const padTimersRef = useRef<Partial<Record<OneShotPad, ReturnType<typeof setTimeout>>>>({});
+  const heldFaderKeysRef = useRef(new Set<string>());
+  const mode = modeFromBlend(modeBlend);
+  const kaleidoSegments = segmentsFromBlend(modeBlend);
 
   const config = useMemo<VisualConfig>(
     () => ({
       scene,
       mode,
+      modeBlend,
       colorPreset,
       colorDrive,
       fishCount,
@@ -206,6 +244,7 @@ export function FishVJConsole() {
     [
       scene,
       mode,
+      modeBlend,
       colorPreset,
       colorDrive,
       fishCount,
@@ -391,6 +430,51 @@ export function FishVJConsole() {
     setHoldBlackout(false);
   }, []);
 
+  const releaseFaders = useCallback(() => {
+    heldFaderKeysRef.current.clear();
+    setHeldFaderKeys([]);
+  }, []);
+
+  useEffect(() => {
+    let frame = 0;
+    let previous = performance.now();
+
+    const animateFaders = (now: number) => {
+      const delta = Math.min(0.05, Math.max(0, (now - previous) / 1000));
+      previous = now;
+      const keys = heldFaderKeysRef.current;
+      const axis = (decrease: string, increase: string) =>
+        Number(keys.has(increase)) - Number(keys.has(decrease));
+
+      const modeAxis = axis("z", "x");
+      const colorAxis = axis("c", "v");
+      const speedAxis = axis("ArrowDown", "ArrowUp");
+      const depthAxis = axis("ArrowLeft", "ArrowRight");
+      const sizeAxis = axis("[", "]");
+
+      if (modeAxis) {
+        setModeBlend((value) => clamp(value + modeAxis * delta * 0.62, 0, 2));
+      }
+      if (colorAxis) {
+        setColorDrive((value) => clamp(value + colorAxis * delta * 0.5, 0, 1));
+      }
+      if (speedAxis) {
+        setSpeed((value) => clamp(value + speedAxis * delta * 0.56, 0.2, 1.6));
+      }
+      if (depthAxis) {
+        setDepth((value) => clamp(value + depthAxis * delta * 0.4, 0.15, 1));
+      }
+      if (sizeAxis) {
+        setFishSize((value) => clamp(value + sizeAxis * delta * 0.9, 0.5, 3));
+      }
+
+      frame = requestAnimationFrame(animateFaders);
+    };
+
+    frame = requestAnimationFrame(animateFaders);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   useEffect(
     () => () => {
       Object.values(padTimersRef.current).forEach((timer) => clearTimeout(timer));
@@ -400,8 +484,9 @@ export function FishVJConsole() {
 
   const reset = useCallback(() => {
     clearPerformance();
+    releaseFaders();
     setScene("MANDALA");
-    setMode("MYSTIC");
+    setModeBlend(0);
     setColorPreset("PUNCH");
     setColorDrive(0.72);
     setFishCount(800);
@@ -413,7 +498,7 @@ export function FishVJConsole() {
     setSelectedSpecies([0]);
     setSwimType("SCHOOL");
     setSwarm("SPIRAL");
-  }, [clearPerformance]);
+  }, [clearPerformance, releaseFaders]);
 
   const toggleFullscreen = useCallback(async () => {
     if (document.fullscreenElement) {
@@ -440,6 +525,15 @@ export function FishVJConsole() {
         return;
       }
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      const faderKey = normalizeFaderKey(event.key);
+      if (faderKey) {
+        event.preventDefault();
+        if (!heldFaderKeysRef.current.has(faderKey)) {
+          heldFaderKeysRef.current.add(faderKey);
+          setHeldFaderKeys(Array.from(heldFaderKeysRef.current));
+        }
+        return;
+      }
       if (event.repeat) return;
       const key = event.key.toLowerCase();
       if (key === "t") triggerPerformance("strobe");
@@ -447,9 +541,9 @@ export function FishVJConsole() {
       if (key === "h") triggerPerformance("scatter");
       if (key === "j") triggerPerformance("hueFlip");
       if (key === "k") triggerPerformance("kaleidoBurst");
-      if (event.key === "1") setMode("MYSTIC");
-      if (event.key === "2") setMode("SENSUAL");
-      if (event.key === "3") setMode("EUPHORIC");
+      if (event.key === "1") setModeBlend(0);
+      if (event.key === "2") setModeBlend(1);
+      if (event.key === "3") setModeBlend(2);
       if (event.key === "0") {
         setScene((value) => {
           const next = value === "MANDALA" ? "FREE_SWIM" : "MANDALA";
@@ -462,6 +556,12 @@ export function FishVJConsole() {
       if (key === "f") void toggleFullscreen();
     };
     const handleKeyUp = (event: KeyboardEvent) => {
+      const faderKey = normalizeFaderKey(event.key);
+      if (faderKey) {
+        event.preventDefault();
+        heldFaderKeysRef.current.delete(faderKey);
+        setHeldFaderKeys(Array.from(heldFaderKeysRef.current));
+      }
       if (event.key === "Shift") setSlowMo(false);
       if (event.key === "Tab") {
         event.preventDefault();
@@ -471,6 +571,7 @@ export function FishVJConsole() {
     const releaseHolds = () => {
       setSlowMo(false);
       setHoldBlackout(false);
+      releaseFaders();
     };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
@@ -480,7 +581,7 @@ export function FishVJConsole() {
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", releaseHolds);
     };
-  }, [reset, scene, setSlowMo, toggleFullscreen, triggerPerformance]);
+  }, [releaseFaders, reset, scene, setSlowMo, toggleFullscreen, triggerPerformance]);
 
   const toggleSpecies = useCallback((index: number, motion: SwimType) => {
     setSelectedSpecies((current) => {
@@ -511,6 +612,55 @@ export function FishVJConsole() {
     100,
     Math.round((audioLevels.kick * 0.34 + audioLevels.mid * 0.28 + audioLevels.high * 0.38) * 118),
   );
+  const keyboardFaders: Array<{
+    id: KeyboardFader;
+    keys: string[];
+    label: string;
+    value: string;
+    level: number;
+    active: boolean;
+  }> = [
+    {
+      id: "mode",
+      keys: ["Z", "X"],
+      label: "MODE MORPH",
+      value: `${Math.round(modeBlend * 50)}%`,
+      level: modeBlend / 2,
+      active: heldFaderKeys.includes("z") || heldFaderKeys.includes("x"),
+    },
+    {
+      id: "color",
+      keys: ["C", "V"],
+      label: "COLOR",
+      value: `${Math.round(colorDrive * 100)}%`,
+      level: colorDrive,
+      active: heldFaderKeys.includes("c") || heldFaderKeys.includes("v"),
+    },
+    {
+      id: "speed",
+      keys: ["↓", "↑"],
+      label: "SPEED",
+      value: `${Math.round(speed * 100)}`,
+      level: (speed - 0.2) / 1.4,
+      active: heldFaderKeys.includes("ArrowDown") || heldFaderKeys.includes("ArrowUp"),
+    },
+    {
+      id: "depth",
+      keys: ["←", "→"],
+      label: "DEPTH",
+      value: `${Math.round(depth * 100)}`,
+      level: (depth - 0.15) / 0.85,
+      active: heldFaderKeys.includes("ArrowLeft") || heldFaderKeys.includes("ArrowRight"),
+    },
+    {
+      id: "size",
+      keys: ["[", "]"],
+      label: "SIZE",
+      value: `${fishSize.toFixed(1)}x`,
+      level: (fishSize - 0.5) / 2.5,
+      active: heldFaderKeys.includes("[") || heldFaderKeys.includes("]"),
+    },
+  ];
 
   return (
     <main className={`vj-shell ${blackout || holdBlackout ? "is-blackout" : ""}`}>
@@ -569,7 +719,8 @@ export function FishVJConsole() {
         <p className="shortcut-note">
           <span>0 SCENE · 1–3 MODE · D DIVE · B LOCK · F OUTPUT</span>
           <span>T STROBE · G RUSH · H SCATTER · J HUE · K KALEIDO</span>
-          <span>⇧ SLOW-MO · TAB BLACKOUT · ESC INTRO</span>
+          <span>Z/X MODE · C/V COLOR · ↑↓ SPEED · ←→ DEPTH · [ ] SIZE</span>
+          <span>HOLD TO FADE · ⇧ SLOW · TAB BLACK · ESC INTRO</span>
         </p>
       </aside>
 
@@ -583,7 +734,7 @@ export function FishVJConsole() {
           <div className="output-badges">
             <span>
               {scene === "MANDALA"
-                ? `CH 01 · MANDALA · ${mode} · ${swarm} · K-${mode === "MYSTIC" ? "06" : mode === "SENSUAL" ? "08" : "12"}`
+                ? `CH 01 · MANDALA · ${mode} · ${swarm} · K-${kaleidoSegments.toFixed(1)}`
                 : `CH 01 · FREE SWIM · ${mode} · ${FREE_SWIM_STYLES[swarm]}`}
             </span>
             <span>{fishCount.toLocaleString()} FISH</span>
@@ -653,6 +804,23 @@ export function FishVJConsole() {
               <span>BLACKOUT</span>
             </button>
           </div>
+          <div className="keyboard-faders" role="group" aria-label="Keyboard gradient controls">
+            {keyboardFaders.map((fader) => (
+              <div
+                key={fader.id}
+                className={`keyboard-fader ${fader.active ? "is-active" : ""}`}
+                data-fader={fader.id}
+                style={{ "--level": `${clamp(fader.level, 0, 1) * 100}%` } as React.CSSProperties}
+              >
+                <span className="fader-keys" aria-hidden>
+                  {fader.keys.map((key) => <kbd key={key}>{key}</kbd>)}
+                </span>
+                <strong>{fader.label}</strong>
+                <i><b /></i>
+                <output>{fader.value}</output>
+              </div>
+            ))}
+          </div>
         </section>
       </section>
 
@@ -680,11 +848,11 @@ export function FishVJConsole() {
         <section>
           <h2>MODE</h2>
           <div className="mode-buttons">
-            {MODES.map((item) => (
+            {MODES.map((item, index) => (
               <button
                 key={item}
                 className={mode === item ? "is-active" : ""}
-                onClick={() => setMode(item)}
+                onClick={() => setModeBlend(index)}
                 aria-pressed={mode === item}
               >
                 {item}

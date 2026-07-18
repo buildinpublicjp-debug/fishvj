@@ -34,6 +34,8 @@
 - [x] SCHOOL RUSH + EXIT RUSH
 - [x] 複数魚種の同時選択（最低1種を維持）
 - [x] PERFORM 5ワンショット + 2ホールド + 同時押し
+- [x] キーボード長押しフェーダー（MODE / COLOR / SPEED / DEPTH / SIZE）
+- [x] MYSTIC〜SENSUAL〜EUPHORICの連続モーフ
 - [x] ESCで全エフェクト解除 + INTRO復帰
 - [x] BLACKOUT / RESET / FULLSCREEN
 - [ ] ヒーロー魚GLB演出
