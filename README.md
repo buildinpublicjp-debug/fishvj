@@ -5,20 +5,22 @@ into an audio-reactive, independently animated school for projection and VJ
 performance.
 
 The current milestone is a complete interactive seed build: eight generated
-fish species, up to 2,000 GPU-animated individuals, four swimming systems,
-four morphing swarm structures, four color-grading macros,
-microphone/audio-file analysis, blackout, fullscreen output, and the
-`INFINITE DIVE` tunnel cue.
+fish species, up to 2,000 GPU-animated individuals, separate MANDALA and
+FREE SWIM scenes, four swimming systems, four morphing structures per scene,
+four color-grading macros, microphone/audio-file analysis, blackout,
+fullscreen output, `INFINITE DIVE`, and `SCHOOL RUSH`.
 
 ## Controls
 
+- `0`: morph between MANDALA and FREE SWIM
 - `1` / `2` / `3`: MYSTIC / SENSUAL / EUPHORIC
-- `D`: enter or exit INFINITE DIVE
+- `D`: enter or exit INFINITE DIVE / SCHOOL RUSH
 - `B`: blackout
 - `F`: fullscreen output
 - FISH DECK: select a fish species and its natural movement family
 - SCHOOL / GLIDE / WAVE / FLOAT: focus a movement system
 - SPIRAL / VORTEX / WAVE / BLOOM: morph the school structure over 1.5 seconds
+- CRUISE / CURRENT / CROSS / DRIFT: reshape open-water swimming over 1.5 seconds
 - CLEAN / PUNCH / ACID / DEEP: switch live color treatment
 - COLOR DRIVE: control contrast, saturation, hue motion, and depth
 - FISH COUNT: change density without changing individual scale
@@ -44,12 +46,14 @@ granted.
 - a single mirrored wedge copied 6/8/12 times for true kaleidoscope symmetry
 - SPIRAL / VORTEX / WAVE / BLOOM coordinate generators sharing the same
   kaleidoscope path and a 1.5-second position morph
+- a raw open-water render path with two-way traversal, layered depth,
+  velocity-following headings, and four smoothly morphing swim styles
 - 30–100 Hz kick, 100–250 Hz bass, 250 Hz–2 kHz mid, and 2–12 kHz high-band
   analysis
 - selective high-threshold bloom, beat pulse, color macros, and a bounded
   INFINITE DIVE transition
-- safe initial load of 800 fish; tested at 2,000 fish plus INFINITE DIVE at
-  60 FPS in the local 1080-class preview
+- safe initial load of 800 fish; tested at 2,000 fish plus INFINITE DIVE and
+  2,000 fish plus SCHOOL RUSH at 60 FPS in the local 1080-class preview
 
 The generated finished artwork is an art-direction target, not a flattened
 animation source. Runtime output is rebuilt from independent transparent fish,

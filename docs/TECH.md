@@ -40,6 +40,14 @@
 - 切替時は旧座標生成器と新座標生成器の結果を1.5秒で補間
 - 4構造とも基準半扇形だけを描画し、同じ万華鏡コピーを通す
 
+### SCENE / FREE SWIM
+- `SCENE`を最上位軸とし、MANDALAとFREE SWIMをキー0またはUIで1.2秒モーフする
+- MANDALAは基準半扇形から6/8/12方向へミラーコピーし、FREE SWIMは万華鏡を外して全個体を直接描画する
+- FREE SWIMでは個体が左右両方向から画面を横断し、進行方向は約0.11秒前との位置差へ追従する
+- FREE SWIMの構造はCRUISE / CURRENT / CROSS / DRIFT。既存SWARMと同じ座標補間基盤を使い1.5秒で切り替える
+- CRUISEは層状巡航、CURRENTは2本の海流、CROSSは対向群の交差、DRIFTは広い蛇行漂流
+- SCHOOL RUSHはFREE SWIM専用の速度倍率として働き、キックの尾振り・前方伸長も維持する
+
 ### 2.5Dカメラ
 - 汎用スプラインは作らず、時間ベースの固定 `sin/cos` とモード別パラメータだけで駆動
 - MYSTIC: 緩い沈降 / SENSUAL: 緩い旋回 / EUPHORIC: 急上昇・魚群突入・曼荼羅吸引
@@ -75,7 +83,7 @@
 
 ### パフォーマンス / 8K
 - 初期値は出力領域サイズ、devicePixelRatio上限1、魚800体
-- 2,000体 + INFINITE DIVEで60fpsをローカル実測済み
+- 2,000体 + INFINITE DIVE、および2,000体 + FREE SWIM / SCHOOL RUSHで60fpsをローカル実測済み
 - canvas解像度はプロジェクタ実解像度を上限キャップ
 - 解像度スケールと魚数を実行時スライダーで調整
 - Bloomは半解像度レンダーターゲット

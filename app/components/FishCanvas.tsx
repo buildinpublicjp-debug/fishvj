@@ -7,6 +7,7 @@ export type ModeName = "MYSTIC" | "SENSUAL" | "EUPHORIC";
 export type ColorPreset = "CLEAN" | "PUNCH" | "ACID" | "DEEP";
 export type SwimType = "SCHOOL" | "GLIDE" | "WAVE" | "FLOAT";
 export type SwarmType = "SPIRAL" | "VORTEX" | "WAVE" | "BLOOM";
+export type SceneMode = "MANDALA" | "FREE_SWIM";
 
 export type AudioLevels = {
   kick: number;
@@ -16,6 +17,7 @@ export type AudioLevels = {
 };
 
 export type VisualConfig = {
+  scene: SceneMode;
   mode: ModeName;
   colorPreset: ColorPreset;
   colorDrive: number;
@@ -35,7 +37,7 @@ type FishCanvasProps = {
   onFps: (fps: number) => void;
 };
 
-const MAX_SOURCE_FISH = 256;
+const MAX_SOURCE_FISH = 2000;
 const RING_COUNT = 6;
 
 const fullscreenVertex = `
@@ -57,6 +59,7 @@ const backgroundFragment = `
   uniform float uDive;
   uniform float uMode;
   uniform float uDrive;
+  uniform float uSceneMix;
 
   float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -95,6 +98,17 @@ const backgroundFragment = `
     float blackGate = smoothstep(0.01, 0.055, max(max(col.r, col.g), col.b));
     col *= blackGate;
     col *= smoothstep(1.68, 0.04, r);
+
+    float waterDepth = smoothstep(1.0, -1.0, p.y);
+    vec3 ocean = mix(vec3(0.0, 0.005, 0.018), vec3(0.0, 0.028, 0.07), waterDepth);
+    float currentA = sin(p.x * 3.4 + p.y * 5.8 + uTime * 0.19);
+    float currentB = sin(p.x * 7.2 - p.y * 3.1 - uTime * 0.13);
+    float caustic = pow(max(0.0, currentA * currentB), 18.0);
+    ocean += vec3(0.0, 0.18, 0.28) * caustic * (0.025 + uHigh * 0.05);
+    ocean += rainbow(starSeed + uTime * 0.01) * stars * (0.035 + uHigh * 0.18);
+    ocean += vec3(0.0, 0.05, 0.11) * uBass * 0.08;
+
+    col = mix(col, ocean, smoothstep(0.0, 1.0, uSceneMix));
     gl_FragColor = vec4(max(col, 0.0), 1.0);
   }
 `;
@@ -108,6 +122,7 @@ const fishVertex = `
   attribute float aSpecies;
   attribute float aMotion;
   attribute float aVelocity;
+  attribute float aPopulation;
   varying vec2 vUv;
   varying float vSpecies;
   varying float vDepth;
@@ -128,6 +143,8 @@ const fishVertex = `
   uniform float uSwarmFrom;
   uniform float uSwarmTo;
   uniform float uSwarmMix;
+  uniform float uSceneMix;
+  uniform float uMandalaPopulation;
 
   float foldSeed(float value) {
     return abs(fract(value * 0.5) * 2.0 - 1.0);
@@ -178,6 +195,60 @@ const fishVertex = `
     return vec2(cos(angle), sin(angle)) * radius;
   }
 
+  float freeSwimDirection(float seed, float angleSeed) {
+    return fract(seed * 17.31 + angleSeed * 3.7) > 0.5 ? 1.0 : -1.0;
+  }
+
+  float freeSwimProgress(float time, float speed, float seed, float angleSeed) {
+    return fract(seed + angleSeed * 0.11 + time * (0.04 + speed * 0.032));
+  }
+
+  vec2 freeSwimPosition(
+    float style,
+    float ringNorm,
+    float angleSeed,
+    float seed,
+    float phase,
+    float time,
+    float speed,
+    float aspect
+  ) {
+    float direction = freeSwimDirection(seed, angleSeed);
+    float progress = freeSwimProgress(time, speed, seed, angleSeed);
+    float directedProgress = direction > 0.0 ? progress : 1.0 - progress;
+    float x = mix(-aspect - 0.28, aspect + 0.28, directedProgress);
+    float lane = fract(ringNorm * 0.73 + angleSeed * 0.47 + seed * 0.61);
+    float y = mix(-0.82, 0.82, lane);
+    float bodyDrift = sin(
+      time * (0.62 + speed * 0.52) + phase + x * 1.15
+    ) * (0.035 + 0.025 * sin(phase * 1.7));
+
+    if (style < 0.5) {
+      // CRUISE: relaxed, layered lanes with small unsynchronised deviations.
+      y += bodyDrift;
+      y += sin(time * 0.31 + seed * 15.0 + ringNorm * 2.0) * 0.022;
+    } else if (style < 1.5) {
+      // CURRENT: the whole school bends through two broad ocean currents.
+      float currentBand = lane < 0.5 ? -0.34 : 0.34;
+      y = currentBand
+        + (lane - step(0.5, lane)) * 0.46
+        + sin(x * 1.05 - time * 0.42 + currentBand * 3.0) * 0.22
+        + bodyDrift * 0.8;
+    } else if (style < 2.5) {
+      // CROSS: opposing schools cross on gentle diagonals.
+      float diagonal = (directedProgress - 0.5) * direction;
+      y = mix(-0.7, 0.7, lane) + diagonal * (lane < 0.5 ? 0.48 : -0.48);
+      y += sin(time * 0.48 + phase + x * 0.72) * 0.055;
+    } else {
+      // DRIFT: loose depth layers meander with a slower, wider motion.
+      x += sin(time * 0.24 + phase + lane * 5.0) * 0.12;
+      y = mix(-0.68, 0.68, lane);
+      y += sin(time * 0.34 + phase * 1.7 + x * 0.58) * 0.15;
+      y += sin(time * 0.17 + seed * 12.0) * 0.055;
+    }
+    return vec2(x, y);
+  }
+
   void main() {
     vUv = uv;
     vSpecies = aSpecies;
@@ -187,6 +258,7 @@ const fishVertex = `
     float ringPace = 0.86 + aRing * 0.055;
     float alignedVelocity = mix(aVelocity, ringPace, 0.16);
     float motionSpeed = uSpeed * modeSpeed * alignedVelocity;
+    motionSpeed *= mix(1.0, 2.1, uSceneMix * uDive);
     float kickLead = uKick * (0.035 + alignedVelocity * 0.028);
     float motionTime = uTime + kickLead;
     float headingWindow = 0.11;
@@ -213,105 +285,191 @@ const fishVertex = `
     float wave = 1.0 - step(0.5, abs(aMotion - 2.0));
     float floating = 1.0 - step(0.5, abs(aMotion - 3.0));
 
-    vec2 fromPolar = swarmPosition(
+    float sceneEase = smoothstep(0.0, 1.0, uSceneMix);
+    float swarmEase = smoothstep(0.0, 1.0, uSwarmMix);
+    vec2 mandalaCenter = vec2(0.0);
+    vec2 mandalaPrevious = vec2(0.0);
+    float mandalaDepth = 0.35;
+    float mandalaLife = 1.0;
+
+    if (sceneEase < 0.999) {
+      vec2 fromPolar = swarmPosition(
+        uSwarmFrom,
+        ringNorm,
+        aOffset.x,
+        aOffset.y,
+        aOffset.z,
+        aPhase,
+        wedge,
+        motionTime,
+        motionSpeed,
+        normalRadius,
+        diveRadius,
+        uDive
+      );
+      vec2 toPolar = swarmPosition(
+        uSwarmTo,
+        ringNorm,
+        aOffset.x,
+        aOffset.y,
+        aOffset.z,
+        aPhase,
+        wedge,
+        motionTime,
+        motionSpeed,
+        normalRadius,
+        diveRadius,
+        uDive
+      );
+      vec2 fromPrevious = swarmPosition(
+        uSwarmFrom,
+        ringNorm,
+        aOffset.x,
+        aOffset.y,
+        aOffset.z,
+        aPhase,
+        wedge,
+        previousTime,
+        motionSpeed,
+        normalRadius,
+        previousDiveRadius,
+        uDive
+      );
+      vec2 toPrevious = swarmPosition(
+        uSwarmTo,
+        ringNorm,
+        aOffset.x,
+        aOffset.y,
+        aOffset.z,
+        aPhase,
+        wedge,
+        previousTime,
+        motionSpeed,
+        normalRadius,
+        previousDiveRadius,
+        uDive
+      );
+      mandalaCenter = mix(fromPolar, toPolar, swarmEase);
+      mandalaPrevious = mix(fromPrevious, toPrevious, swarmEase);
+
+      float radialWobble = sin(
+        motionTime * (1.1 + alignedVelocity * 0.72)
+        + aPhase
+        + aRing * 0.63
+      ) * 0.026;
+      float previousWobble = sin(
+        previousTime * (1.1 + alignedVelocity * 0.72)
+        + aPhase
+        + aRing * 0.63
+      ) * 0.026;
+      mandalaCenter += normalize(mandalaCenter + vec2(0.00001)) * radialWobble;
+      mandalaPrevious += normalize(mandalaPrevious + vec2(0.00001)) * previousWobble;
+
+      float mandalaRadius = length(mandalaCenter);
+      mandalaRadius *= 1.0 + uBass * (0.012 + ringNorm * 0.018);
+      mandalaCenter = normalize(mandalaCenter + vec2(0.00001)) * mandalaRadius;
+      mandalaDepth = clamp(mandalaRadius / 1.5, 0.0, 1.0);
+      float bloomFrom = step(2.5, uSwarmFrom);
+      float bloomTo = step(2.5, uSwarmTo);
+      float bloomAmount = mix(bloomFrom, bloomTo, uSwarmMix);
+      mandalaLife = mix(
+        1.0,
+        1.0 - smoothstep(0.82, 1.0, mandalaDepth),
+        bloomAmount
+      );
+      float vortexFrom = 1.0 - step(0.5, abs(uSwarmFrom - 1.0));
+      float vortexTo = 1.0 - step(0.5, abs(uSwarmTo - 1.0));
+      float vortexAmount = mix(vortexFrom, vortexTo, uSwarmMix);
+      float vortexEdgeFade = 1.0 - smoothstep(0.96, 1.12, mandalaRadius);
+      mandalaLife *= mix(1.0, vortexEdgeFade, vortexAmount);
+    }
+
+    vec2 freeFrom = freeSwimPosition(
       uSwarmFrom,
       ringNorm,
       aOffset.x,
-      aOffset.y,
       aOffset.z,
       aPhase,
-      wedge,
       motionTime,
       motionSpeed,
-      normalRadius,
-      diveRadius,
-      uDive
+      uAspect
     );
-    vec2 toPolar = swarmPosition(
+    vec2 freeTo = freeSwimPosition(
       uSwarmTo,
       ringNorm,
       aOffset.x,
-      aOffset.y,
       aOffset.z,
       aPhase,
-      wedge,
       motionTime,
       motionSpeed,
-      normalRadius,
-      diveRadius,
-      uDive
+      uAspect
     );
-    vec2 fromPrevious = swarmPosition(
+    vec2 freeFromPrevious = freeSwimPosition(
       uSwarmFrom,
       ringNorm,
       aOffset.x,
-      aOffset.y,
       aOffset.z,
       aPhase,
-      wedge,
       previousTime,
       motionSpeed,
-      normalRadius,
-      previousDiveRadius,
-      uDive
+      uAspect
     );
-    vec2 toPrevious = swarmPosition(
+    vec2 freeToPrevious = freeSwimPosition(
       uSwarmTo,
       ringNorm,
       aOffset.x,
-      aOffset.y,
       aOffset.z,
       aPhase,
-      wedge,
       previousTime,
       motionSpeed,
-      normalRadius,
-      previousDiveRadius,
-      uDive
+      uAspect
     );
-    vec2 centerPolar = mix(fromPolar, toPolar, smoothstep(0.0, 1.0, uSwarmMix));
-    vec2 previousPolar = mix(
-      fromPrevious,
-      toPrevious,
-      smoothstep(0.0, 1.0, uSwarmMix)
-    );
+    vec2 freeCenter = mix(freeFrom, freeTo, swarmEase);
+    vec2 freePrevious = mix(freeFromPrevious, freeToPrevious, swarmEase);
+    float freeDirection = freeSwimDirection(aOffset.z, aOffset.x);
+    if (abs(freeCenter.x - freePrevious.x) > uAspect) {
+      freePrevious = freeCenter - vec2(freeDirection * 0.02, 0.0);
+    }
 
-    float radialWobble = sin(
-      motionTime * (1.1 + alignedVelocity * 0.72)
-      + aPhase
-      + aRing * 0.63
-    ) * 0.026;
-    float previousWobble = sin(
-      previousTime * (1.1 + alignedVelocity * 0.72)
-      + aPhase
-      + aRing * 0.63
-    ) * 0.026;
-    centerPolar += normalize(centerPolar + vec2(0.00001)) * radialWobble;
-    previousPolar += normalize(previousPolar + vec2(0.00001)) * previousWobble;
-
+    vec2 centerPolar = mix(mandalaCenter, freeCenter, sceneEase);
+    vec2 previousPolar = mix(mandalaPrevious, freePrevious, sceneEase);
     vec2 velocity = centerPolar - previousPolar;
+    if (sceneEase > 0.5 && abs(velocity.x) > uAspect * 0.5) {
+      velocity = vec2(freeDirection * 0.02, 0.0);
+    }
     vec2 velocityDirection = normalize(velocity + vec2(0.00001, 0.0));
     centerPolar += velocityDirection * uKick * (0.018 + ringNorm * 0.016);
-    float radius = length(centerPolar);
-    radius *= 1.0 + uBass * (0.012 + ringNorm * 0.018);
-    centerPolar = normalize(centerPolar + vec2(0.00001)) * radius;
-    vDepth = clamp(radius / 1.5, 0.0, 1.0);
-    float bloomFrom = step(2.5, uSwarmFrom);
-    float bloomTo = step(2.5, uSwarmTo);
-    float bloomAmount = mix(bloomFrom, bloomTo, uSwarmMix);
-    vLife = mix(1.0, 1.0 - smoothstep(0.82, 1.0, vDepth), bloomAmount);
-    float vortexFrom = 1.0 - step(0.5, abs(uSwarmFrom - 1.0));
-    float vortexTo = 1.0 - step(0.5, abs(uSwarmTo - 1.0));
-    float vortexAmount = mix(vortexFrom, vortexTo, uSwarmMix);
-    float vortexEdgeFade = 1.0 - smoothstep(0.96, 1.12, radius);
-    vLife *= mix(1.0, vortexEdgeFade, vortexAmount);
+
+    float freeDepth = mix(
+      0.22,
+      0.9,
+      fract(aOffset.z * 5.71 + aOffset.x * 2.39 + aRing * 0.17)
+    );
+    vDepth = mix(mandalaDepth, freeDepth, sceneEase);
+    float freeProgress = freeSwimProgress(
+      motionTime,
+      motionSpeed,
+      aOffset.z,
+      aOffset.x
+    );
+    float freeLife = smoothstep(0.0, 0.055, freeProgress)
+      * (1.0 - smoothstep(0.945, 1.0, freeProgress));
+    float populationVisible = 1.0 - smoothstep(
+      uMandalaPopulation - 0.004,
+      uMandalaPopulation + 0.004,
+      aPopulation
+    );
+    vLife = mix(mandalaLife, freeLife, sceneEase)
+      * mix(populationVisible, 1.0, sceneEase);
     vec2 centerClip = vec2(centerPolar.x / uAspect, centerPolar.y);
 
     float speciesFocus = 1.0 - step(0.4, abs(aSpecies - uSelectedSpecies));
     float motionFocus = 1.0 - step(0.4, abs(aMotion - uSwimFocus));
     vFocus = max(speciesFocus, motionFocus * 0.72);
 
-    float perspective = mix(0.22, 1.78, pow(vDepth, 1.22));
+    float mandalaPerspective = mix(0.22, 1.78, pow(mandalaDepth, 1.22));
+    float freePerspective = mix(0.52, 1.08, freeDepth);
+    float perspective = mix(mandalaPerspective, freePerspective, sceneEase);
     float bodyScale = aScale * perspective * (0.72 + vFocus * 0.52);
     bodyScale *= 1.0 + uKick * (0.04 + school * 0.07);
 
@@ -333,7 +491,7 @@ const fishVertex = `
 
     float orientation = atan(velocityDirection.y, velocityDirection.x);
 
-    float fishWidth = 0.192 * uFishSize * bodyScale;
+    float fishWidth = 0.192 * uFishSize * bodyScale * mix(1.0, 0.58, sceneEase);
     vec2 localPolar = vec2(local.x * fishWidth, local.y * fishWidth / 0.89);
     mat2 rotateFish = mat2(
       cos(orientation), -sin(orientation),
@@ -413,6 +571,7 @@ const KaleidoShader = {
     uColorPreset: { value: 1 },
     uMode: { value: 0 },
     uKick: { value: 0 },
+    uSceneMix: { value: 0 },
     uResolution: { value: new THREE.Vector2(1, 1) },
   },
   vertexShader: fullscreenVertex,
@@ -428,6 +587,7 @@ const KaleidoShader = {
     uniform float uColorPreset;
     uniform float uMode;
     uniform float uKick;
+    uniform float uSceneMix;
     uniform vec2 uResolution;
 
     vec3 hueShift(vec3 color, float angle) {
@@ -446,15 +606,19 @@ const KaleidoShader = {
       float layerNorm = layer / 5.0;
       float direction = mod(layer, 2.0) < 1.0 ? 1.0 : -1.0;
       float differential = mix(0.26, 0.045, layerNorm);
-      angle += direction * uTime * differential * (0.28 + uMode * 0.16);
-      angle += direction * uDive * (1.0 - layerNorm) * (0.42 + 0.18 * sin(uTime * 0.7));
+      float mandalaAmount = 1.0 - smoothstep(0.0, 1.0, uSceneMix);
+      angle += direction * uTime * differential * (0.28 + uMode * 0.16) * mandalaAmount;
+      angle += direction * uDive * (1.0 - layerNorm)
+        * (0.42 + 0.18 * sin(uTime * 0.7))
+        * mandalaAmount;
 
       float wedge = 6.28318530718 / uSegments;
       angle = mod(angle + wedge * 0.5, wedge) - wedge * 0.5;
       angle = abs(angle);
 
       vec2 sourcePolar = radius * vec2(cos(angle), sin(angle));
-      vec2 sourceUv = vec2(sourcePolar.x / uAspect, sourcePolar.y) * 0.5 + 0.5;
+      vec2 kaleidoUv = vec2(sourcePolar.x / uAspect, sourcePolar.y) * 0.5 + 0.5;
+      vec2 sourceUv = mix(kaleidoUv, vUv, smoothstep(0.0, 1.0, uSceneMix));
       vec3 color = texture2D(tDiffuse, sourceUv).rgb;
 
       vec2 pixel = 1.0 / max(uResolution, vec2(1.0));
@@ -479,8 +643,9 @@ const KaleidoShader = {
       glow += sampleH * smoothstep(threshold, 0.96, dot(sampleH, vec3(0.2126, 0.7152, 0.0722)));
       color += glow * (0.085 + uDrive * 0.055);
 
-      float ringHue = layer * (0.24 + uDrive * 0.22);
-      color = hueShift(color, ringHue + uMode * 0.15);
+      float ringHue = layer * (0.24 + uDrive * 0.22) * mandalaAmount;
+      float waterHue = (vUv.y - 0.5) * 0.34 * uSceneMix;
+      color = hueShift(color, ringHue + waterHue + uMode * 0.15);
 
       float lum = dot(color, vec3(0.2126, 0.7152, 0.0722));
       float contrast = 1.08 + uDrive * (uColorPreset > 0.5 && uColorPreset < 1.5 ? 0.82 : 0.48);
@@ -498,7 +663,9 @@ const KaleidoShader = {
       color *= 1.0 + uKick * smoothstep(0.35, 0.9, lum) * 0.46;
       float blackGate = smoothstep(0.008, 0.065, max(max(color.r, color.g), color.b));
       color *= blackGate;
-      color *= smoothstep(1.72, 0.02, radius);
+      float mandalaVignette = smoothstep(1.72, 0.02, radius);
+      float waterVignette = smoothstep(2.12, 1.62, radius);
+      color *= mix(mandalaVignette, waterVignette, uSceneMix);
 
       gl_FragColor = vec4(max(color, 0.0), 1.0);
       #include <tonemapping_fragment>
@@ -525,6 +692,10 @@ function swimValue(swim: SwimType) {
 
 function swarmValue(swarm: SwarmType) {
   return swarm === "SPIRAL" ? 0 : swarm === "VORTEX" ? 1 : swarm === "WAVE" ? 2 : 3;
+}
+
+function sceneValue(scene: SceneMode) {
+  return scene === "MANDALA" ? 0 : 1;
 }
 
 export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
@@ -577,6 +748,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       uMode: { value: 0 },
       uDrive: { value: 0.72 },
       uColorPreset: { value: 1 },
+      uSceneMix: { value: sceneValue(configRef.current.scene) },
     };
 
     const backgroundGeometry = new THREE.PlaneGeometry(2, 2);
@@ -604,6 +776,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     const species = new Float32Array(MAX_SOURCE_FISH);
     const motions = new Float32Array(MAX_SOURCE_FISH);
     const velocities = new Float32Array(MAX_SOURCE_FISH);
+    const populations = new Float32Array(MAX_SOURCE_FISH);
     const speciesScales = [0.72, 1.1, 0.92, 1.14, 0.82, 1.2, 0.9, 0.8];
     const speciesMotions = [0, 1, 3, 1, 3, 2, 3, 0];
 
@@ -621,6 +794,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       species[index] = speciesIndex;
       motions[index] = speciesMotions[speciesIndex];
       velocities[index] = 0.7 + Math.random() * 0.6;
+      populations[index] = index / (MAX_SOURCE_FISH - 1);
     }
 
     fishGeometry.setAttribute("aOffset", new THREE.InstancedBufferAttribute(offsets, 3));
@@ -630,6 +804,10 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     fishGeometry.setAttribute("aSpecies", new THREE.InstancedBufferAttribute(species, 1));
     fishGeometry.setAttribute("aMotion", new THREE.InstancedBufferAttribute(motions, 1));
     fishGeometry.setAttribute("aVelocity", new THREE.InstancedBufferAttribute(velocities, 1));
+    fishGeometry.setAttribute(
+      "aPopulation",
+      new THREE.InstancedBufferAttribute(populations, 1),
+    );
 
     const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png");
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -648,6 +826,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       uSwarmFrom: { value: swarmValue(configRef.current.swarm) },
       uSwarmTo: { value: swarmValue(configRef.current.swarm) },
       uSwarmMix: { value: 1 },
+      uMandalaPopulation: { value: 1 },
     };
 
     const fishMaterial = new THREE.ShaderMaterial({
@@ -716,6 +895,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     let swarmFrom = swarmValue(observedSwarm);
     let swarmTo = swarmFrom;
     let swarmTransitionStart = startTime - 1500;
+    let currentScene = sceneValue(configRef.current.scene);
 
     const render = () => {
       const now = performance.now();
@@ -734,6 +914,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       const elapsed = (now - startTime) / 1000;
       const mode = modeValue(cfg.mode);
       const segments = segmentValue(cfg.mode);
+      const targetScene = sceneValue(cfg.scene);
       if (cfg.swarm !== observedSwarm) {
         const previousMix = Math.min(1, (now - swarmTransitionStart) / 1500);
         swarmFrom = previousMix >= 0.5 ? swarmTo : swarmFrom;
@@ -742,6 +923,8 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
         swarmTransitionStart = now;
       }
       const swarmMix = Math.min(1, (now - swarmTransitionStart) / 1500);
+      currentScene +=
+        (targetScene - currentScene) * Math.min(1, deltaMs / 360);
       currentDive +=
         ((cfg.dive ? 1 : 0) - currentDive) * Math.min(1, deltaMs / 760);
       smoothKick += (levels.kick - smoothKick) * 0.2;
@@ -757,6 +940,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       sharedUniforms.uMode.value = mode;
       sharedUniforms.uDrive.value = cfg.colorDrive;
       sharedUniforms.uColorPreset.value = colorValue(cfg.colorPreset);
+      sharedUniforms.uSceneMix.value = currentScene;
 
       fishUniforms.uSpeed.value = cfg.speed;
       fishUniforms.uFishSize.value = cfg.fishSize;
@@ -766,10 +950,14 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       fishUniforms.uSwarmFrom.value = swarmFrom;
       fishUniforms.uSwarmTo.value = swarmTo;
       fishUniforms.uSwarmMix.value = swarmMix;
-      fishGeometry.instanceCount = Math.min(
+      const mandalaCount = Math.min(
         MAX_SOURCE_FISH,
         Math.max(24, Math.ceil(cfg.fishCount / (segments * 2))),
       );
+      const freeSwimCount = Math.min(MAX_SOURCE_FISH, Math.max(100, cfg.fishCount));
+      fishUniforms.uMandalaPopulation.value = mandalaCount / MAX_SOURCE_FISH;
+      fishGeometry.instanceCount =
+        currentScene > 0.01 ? Math.max(mandalaCount, freeSwimCount) : mandalaCount;
 
       postUniforms.uTime.value = elapsed;
       postUniforms.uSegments.value = segments;
@@ -778,6 +966,7 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       postUniforms.uColorPreset.value = colorValue(cfg.colorPreset);
       postUniforms.uMode.value = mode;
       postUniforms.uKick.value = smoothKick;
+      postUniforms.uSceneMix.value = currentScene;
       renderer.toneMappingExposure =
         cfg.colorPreset === "DEEP"
           ? 0.86

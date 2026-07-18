@@ -13,6 +13,7 @@ import {
   ColorPreset,
   FishCanvas,
   ModeName,
+  SceneMode,
   SwarmType,
   SwimType,
   VisualConfig,
@@ -30,9 +31,19 @@ const FISH = [
 ] as const;
 
 const MODES: ModeName[] = ["MYSTIC", "SENSUAL", "EUPHORIC"];
+const SCENES: { id: SceneMode; label: string; hint: string }[] = [
+  { id: "MANDALA", label: "MANDALA", hint: "RADIAL MIRROR" },
+  { id: "FREE_SWIM", label: "FREE SWIM", hint: "OPEN WATER" },
+];
 const COLORS: ColorPreset[] = ["CLEAN", "PUNCH", "ACID", "DEEP"];
 const SWIMS: SwimType[] = ["SCHOOL", "GLIDE", "WAVE", "FLOAT"];
 const SWARMS: SwarmType[] = ["SPIRAL", "VORTEX", "WAVE", "BLOOM"];
+const FREE_SWIM_STYLES: Record<SwarmType, string> = {
+  SPIRAL: "CRUISE",
+  VORTEX: "CURRENT",
+  WAVE: "CROSS",
+  BLOOM: "DRIFT",
+};
 const EMPTY_LEVELS: AudioLevels = { kick: 0, bass: 0, mid: 0, high: 0 };
 
 type AudioRuntime = {
@@ -96,6 +107,7 @@ function RangeControl({
 }
 
 export function FishVJConsole() {
+  const [scene, setScene] = useState<SceneMode>("MANDALA");
   const [mode, setMode] = useState<ModeName>("MYSTIC");
   const [colorPreset, setColorPreset] = useState<ColorPreset>("PUNCH");
   const [colorDrive, setColorDrive] = useState(0.72);
@@ -123,6 +135,7 @@ export function FishVJConsole() {
 
   const config = useMemo<VisualConfig>(
     () => ({
+      scene,
       mode,
       colorPreset,
       colorDrive,
@@ -136,6 +149,7 @@ export function FishVJConsole() {
       swarm,
     }),
     [
+      scene,
       mode,
       colorPreset,
       colorDrive,
@@ -293,6 +307,7 @@ export function FishVJConsole() {
   }, []);
 
   const reset = useCallback(() => {
+    setScene("MANDALA");
     setMode("MYSTIC");
     setColorPreset("PUNCH");
     setColorDrive(0.72);
@@ -323,6 +338,9 @@ export function FishVJConsole() {
       if (event.key === "1") setMode("MYSTIC");
       if (event.key === "2") setMode("SENSUAL");
       if (event.key === "3") setMode("EUPHORIC");
+      if (event.key === "0") {
+        setScene((value) => (value === "MANDALA" ? "FREE_SWIM" : "MANDALA"));
+      }
       if (event.key.toLowerCase() === "d") setDive((value) => !value);
       if (event.key.toLowerCase() === "b") setBlackout((value) => !value);
       if (event.key.toLowerCase() === "f") void toggleFullscreen();
@@ -406,7 +424,7 @@ export function FishVJConsole() {
             </button>
           ))}
         </div>
-        <p className="shortcut-note">1–3 MODE · D DIVE · B BLACKOUT · F OUTPUT</p>
+        <p className="shortcut-note">0 SCENE · 1–3 MODE · D DIVE · B BLACKOUT · F OUTPUT</p>
       </aside>
 
       <section className="output-column">
@@ -418,14 +436,16 @@ export function FishVJConsole() {
           <div className="scanlines" aria-hidden />
           <div className="output-badges">
             <span>
-              CH 01 · {mode} · {swarm} · K-{mode === "MYSTIC" ? "06" : mode === "SENSUAL" ? "08" : "12"}
+              {scene === "MANDALA"
+                ? `CH 01 · MANDALA · ${mode} · ${swarm} · K-${mode === "MYSTIC" ? "06" : mode === "SENSUAL" ? "08" : "12"}`
+                : `CH 01 · FREE SWIM · ${mode} · ${FREE_SWIM_STYLES[swarm]}`}
             </span>
             <span>{fishCount.toLocaleString()} FISH</span>
           </div>
           {dive && (
             <div className="dive-badge">
-              <b>∞</b>
-              <span>INFINITE DIVE</span>
+              <b>{scene === "MANDALA" ? "∞" : "≋"}</b>
+              <span>{scene === "MANDALA" ? "INFINITE DIVE" : "SCHOOL RUSH"}</span>
             </div>
           )}
           <div className="blackout-screen">
@@ -435,6 +455,23 @@ export function FishVJConsole() {
       </section>
 
       <aside className="control-panel panel" aria-label="Live controls">
+        <section className="scene-section">
+          <h2>SCENE</h2>
+          <div className="scene-buttons" role="group" aria-label="Scene mode">
+            {SCENES.map((item) => (
+              <button
+                key={item.id}
+                className={scene === item.id ? "is-active" : ""}
+                onClick={() => setScene(item.id)}
+                aria-pressed={scene === item.id}
+              >
+                <strong>{item.label}</strong>
+                <small>{item.hint}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section>
           <h2>MODE</h2>
           <div className="mode-buttons">
@@ -480,8 +517,12 @@ export function FishVJConsole() {
         <section className="motion-section">
           <h2>MOTION</h2>
           <div className="swarm-control">
-            <h3>SWARM</h3>
-            <div className="swarm-buttons" role="group" aria-label="Swarm structure">
+            <h3>{scene === "MANDALA" ? "SWARM" : "SWIM STYLE"}</h3>
+            <div
+              className="swarm-buttons"
+              role="group"
+              aria-label={scene === "MANDALA" ? "Swarm structure" : "Free swim style"}
+            >
               {SWARMS.map((item) => (
                 <button
                   key={item}
@@ -489,7 +530,7 @@ export function FishVJConsole() {
                   onClick={() => setSwarm(item)}
                   aria-pressed={swarm === item}
                 >
-                  {item}
+                  {scene === "MANDALA" ? item : FREE_SWIM_STYLES[item]}
                 </button>
               ))}
             </div>
@@ -538,11 +579,11 @@ export function FishVJConsole() {
             onClick={() => setDive(true)}
             aria-pressed={dive}
           >
-            <b>∞</b>
-            <span>INFINITE DIVE</span>
+            <b>{scene === "MANDALA" ? "∞" : "≋"}</b>
+            <span>{scene === "MANDALA" ? "INFINITE DIVE" : "SCHOOL RUSH"}</span>
           </button>
           <button className="exit-button" onClick={() => setDive(false)} disabled={!dive}>
-            EXIT DIVE
+            {scene === "MANDALA" ? "EXIT DIVE" : "EXIT RUSH"}
           </button>
         </div>
       </aside>

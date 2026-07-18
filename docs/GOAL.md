@@ -16,7 +16,7 @@
 - [ ] 時間フィードバック（前フレーム残像）
 - [x] 生成した透過魚アトラスがFISH DECKへ追加される
 - [ ] 実行中の画像生成結果がクリップ棚へ追加される
-- [ ] デモURLが存在する（最終公開処理中）
+- [x] デモURLが存在する
 
 ## P1
 
@@ -25,10 +25,13 @@
 - [x] 2,000匹個別GPUアニメーション
 - [x] SCHOOL / GLIDE / WAVE / FLOAT
 - [x] SPIRAL / VORTEX / WAVE / BLOOM + 1.5秒モーフ
+- [x] MANDALA / FREE SWIMの1.2秒シーンモーフ
+- [x] FREE SWIMのCRUISE / CURRENT / CROSS / DRIFT + 1.5秒モーフ
 - [x] 個体別位相・速度差・尾のうねり・速度ベクトル追従
 - [x] FISH SIZE 0.5x〜3.0x（魚数と独立）
 - [x] CLEAN / PUNCH / ACID / DEEP + COLOR DRIVE
 - [x] INFINITE DIVE + EXIT DIVE
+- [x] SCHOOL RUSH + EXIT RUSH
 - [x] BLACKOUT / RESET / FULLSCREEN
 - [ ] ヒーロー魚GLB演出
 - [ ] journey入力

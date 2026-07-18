@@ -399,6 +399,15 @@
 - 反映先: `TECH.md`「魚群」「SWARM構造」「実装済みポストFXチェーン」、実装UI
 - 棄却理由: —
 
+### R-028 — 曼荼羅と自由遊泳を独立したシーンとして切り替える
+
+- status: `adopted`
+- source: プロジェクトオーナーの実画面レビュー
+- priority: P0
+- 採用内容: 最上位にMANDALA / FREE SWIMのSCENE軸を追加。1.2秒で全個体を補間し、FREE SWIMでは万華鏡コピーを解除して左右双方向へ全個体を直接描画する。自由遊泳側はCRUISE / CURRENT / CROSS / DRIFTの4構造を持ち、1.5秒で群れの泳ぎ方を連続変形する。加速演出としてSCHOOL RUSHを追加する。
+- 反映先: `TECH.md`「SCENE / FREE SWIM」、実装UI
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -419,3 +428,4 @@
 | 2026-07-18 | R-013〜R-024 | 判断 | R-017/R-018を棄却、その他を推奨どおり採用。プロジェクトオーナーの `/goal` 指示により実装開始 |
 | 2026-07-18 | Milestone 1 | implemented | 透過8魚種アトラス、最大2,000個体、4泳動、4色プリセット、音声入力、INFINITE DIVE、ライブ操作UIを実装 |
 | 2026-07-18 | R-025〜R-027 | adopted / implemented | 装飾円削除、4 SWARMモーフ、個体泳動、独立FISH SIZE、VORTEX層圧縮を実装し、2,000匹 + DIVEで60fpsを確認 |
+| 2026-07-18 | R-028 | adopted / implemented | MANDALA / FREE SWIM、自由遊泳4スタイル、SCHOOL RUSHを実装し、2,000匹で60fpsを確認 |
