@@ -13,6 +13,7 @@ import {
   ColorPreset,
   FishCanvas,
   ModeName,
+  PerformanceState,
   SceneMode,
   SwarmType,
   SwimType,
@@ -45,6 +46,54 @@ const FREE_SWIM_STYLES: Record<SwarmType, string> = {
   BLOOM: "DRIFT",
 };
 const EMPTY_LEVELS: AudioLevels = { kick: 0, bass: 0, mid: 0, high: 0 };
+
+type OneShotPad = "strobe" | "rush" | "scatter" | "hueFlip" | "kaleidoBurst";
+
+const INITIAL_PERFORMANCE: PerformanceState = {
+  strobeStartedAt: 0,
+  rushStartedAt: 0,
+  scatterStartedAt: 0,
+  hueFlipStartedAt: 0,
+  kaleidoBurstStartedAt: 0,
+  slowMo: false,
+};
+
+const PAD_DURATION: Record<OneShotPad, number> = {
+  strobe: 1820,
+  rush: 500,
+  scatter: 1300,
+  hueFlip: 200,
+  kaleidoBurst: 2000,
+};
+
+const PAD_FIELD: Record<OneShotPad, keyof PerformanceState> = {
+  strobe: "strobeStartedAt",
+  rush: "rushStartedAt",
+  scatter: "scatterStartedAt",
+  hueFlip: "hueFlipStartedAt",
+  kaleidoBurst: "kaleidoBurstStartedAt",
+};
+
+const INITIAL_ACTIVE_PADS: Record<OneShotPad, boolean> = {
+  strobe: false,
+  rush: false,
+  scatter: false,
+  hueFlip: false,
+  kaleidoBurst: false,
+};
+
+const ONE_SHOT_PADS: ReadonlyArray<{
+  id: OneShotPad;
+  keyLabel: string;
+  label: string;
+  symbol: string;
+}> = [
+  { id: "strobe", keyLabel: "T", label: "STROBE", symbol: "✦" },
+  { id: "rush", keyLabel: "G", label: "RUSH", symbol: "≫" },
+  { id: "scatter", keyLabel: "H", label: "SCATTER", symbol: "↗" },
+  { id: "hueFlip", keyLabel: "J", label: "HUE FLIP", symbol: "◒" },
+  { id: "kaleidoBurst", keyLabel: "K", label: "KALEIDO", symbol: "✺" },
+];
 
 type AudioRuntime = {
   context: AudioContext;
@@ -117,7 +166,7 @@ export function FishVJConsole() {
   const [depth, setDepth] = useState(0.74);
   const [dive, setDive] = useState(false);
   const [blackout, setBlackout] = useState(false);
-  const [selectedSpecies, setSelectedSpecies] = useState(0);
+  const [selectedSpecies, setSelectedSpecies] = useState<number[]>([0]);
   const [swimType, setSwimType] = useState<SwimType>("SCHOOL");
   const [swarm, setSwarm] = useState<SwarmType>("SPIRAL");
   const [fps, setFps] = useState(60);
@@ -127,11 +176,15 @@ export function FishVJConsole() {
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([]);
   const [bpm] = useState(138);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [performanceState, setPerformanceState] = useState<PerformanceState>(INITIAL_PERFORMANCE);
+  const [activePads, setActivePads] = useState(INITIAL_ACTIVE_PADS);
+  const [holdBlackout, setHoldBlackout] = useState(false);
   const outputRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioRuntimeRef = useRef<AudioRuntime | null>(null);
   const demoFrameRef = useRef(0);
   const beatStartRef = useRef(performance.now());
+  const padTimersRef = useRef<Partial<Record<OneShotPad, ReturnType<typeof setTimeout>>>>({});
 
   const config = useMemo<VisualConfig>(
     () => ({
@@ -143,10 +196,12 @@ export function FishVJConsole() {
       fishSize,
       speed,
       depth,
+      bpm,
       dive,
       selectedSpecies,
       swimType,
       swarm,
+      performance: performanceState,
     }),
     [
       scene,
@@ -157,10 +212,12 @@ export function FishVJConsole() {
       fishSize,
       speed,
       depth,
+      bpm,
       dive,
       selectedSpecies,
       swimType,
       swarm,
+      performanceState,
     ],
   );
 
@@ -306,7 +363,43 @@ export function FishVJConsole() {
     return () => document.removeEventListener("fullscreenchange", onFullscreen);
   }, []);
 
+  const triggerPerformance = useCallback((pad: OneShotPad) => {
+    const field = PAD_FIELD[pad];
+    setPerformanceState((current) => ({
+      ...current,
+      [field]: performance.now(),
+    }));
+    setActivePads((current) => ({ ...current, [pad]: true }));
+    if (padTimersRef.current[pad]) clearTimeout(padTimersRef.current[pad]);
+    padTimersRef.current[pad] = setTimeout(() => {
+      setActivePads((current) => ({ ...current, [pad]: false }));
+      delete padTimersRef.current[pad];
+    }, PAD_DURATION[pad]);
+  }, []);
+
+  const setSlowMo = useCallback((active: boolean) => {
+    setPerformanceState((current) =>
+      current.slowMo === active ? current : { ...current, slowMo: active },
+    );
+  }, []);
+
+  const clearPerformance = useCallback(() => {
+    Object.values(padTimersRef.current).forEach((timer) => clearTimeout(timer));
+    padTimersRef.current = {};
+    setPerformanceState(INITIAL_PERFORMANCE);
+    setActivePads(INITIAL_ACTIVE_PADS);
+    setHoldBlackout(false);
+  }, []);
+
+  useEffect(
+    () => () => {
+      Object.values(padTimersRef.current).forEach((timer) => clearTimeout(timer));
+    },
+    [],
+  );
+
   const reset = useCallback(() => {
+    clearPerformance();
     setScene("MANDALA");
     setMode("MYSTIC");
     setColorPreset("PUNCH");
@@ -317,10 +410,10 @@ export function FishVJConsole() {
     setDepth(0.74);
     setDive(false);
     setBlackout(false);
-    setSelectedSpecies(0);
+    setSelectedSpecies([0]);
     setSwimType("SCHOOL");
     setSwarm("SPIRAL");
-  }, []);
+  }, [clearPerformance]);
 
   const toggleFullscreen = useCallback(async () => {
     if (document.fullscreenElement) {
@@ -331,23 +424,73 @@ export function FishVJConsole() {
   }, []);
 
   useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        reset();
         return;
       }
+      if (event.key === "Shift") {
+        if (!event.repeat) setSlowMo(true);
+        return;
+      }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        if (!event.repeat) setHoldBlackout(true);
+        return;
+      }
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      if (event.repeat) return;
+      const key = event.key.toLowerCase();
+      if (key === "t") triggerPerformance("strobe");
+      if (key === "g") triggerPerformance("rush");
+      if (key === "h") triggerPerformance("scatter");
+      if (key === "j") triggerPerformance("hueFlip");
+      if (key === "k") triggerPerformance("kaleidoBurst");
       if (event.key === "1") setMode("MYSTIC");
       if (event.key === "2") setMode("SENSUAL");
       if (event.key === "3") setMode("EUPHORIC");
       if (event.key === "0") {
-        setScene((value) => (value === "MANDALA" ? "FREE_SWIM" : "MANDALA"));
+        setScene((value) => {
+          const next = value === "MANDALA" ? "FREE_SWIM" : "MANDALA";
+          if (next === "FREE_SWIM") setDive(false);
+          return next;
+        });
       }
-      if (event.key.toLowerCase() === "d") setDive((value) => !value);
-      if (event.key.toLowerCase() === "b") setBlackout((value) => !value);
-      if (event.key.toLowerCase() === "f") void toggleFullscreen();
+      if (key === "d" && scene === "MANDALA") setDive((value) => !value);
+      if (key === "b") setBlackout((value) => !value);
+      if (key === "f") void toggleFullscreen();
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [toggleFullscreen]);
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "Shift") setSlowMo(false);
+      if (event.key === "Tab") {
+        event.preventDefault();
+        setHoldBlackout(false);
+      }
+    };
+    const releaseHolds = () => {
+      setSlowMo(false);
+      setHoldBlackout(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", releaseHolds);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", releaseHolds);
+    };
+  }, [reset, scene, setSlowMo, toggleFullscreen, triggerPerformance]);
+
+  const toggleSpecies = useCallback((index: number, motion: SwimType) => {
+    setSelectedSpecies((current) => {
+      if (current.includes(index)) {
+        return current.length === 1 ? current : current.filter((item) => item !== index);
+      }
+      return [...current, index].sort((a, b) => a - b);
+    });
+    setSwimType(motion);
+  }, []);
 
   const handleAudioInput = async (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
@@ -370,7 +513,7 @@ export function FishVJConsole() {
   );
 
   return (
-    <main className={`vj-shell ${blackout ? "is-blackout" : ""}`}>
+    <main className={`vj-shell ${blackout || holdBlackout ? "is-blackout" : ""}`}>
       <header className="topbar">
         <div className="brand" aria-label="FishVJ">
           FISH<span>VJ</span>
@@ -386,23 +529,22 @@ export function FishVJConsole() {
       </header>
 
       <aside className="fish-deck panel" aria-label="Fish deck">
-        <h2>FISH DECK</h2>
+        <h2>
+          FISH DECK <span>{selectedSpecies.length} SELECTED</span>
+        </h2>
         <div className="fish-grid">
           {FISH.map((fish, index) => (
             <button
               key={fish.name}
-              className={`fish-card ${selectedSpecies === index ? "is-active" : ""}`}
+              className={`fish-card ${selectedSpecies.includes(index) ? "is-active" : ""}`}
               style={
                 {
                   "--fish-x": `${(index % 4) * 33.333}%`,
                   "--fish-y": `${Math.floor(index / 4) * 100}%`,
                 } as React.CSSProperties
               }
-              onClick={() => {
-                setSelectedSpecies(index);
-                setSwimType(fish.motion);
-              }}
-              aria-pressed={selectedSpecies === index}
+              onClick={() => toggleSpecies(index, fish.motion)}
+              aria-pressed={selectedSpecies.includes(index)}
               aria-label={`${fish.name}, ${fish.motion} movement`}
             >
               <span>{index + 1}</span>
@@ -424,7 +566,11 @@ export function FishVJConsole() {
             </button>
           ))}
         </div>
-        <p className="shortcut-note">0 SCENE · 1–3 MODE · D DIVE · B BLACKOUT · F OUTPUT</p>
+        <p className="shortcut-note">
+          <span>0 SCENE · 1–3 MODE · D DIVE · B LOCK · F OUTPUT</span>
+          <span>T STROBE · G RUSH · H SCATTER · J HUE · K KALEIDO</span>
+          <span>⇧ SLOW-MO · TAB BLACKOUT · ESC INTRO</span>
+        </p>
       </aside>
 
       <section className="output-column">
@@ -452,6 +598,62 @@ export function FishVJConsole() {
             <span>BLACKOUT</span>
           </div>
         </div>
+        <section className="perform-panel" aria-label="Performance pads">
+          <div className="perform-heading">
+            <strong>PERFORM</strong>
+            <small>ONE-SHOT + HOLD</small>
+          </div>
+          <div className="perform-grid">
+            {ONE_SHOT_PADS.map((pad) => (
+              <button
+                key={pad.id}
+                data-pad={pad.id}
+                className={activePads[pad.id] ? "is-active" : ""}
+                onClick={() => triggerPerformance(pad.id)}
+                aria-pressed={activePads[pad.id]}
+                aria-label={`${pad.label}, ${pad.keyLabel} key`}
+              >
+                <kbd>{pad.keyLabel}</kbd>
+                <b>{pad.symbol}</b>
+                <span>{pad.label}</span>
+              </button>
+            ))}
+            <button
+              data-pad="slowMo"
+              className={performanceState.slowMo ? "is-active" : ""}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                setSlowMo(true);
+              }}
+              onPointerUp={() => setSlowMo(false)}
+              onPointerCancel={() => setSlowMo(false)}
+              onLostPointerCapture={() => setSlowMo(false)}
+              aria-pressed={performanceState.slowMo}
+              aria-label="SLOW-MO, hold Shift"
+            >
+              <kbd>⇧</kbd>
+              <b>◌</b>
+              <span>SLOW-MO</span>
+            </button>
+            <button
+              data-pad="holdBlackout"
+              className={holdBlackout ? "is-active" : ""}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                setHoldBlackout(true);
+              }}
+              onPointerUp={() => setHoldBlackout(false)}
+              onPointerCancel={() => setHoldBlackout(false)}
+              onLostPointerCapture={() => setHoldBlackout(false)}
+              aria-pressed={holdBlackout}
+              aria-label="BLACKOUT, hold Tab"
+            >
+              <kbd>TAB</kbd>
+              <b>●</b>
+              <span>BLACKOUT</span>
+            </button>
+          </div>
+        </section>
       </section>
 
       <aside className="control-panel panel" aria-label="Live controls">
@@ -462,7 +664,10 @@ export function FishVJConsole() {
               <button
                 key={item.id}
                 className={scene === item.id ? "is-active" : ""}
-                onClick={() => setScene(item.id)}
+                onClick={() => {
+                  setScene(item.id);
+                  if (item.id === "FREE_SWIM") setDive(false);
+                }}
                 aria-pressed={scene === item.id}
               >
                 <strong>{item.label}</strong>
@@ -575,15 +780,19 @@ export function FishVJConsole() {
 
         <div className="dive-controls">
           <button
-            className={`dive-button ${dive ? "is-active" : ""}`}
-            onClick={() => setDive(true)}
-            aria-pressed={dive}
+            className={`dive-button ${scene === "MANDALA" ? (dive ? "is-active" : "") : (activePads.rush ? "is-active" : "")}`}
+            onClick={() => scene === "MANDALA" ? setDive(true) : triggerPerformance("rush")}
+            aria-pressed={scene === "MANDALA" ? dive : activePads.rush}
           >
             <b>{scene === "MANDALA" ? "∞" : "≋"}</b>
             <span>{scene === "MANDALA" ? "INFINITE DIVE" : "SCHOOL RUSH"}</span>
           </button>
-          <button className="exit-button" onClick={() => setDive(false)} disabled={!dive}>
-            {scene === "MANDALA" ? "EXIT DIVE" : "EXIT RUSH"}
+          <button
+            className="exit-button"
+            onClick={() => setDive(false)}
+            disabled={scene === "FREE_SWIM" || !dive}
+          >
+            {scene === "MANDALA" ? "EXIT DIVE" : "ONE SHOT · G"}
           </button>
         </div>
       </aside>

@@ -201,3 +201,11 @@ fishvj/
 推奨順序: 1 → 2、3/4は実イベント実開催のタイミングで。
 
 要外部検証: WebGPUのM系チップ8K実効fps / SyphonのWeb側出力可否
+
+## PERFORM / 複数魚種選択（実装済み）
+
+- FISH DECKは8魚種の複数選択に対応し、最後の1種は解除できない。選択状態は2つの`vec4` uniformへ渡し、GPU側で対象魚を同時に強調する。
+- STROBE / RUSH / SCATTER / HUE FLIP / KALEIDO BURSTは開始時刻だけをReact stateへ記録し、強度包絡をレンダーループで計算する。再トリガーは時刻を上書きするため安全にリスタートできる。
+- RUSHとSCATTERは既存の個体座標・速度方向を変形し、HUE FLIP / STROBE / KALEIDO BURSTは既存ポストFXへ合成する。新しい描画パスやCPU個体更新は増やさない。
+- `Shift`のSLOW-MOは描画時間のみ0.3倍、`Tab`のBLACKOUTは保持中のみ表示を遮断する。keyup / window blur / ESCで必ず解除する。
+- ESCはパッドタイマーを全破棄し、INTRO（MANDALA / MYSTIC / PUNCH / 800匹 / SPIRAL）へ即時復帰する。

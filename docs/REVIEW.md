@@ -417,6 +417,15 @@
 - 反映先: `TECH.md`「魚群」、魚頂点シェーダー
 - 棄却理由: —
 
+### R-030〜R-031 — 演奏パッドと複数魚種選択
+
+- status: `adopted`
+- source: プロジェクトオーナーの公開版改善指示
+- priority: P0 / P1
+- 採用内容: 既存レンダーを再利用するPERFORMセクションを追加。T/G/H/J/Kの5ワンショット、Shift/Tabの2ホールド、同時押し、再トリガー、ESC事故復帰を実装した。FISH DECKは複数魚種の追加・解除へ変更し、最低1種を維持しながら選択魚種を同時強調する。
+- 反映先: `TECH.md`「PERFORM / 複数魚種選択」、実装UI、ショートカット一覧
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -439,3 +448,4 @@
 | 2026-07-18 | R-025〜R-027 | adopted / implemented | 装飾円削除、4 SWARMモーフ、個体泳動、独立FISH SIZE、VORTEX層圧縮を実装し、2,000匹 + DIVEで60fpsを確認 |
 | 2026-07-18 | R-028 | adopted / implemented | MANDALA / FREE SWIM、自由遊泳4スタイル、SCHOOL RUSHを実装し、2,000匹で60fpsを確認 |
 | 2026-07-18 | R-029 | adopted / implemented | 魚種別の移動速度・尾振り周期・上下揺れを分離し、4スタイルと2,000匹最速状態をE2E確認 |
+| 2026-07-18 | R-030〜R-031 | adopted / implemented | 5ワンショット + 2ホールドのPERFORM、同時押し、再トリガー、ESC復帰、複数魚種選択を実装 |

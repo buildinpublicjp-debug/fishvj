@@ -8,16 +8,25 @@ The current milestone is a complete interactive seed build: eight generated
 fish species, up to 2,000 GPU-animated individuals, separate MANDALA and
 FREE SWIM scenes, four swimming systems, four morphing structures per scene,
 four color-grading macros, microphone/audio-file analysis, blackout,
-fullscreen output, `INFINITE DIVE`, and `SCHOOL RUSH`.
+fullscreen output, `INFINITE DIVE`, multi-species selection, and a seven-pad
+live performance bank.
 
 ## Controls
 
 - `0`: morph between MANDALA and FREE SWIM
 - `1` / `2` / `3`: MYSTIC / SENSUAL / EUPHORIC
-- `D`: enter or exit INFINITE DIVE / SCHOOL RUSH
+- `D`: enter or exit INFINITE DIVE
 - `B`: blackout
 - `F`: fullscreen output
-- FISH DECK: select a fish species and its natural movement family
+- `T`: four-beat STROBE
+- `G`: 0.5-second RUSH
+- `H`: SCATTER and formation return
+- `J`: 200 ms HUE FLIP
+- `K`: two-second KALEIDO BURST
+- hold `Shift`: 0.3x SLOW-MO
+- hold `Tab`: momentary BLACKOUT
+- `Esc`: cancel all effects and restore the safe INTRO state
+- FISH DECK: add or remove multiple species; at least one always remains active
 - SCHOOL / GLIDE / WAVE / FLOAT: focus a movement system
 - SPIRAL / VORTEX / WAVE / BLOOM: morph the school structure over 1.5 seconds
 - CRUISE / CURRENT / CROSS / DRIFT: reshape open-water swimming over 1.5 seconds
@@ -52,6 +61,8 @@ granted.
   analysis
 - selective high-threshold bloom, beat pulse, color macros, and a bounded
   INFINITE DIVE transition
+- timestamp-driven, composable one-shot effects that restart safely when
+  re-triggered, plus hold-only slow motion and blackout
 - safe initial load of 800 fish; tested at 2,000 fish plus INFINITE DIVE and
   2,000 fish plus SCHOOL RUSH at 60 FPS in the local 1080-class preview
 
