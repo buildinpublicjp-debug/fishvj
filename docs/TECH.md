@@ -72,8 +72,8 @@
 3. 半径層ごとの差動回転と色相オフセット
 4. 8近傍・高閾値の選択的Bloom（明るい魚だけを滲ませる）
 5. 黒レベルを保つcontrast / saturation / hue / color preset
-
-時間Feedbackは将来項目として残し、Milestone 1では60fpsと魚の可読性を優先して未実装。
+6. TWIST / CHROMA / PIXEL / RIPPLE / GLITCH / ZOOM / MIRRORを同一ポストシェーダーで合成
+7. FEEDBACKが0より大きいときだけ68%解像度のHalfFloat履歴をping-pongし、表示用copy passへ渡す
 
 ### FeedbackPass
 - 前フレーム用ping-pong render targetはAfterimagePassの構造を流用し、汎用フィードバック基盤は作らない
@@ -81,7 +81,7 @@
 - 旧フレームへdecayを掛けた後、`clamp(max(current, mix(current, feedback, amount)), 0, 1)` の有界構成で合成。無制限の加算合成は禁止
 - ビート位相でzoom/rotationを脈動させ、ドロップ時だけzoomを一時的に深くする
 - MYSTIC=浅く遅く / SENSUAL=回転強め / EUPHORIC=深いzoom + 速い色相回転
-- 実装10分timebox。`feedbackEnabled` で即時OFF、超過/不安定時はstock AfterimagePassへ復帰
+- FEEDBACK 0%では履歴パスを完全に迂回し、再度ONにしたときは黒クリアして古い像を持ち越さない
 
 ### パフォーマンス / 8K
 - 初期値は出力領域サイズ、devicePixelRatio上限1、魚800体
@@ -201,3 +201,23 @@ fishvj/
 推奨順序: 1 → 2、3/4は実イベント実開催のタイミングで。
 
 要外部検証: WebGPUのM系チップ8K実効fps / SyphonのWeb側出力可否
+
+## PERFORM / 複数魚種選択（実装済み）
+
+- FISH DECKは8魚種の複数選択に対応し、最後の1種は解除できない。選択状態は2つの`vec4` uniformへ渡し、GPU側で対象魚を同時に強調する。
+- STROBE / RUSH / SCATTER / HUE FLIP / KALEIDO BURSTは開始時刻だけをReact stateへ記録し、強度包絡をレンダーループで計算する。再トリガーは時刻を上書きするため安全にリスタートできる。
+- RUSHとSCATTERは既存の個体座標・速度方向を変形し、HUE FLIP / STROBE / KALEIDO BURSTは既存ポストFXへ合成する。新しい描画パスやCPU個体更新は増やさない。
+- `Shift`のSLOW-MOは描画時間のみ0.3倍、`Tab`のBLACKOUTは保持中のみ表示を遮断する。keyup / window blur / ESCで必ず解除する。
+- ESCはパッドタイマーを全破棄し、INTRO（MANDALA / MYSTIC / PUNCH / 800匹 / SPIRAL）へ即時復帰する。
+- Z/X・C/V・矢印・角括弧はkeydown中だけ毎フレーム値を積分する連続フェーダー。更新量はdelta time基準で、フレームレートに依存しない。
+- MODEは0〜2の連続値として保持し、0/1/2をMYSTIC/SENSUAL/EUPHORICの基準点にする。魚の速度、色相処理、万華鏡分割数を同じ値から補間し、1〜3キーは従来どおり各基準点へ即時ジャンプする。
+- window blur / ESCでは保持キーを全解除し、キー取りこぼしによる値の暴走を防ぐ。
+
+## FX RACK / CUE BANK / AUTO PILOT（実装済み）
+
+- 右パネルをCORE / FX / CUESへ分離し、出力・FISH DECK・PERFORMは常時表示する。
+- 8 FXは0〜100%の連続uniformとして合成でき、Space+1〜8で対象選択、Space+左右で連続調整、Space+上下で0/100%へ移動する。
+- F1〜F8はSCENE / MODE / COLOR / SWARM / SWIM / FISH SIZE / SPEED / DEPTH / 8 FXを保存・呼出しする。Shift+F1〜F8で端末のlocalStorageへ上書きする。
+- CUE呼出しは設定した0.5〜8秒で連続値をsmoothstep補間し、途中で再トリガーした場合は現在値から安全に開始し直す。
+- AUTO PILOTはBPM基準の4 / 8 / 16拍でCUEを順送りする。PでON/OFF、Oで拍数変更、ESCで停止する。
+- ESCは進行中のCUE補間、AUTO、全FX、全保持キーを破棄し、INTROへ戻す。

@@ -1,10 +1,21 @@
 # FishVJ — Implementation Goal
 
-> 2026-07-18、プロジェクトオーナーの `/goal` 指示により実装ゲートを開放。実装中。
+> 2026-07-18、プロジェクトオーナーの `/goal` 指示により実装ゲートを開放。Milestone 2完了。
 
 ## ゴール
 
 音に反応するレイヤー式AI VJ「FishVJ」を、Vercelで動くURLとして完成させる。
+
+## Milestone 2 — Performance Expansion
+
+- [x] CORE / FX / CUESの3ビュー
+- [x] FEEDBACK / TWIST / CHROMA / PIXEL / RIPPLE / GLITCH / ZOOM / MIRROR
+- [x] 8 CUEの保存・呼出し
+- [x] 0.5〜8秒のCUEクロスフェード
+- [x] 4 / 8 / 16拍AUTO PILOT
+- [x] Space + キーのFX操作レイヤー
+- [x] FX込みのESC安全復帰
+- 詳細契約: `docs/EXPANSION-PLAN.md`
 
 ## P0受け入れ条件
 
@@ -13,7 +24,7 @@
 - [x] キー1〜3でモード切替できる
 - [ ] モード切替の2秒クロスフェード
 - [x] 6/8/12分割のミラー万華鏡が効いている
-- [ ] 時間フィードバック（前フレーム残像）
+- [x] 時間フィードバック（前フレーム残像）
 - [x] 生成した透過魚アトラスがFISH DECKへ追加される
 - [ ] 実行中の画像生成結果がクリップ棚へ追加される
 - [x] デモURLが存在する
@@ -32,6 +43,11 @@
 - [x] CLEAN / PUNCH / ACID / DEEP + COLOR DRIVE
 - [x] INFINITE DIVE + EXIT DIVE
 - [x] SCHOOL RUSH + EXIT RUSH
+- [x] 複数魚種の同時選択（最低1種を維持）
+- [x] PERFORM 5ワンショット + 2ホールド + 同時押し
+- [x] キーボード長押しフェーダー（MODE / COLOR / SPEED / DEPTH / SIZE）
+- [x] MYSTIC〜SENSUAL〜EUPHORICの連続モーフ
+- [x] ESCで全エフェクト解除 + INTRO復帰
 - [x] BLACKOUT / RESET / FULLSCREEN
 - [ ] ヒーロー魚GLB演出
 - [ ] journey入力
@@ -40,4 +56,4 @@
 
 - status: `open`
 - 開放根拠: プロジェクトオーナーの「`/goal` で実際に動くのを作っていって欲しい」
-- 現在: Milestone 1の動作版を実装・検証中
+- 現在: Milestone 2の動作版を実装・検証・公開済み

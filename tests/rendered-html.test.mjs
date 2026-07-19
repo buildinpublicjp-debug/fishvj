@@ -32,6 +32,13 @@ test("server-renders the FishVJ console shell", async () => {
   assert.match(html, /FISH/);
   assert.match(html, /FISH DECK/);
   assert.match(html, /INFINITE DIVE/);
+  assert.match(html, /MODE MORPH/);
+  assert.match(html, /HOLD TO FADE/);
+  assert.match(html, /CORE/);
+  assert.match(html, />FX</);
+  assert.match(html, /CUES/);
+  assert.match(html, /SPACE\+1–8 FX/);
+  assert.match(html, /F1–F8 CUE/);
   assert.match(html, /AUDIO INPUT/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });

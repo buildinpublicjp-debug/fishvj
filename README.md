@@ -8,16 +8,37 @@ The current milestone is a complete interactive seed build: eight generated
 fish species, up to 2,000 GPU-animated individuals, separate MANDALA and
 FREE SWIM scenes, four swimming systems, four morphing structures per scene,
 four color-grading macros, microphone/audio-file analysis, blackout,
-fullscreen output, `INFINITE DIVE`, and `SCHOOL RUSH`.
+fullscreen output, `INFINITE DIVE`, multi-species selection, and a seven-pad
+live performance bank. The second milestone adds an eight-effect rack, eight
+saveable cues with timed morphing, and a beat-synced auto pilot.
 
 ## Controls
 
 - `0`: morph between MANDALA and FREE SWIM
 - `1` / `2` / `3`: MYSTIC / SENSUAL / EUPHORIC
-- `D`: enter or exit INFINITE DIVE / SCHOOL RUSH
+- `D`: enter or exit INFINITE DIVE
 - `B`: blackout
 - `F`: fullscreen output
-- FISH DECK: select a fish species and its natural movement family
+- `T`: four-beat STROBE
+- `G`: 0.5-second RUSH
+- `H`: SCATTER and formation return
+- `J`: 200 ms HUE FLIP
+- `K`: two-second KALEIDO BURST
+- hold `Shift`: 0.3x SLOW-MO
+- hold `Tab`: momentary BLACKOUT
+- `Esc`: cancel all effects and restore the safe INTRO state
+- hold `Z` / `X`: continuously morph MYSTIC → SENSUAL → EUPHORIC
+- hold `C` / `V`: continuously decrease / increase COLOR DRIVE
+- hold `↓` / `↑`: continuously decrease / increase swimming SPEED
+- hold `←` / `→`: continuously decrease / increase DEPTH
+- hold `[` / `]`: continuously decrease / increase FISH SIZE
+- `F1`–`F8`: recall a CUE; `Shift` + `F1`–`F8`: save the current scene
+- `P`: toggle AUTO PILOT; `O`: cycle 4 / 8 / 16 beats
+- `Space` + `1`–`8`: select FEEDBACK / TWIST / CHROMA / PIXEL / RIPPLE /
+  GLITCH / ZOOM / MIRROR
+- hold `Space` + `←` / `→`: decrease / increase the selected FX
+- `Space` + `↓` / `↑`: set the selected FX to 0% / 100%
+- FISH DECK: add or remove multiple species; at least one always remains active
 - SCHOOL / GLIDE / WAVE / FLOAT: focus a movement system
 - SPIRAL / VORTEX / WAVE / BLOOM: morph the school structure over 1.5 seconds
 - CRUISE / CURRENT / CROSS / DRIFT: reshape open-water swimming over 1.5 seconds
@@ -52,6 +73,13 @@ granted.
   analysis
 - selective high-threshold bloom, beat pulse, color macros, and a bounded
   INFINITE DIVE transition
+- timestamp-driven, composable one-shot effects that restart safely when
+  re-triggered, plus hold-only slow motion and blackout
+- frame-rate-independent keyboard faders with continuous on-screen level meters;
+  MODE also interpolates color, motion speed, and kaleidoscope divisions
+- one integrated shader for seven continuous screen-space FX, plus a bounded
+  68%-resolution ping-pong history path used only when FEEDBACK is active
+- eight local CUE slots with 0.5–8 second morphing and 4/8/16-beat AUTO PILOT
 - safe initial load of 800 fish; tested at 2,000 fish plus INFINITE DIVE and
   2,000 fish plus SCHOOL RUSH at 60 FPS in the local 1080-class preview
 
