@@ -60,6 +60,13 @@
 | R-035 | adopted | P0 | worldのbounded/continuous timelineが未定義 | adopt（timeline union） |
 | R-036 | adopted | P1 | asset memory gateにbyte上限とdecoded算術がない | adopt（2段ceiling） |
 | R-037 | adopted | P1 | p95計測が平均fpsで代用できる | adopt（warm-up + 3,600 tick） |
+| R-038 | adopted | P0 | bounded worldのseek/tempoからstateが一意に決まらない | adopt（Baseline + Q32.32） |
+| R-039 | adopted | P1 | manifest/session seedとPRNG substream導出が曖昧 | adopt（seed一本化） |
+| R-040 | adopted | P1 | composite entity IDのcanonical順序がない | adopt（numeric tuple order） |
+| R-041 | adopted | P1 | shared 2,000B metadataのbinary layoutがない | adopt（world.dict） |
+| R-042 | adopted | P1 | proof fixtureがcontent hashでpinされていない | adopt（pinned fixtures） |
+| R-043 | adopted | P2 | 死亡entityへのinvokeが未定義 | adopt（no-op + diagnostic） |
+| R-044 | adopted | P2 | 複数graph伝播とmulti-blobに機械判定がない | adopt（dual trigger + 2 blob） |
 
 ## 指摘詳細
 
@@ -440,6 +447,20 @@
 - 反映先: 上記5文書。詳細な破壊シナリオとpatch auditは`WORLD_REVIEW_X.md`を正とする。
 - 棄却理由: —
 
+### R-038〜R-044 — World設計の独立再監査
+
+- status: `adopted / patched / active P0=0 / active P1=0`
+- source: [WORLD_REVIEW_F](./WORLD_REVIEW_F.md) F-W01〜F-W07
+- priority: P0×1 / P1×4 / P2×2
+- 対象: `WORLD_SOURCE_V0`、`PERFORMANCE_MAP_V0`、`OUTPUT_SURFACES_V0`、
+  `WORLD_PROOFS_V0`、`FISHVJ_INSTRUMENT_V2`
+- 採用内容: bounded worldを`Baseline(p)`で定義し、後方seek/reverse/loopとQ32.32 tempoを固定した。
+  manifest seedへ一本化したPCG32、numeric entity tuple順、fixed `world.dict` layoutを追加した。
+  proof manifest/input/expectedをrepo fixtureへ置いてJCS SHA-256でpinし、water decay、dead entity no-op、
+  dual-trigger graph merge、2-blob入力、60秒DJ transportを機械判定可能にした。
+- 反映先: 上記5文書、`fixtures/world/`。詳細な破壊シナリオとpatch auditは`WORLD_REVIEW_F.md`を正とする。
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -464,3 +485,4 @@
 | 2026-07-18 | R-029 | adopted / implemented | 魚種別の移動速度・尾振り周期・上下揺れを分離し、4スタイルと2,000匹最速状態をE2E確認 |
 | 2026-07-21 | Z-01 | adopted | DJ/VJ 2文法を維持し、WorldSourceを新source種別として増築。物理multi-surfaceは契約のみ |
 | 2026-07-21 | R-030〜R-037 | adopted / patched | World設計を一回攻撃監査。P0×6・P1×2を全件反映し、active P0/P1を0件へ閉じた |
+| 2026-07-22 | R-038〜R-044 | adopted / patched | Fable独立監査P0×1・P1×4・P2×2を全件反映し、fixture hash再計算後active P0/P1を0件へ閉じた |

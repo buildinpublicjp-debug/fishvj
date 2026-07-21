@@ -1,6 +1,7 @@
 # FishVJ Output Surfaces Contract v0
 
-> status: frozen / topology hard / X review P0=0 / physical multi-projector implementation out of v0
+> status: frozen / X-W01〜X-W08 + F-W01〜F-W07 patched / active P0=0 / active P1=0 /
+> physical multi-projector implementation out of v0
 >
 > initial proof: camera `1台` + projector `1台`（contract / unverified）
 
@@ -76,8 +77,10 @@ interface CameraBinding {
 6. program surfaceのcalibration hashが解決できないprofileは開始拒否。
 7. camera bindingは1 surfaceだけを参照し、frozen S3 calibrationと同じcanvas clean-outputを使う。
 
-content hashは自身のhash fieldを除いたcanonical JSONと全calibration profile hashを固定順で
-連結したbyte列のSHA-256（contract）である。
+content hashは自身の`contentHash` fieldを除いた[RFC 8785 JCS](https://www.rfc-editor.org/rfc/rfc8785.html)
+UTF-8 byte列に、surface IDのUTF-8 byte辞書順で各surfaceのcalibration SHA-256 raw `32B`を
+（同じhashでもsurfaceごとに）連結したbyte列のSHA-256（contract）である。文字列表現はlowercase hex
+`sha256:` + `64文字`へ固定する。
 
 ## 4. render model
 
@@ -116,7 +119,8 @@ tick `n`のbehavior更新後にentityがportal from edgeを越えた場合:
 2. from/to rangeの比でdestination edge positionへ写す。
 3. destination内側へ`65536 Q16 = 1 logical pixel`（contract）進めて位置をcanonicalizeする。
 4. entity ID、velocity、age、group、PRNG stateを維持する。
-5. tick `n`のtransfer queueへ積み、entity ID順でownerをto surfaceへ変更する。
+5. tick `n`のtransfer queueへ積み、WorldSource §3.2のcanonical entity tuple
+   `(systemIndexU8, spawnCounterU32)`昇順でownerをto surfaceへ変更する。
 6. tick `n`のRenderSnapshotはdestinationだけへentityを出す。
 
 同tickに複数portalを越える速度はv0で禁止し、最大移動量を最小surface辺長の`1/4`以下
@@ -166,6 +170,8 @@ physical window position、display EDID、OS compositor timestamp、projector la
 
 ### simulated two-surface fixture
 
+- fixtureは[`fixtures/world/proof-cross-surface-v0.json`](../fixtures/world/proof-cross-surface-v0.json)を正とし、
+  `fixtureHash`不一致ならproof開始前にrejectする。
 - A/B各`480×540` offscreen target（contract）をlogical `960×540`に隣接させる。
 - `200 entities`（contract）のうち指定entityがright portalを越えたtickでAから消えBへ一度だけ現れる。
 - `120 seconds`（contract）のlive/replayで30 tickごとのworld hashが完全一致。

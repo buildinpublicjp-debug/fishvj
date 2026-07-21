@@ -6,7 +6,8 @@
 >
 > 基準日: 2026-07-21
 >
-> status: frozen / Z-01 adopted / X-W01〜X-W08 patched / active P0=0 / implementation not started
+> status: frozen / Z-01 adopted / X-W01〜X-W08 + F-W01〜F-W07 patched /
+> active P0=0 / active P1=0 / implementation not started
 >
 > scope: WorldSource、Performance Map、Output Surfaces、world proof roadmap
 
@@ -155,6 +156,7 @@ Instrument v1のglobal worst `59,720B/分`、上限 `60,000B/分`、margin `280B
 - world `load/eject/invoke`はcontrol JSON枠を共有。
 - world continuous paramはbase-param binary aggregate 8Hz枠を共有。
 - map/surface/world hashはsession manifest/dictionary 2,000B枠を共有。
+- world dictionaryは`WORLD_SOURCE_V0 §5.1`のfixed binary layoutとraw 32B hashを使う。
 - shared上限超過mapはrecord開始前にrejectする。
 
 ### semantic hash
@@ -190,8 +192,8 @@ live/replayで30 tickごとのhash trace完全一致を要求する。
 | D0-1 | official capability baseline + Z-01 | WORLD_RESEARCH_V1 |
 | D0-2 | frozen contract衝突監査 | 本書§0/§11 |
 | D0-3 | WorldSource / map / surface contracts | 3文書 |
-| D0-4 | 4 proof contracts | WORLD_PROOFS_V0 |
-| D0-5 | X形式攻撃、P0修正、再監査 | REVIEW R-030以降 |
+| D0-4 | 5 proof contracts + graph fixture | WORLD_PROOFS_V0 + `fixtures/world/` |
+| D0-5 | X形式攻撃 + 独立F監査、P0/P1修正、再監査 | REVIEW R-030〜R-044 |
 | D0-6 | docs-only draft PR | checks green + draft |
 
 ### 9.2 実装milestones
@@ -205,7 +207,7 @@ live/replayで30 tickごとのhash trace完全一致を要求する。
 | 3 | S3 | frozen `24h`（contract） | camera/CV v0 | 512→256px |
 | 4 | S4 | `20h`（Instrument v1 contract） | source slot/transport/preview/program | adapter stubs |
 | 5 | S5 | `20h`（Instrument v1 contract） | EQ/FLX4/2 grammar | LED/Shift表示 |
-| 6 | W0 | `20h`（contract / estimated） | fixed-point WorldRuntime、manifest validator、hash | renderer polish |
+| 6 | W0 | `20h`（contract / estimated） | fixed-point WorldRuntime、manifest validator、hash、W-P05 transport | renderer polish |
 | 7 | W1 | `20h`（contract / estimated） | W-P01 water + W-P02 lifecycle minimum | trail length、entity cap |
 | 8 | W2 | `20h`（contract / estimated） | graph-256 + W-P03 fish fixture | cross-system visual polish |
 | 9 | W3 | `12h`（contract / estimated） | W-P04 offscreen surfaces | physical output実験 |

@@ -1,0 +1,164 @@
+{
+  "fixtureAsset": {
+    "algorithm": "rgba8-ellipse-tail-v0",
+    "description": "512x512 row-major RGBA8. Body iff (x-240)^2*8100+(y-256)^2*25600<=207360000; tail iff 360<=x<=470 and 4*abs(y-256)<=3*(x-360). Foreground=[64,220,255,255], background=[0,0,0,0].",
+    "sha256": "sha256:3c96edec1de6d547d6cf920c9f19a3271294aa018328342ccd1c4f10dc41d5d7"
+  },
+  "fixtureHash": "sha256:192240a6ab3d78718c118ffe7c30c1d4ebe8f5af2b532363080a61354e08bd67",
+  "id": "proof-fish-v0",
+  "expected": {
+    "assetAlphaPixels": { "equalZero": 208815, "greaterThanZero": 53329 },
+    "assetBytes": 1048576,
+    "duplicateEntityIds": 0,
+    "entityCountAfterSpawn": 2000,
+    "spawnedCollectedEntities": 1
+  },
+  "v": 0,
+  "worldManifest": {
+    "assets": [
+      {
+        "bytes": 1048576,
+        "id": "collected-fish",
+        "role": "sprite",
+        "sha256": "sha256:3c96edec1de6d547d6cf920c9f19a3271294aa018328342ccd1c4f10dc41d5d7",
+        "url": "fixture://collected-fish-v0"
+      }
+    ],
+    "bindings": [
+      {
+        "capability": "entity.repel",
+        "target": { "id": "fish", "scope": "group" },
+        "verbId": "fish.repel"
+      },
+      {
+        "capability": "entity.attract",
+        "target": { "id": "fish", "scope": "group" },
+        "verbId": "fish.feed"
+      },
+      {
+        "capability": "entity.spawn",
+        "target": { "id": "fish", "scope": "group" },
+        "verbId": "fish.spawn-collected"
+      }
+    ],
+    "contentHash": "sha256:c0e080f43d036a1abf4e512c1f6f4fd0b894d00cd5ef0f7672e39932947876a2",
+    "groups": [
+      { "id": "fish", "systemId": "boids", "tags": ["fish", "collected"] }
+    ],
+    "id": "proof-fish-world-v0",
+    "limits": {
+      "maxAssets": 1,
+      "maxEntities": 2000,
+      "maxGroups": 1,
+      "maxParameters": 0,
+      "maxSystems": 1
+    },
+    "logicalSize": { "height": 540, "width": 960 },
+    "name": "Proof Fish World v0",
+    "output": {
+      "alpha": "premultiplied",
+      "colorSpace": "linear-srgb",
+      "format": "rgba8"
+    },
+    "parameters": [],
+    "provenance": { "author": "FishVJ", "license": "CC0-1.0" },
+    "runtime": "fishvj-world-v0",
+    "seed": { "algorithm": "pcg32-v1", "valueU64": "0x0000000000000003" },
+    "surfaces": {
+      "maximum": 1,
+      "minimum": 1,
+      "singleSurfaceFallback": "supported"
+    },
+    "systems": [
+      {
+        "capacity": 2000,
+        "config": {
+          "alignmentQ16": 16384,
+          "cohesionQ16": 8192,
+          "maxSpeedQ16": 98304,
+          "neighborRadiusQ16": 4194304,
+          "separationQ16": 32768
+        },
+        "groupId": "fish",
+        "id": "boids",
+        "initialCount": 1999,
+        "kernel": "boids-v0",
+        "type": "boids"
+      }
+    ],
+    "tickHz": 60,
+    "timeline": { "djCompatible": false, "kind": "continuous" },
+    "v": 0
+  },
+  "tracks": {
+    "durationEngineTicks": 3600,
+    "events": [
+      {
+        "orderInTick": 0,
+        "payload": {
+          "action": "invoke",
+          "deck": "A",
+          "phase": "trigger",
+          "strengthQ8": 255,
+          "target": { "id": "fish", "scope": "group" },
+          "update": "atomic",
+          "verbId": "fish.spawn-collected"
+        },
+        "sourceTick": 0,
+        "type": "world"
+      },
+      {
+        "orderInTick": 0,
+        "payload": {
+          "action": "invoke",
+          "deck": "A",
+          "phase": "trigger",
+          "strengthQ8": 255,
+          "target": { "id": "fish", "scope": "group" },
+          "update": "atomic",
+          "verbId": "fish.repel"
+        },
+        "sourceTick": 1200,
+        "type": "world"
+      },
+      {
+        "orderInTick": 1,
+        "payload": {
+          "action": "invoke",
+          "deck": "A",
+          "phase": "trigger",
+          "strengthQ8": 255,
+          "target": { "id": "fish", "scope": "group" },
+          "update": "atomic",
+          "verbId": "fish.feed"
+        },
+        "sourceTick": 1200,
+        "type": "world"
+      }
+    ],
+    "sampleEveryEngineTicks": 12,
+    "spaceSegments": [
+      {
+        "energy": 0,
+        "fromEngineTick": 0,
+        "grid": { "cells": [], "fill": 0 },
+        "silRatio": 0,
+        "toEngineTickExclusive": 600
+      },
+      {
+        "energy": 96,
+        "fromEngineTick": 600,
+        "grid": { "cells": [[27, 255], [28, 255], [35, 255], [36, 255]], "fill": 0 },
+        "silRatio": 16,
+        "toEngineTickExclusive": 900
+      },
+      {
+        "energy": 0,
+        "fromEngineTick": 900,
+        "grid": { "cells": [], "fill": 0 },
+        "silRatio": 0,
+        "toEngineTickExclusive": 3600
+      }
+    ]
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "fixtureHash": "sha256:0579a5cf4c51198f06d8f3094b8151bd37f153f3ac77603a067733910311a109",
+  "id": "proof-water-v0",
+  "expected": {
+    "decayProbe": {
+      "decayQ16": 61440,
+      "initialImpulseQ16": 65536,
+      "recurrence": "vNext=floor(v*decayQ16/65536)",
+      "ticksToExactZero": 139
+    },
+    "duplicateEntityIds": 0,
+    "particleCountEveryTick": 2048,
+    "semanticHashDifferenceWithFastMask": 0
+  },
+  "derivedComparators": {
+    "zeroSpace": {
+      "durationEngineTicks": 3600,
+      "energy": 0,
+      "gridFill": 0,
+      "silRatio": 0
+    }
+  },
+  "v": 0,
+  "worldManifest": {
+    "assets": [],
+    "bindings": [
+      {
+        "capability": "flow.impulse",
+        "target": { "id": "flow", "scope": "system" },
+        "verbId": "water.impulse"
+      }
+    ],
+    "contentHash": "sha256:4740518a062a60797154eb7e31827cc8f42c75d820b7088dba0788cc7cd68da8",
+    "groups": [
+      { "id": "water", "systemId": "particles", "tags": ["water"] }
+    ],
+    "id": "proof-water-world-v0",
+    "limits": {
+      "maxAssets": 0,
+      "maxEntities": 2048,
+      "maxGroups": 1,
+      "maxParameters": 0,
+      "maxSystems": 2
+    },
+    "logicalSize": { "height": 540, "width": 960 },
+    "name": "Proof Water World v0",
+    "output": {
+      "alpha": "premultiplied",
+      "colorSpace": "linear-srgb",
+      "format": "rgba8"
+    },
+    "parameters": [],
+    "provenance": { "author": "FishVJ", "license": "CC0-1.0" },
+    "runtime": "fishvj-world-v0",
+    "seed": { "algorithm": "pcg32-v1", "valueU64": "0x0000000000000001" },
+    "surfaces": {
+      "maximum": 1,
+      "minimum": 1,
+      "singleSurfaceFallback": "supported"
+    },
+    "systems": [
+      {
+        "config": { "decayQ16": 61440, "diffusionQ16": 0, "inputGainQ16": 65536 },
+        "height": 36,
+        "id": "flow",
+        "kernel": "field2d-v0",
+        "type": "field2d",
+        "width": 64
+      },
+      {
+        "capacity": 2048,
+        "config": { "dragQ16": 64512, "fieldGainQ16": 65536, "trailTicks": 24 },
+        "groupId": "water",
+        "id": "particles",
+        "initialCount": 2048,
+        "kernel": "flow-particles-v0",
+        "type": "particles"
+      }
+    ],
+    "tickHz": 60,
+    "timeline": { "djCompatible": false, "kind": "continuous" },
+    "v": 0
+  },
+  "tracks": {
+    "durationEngineTicks": 3600,
+    "sampleEveryEngineTicks": 12,
+    "spaceSegments": [
+      {
+        "energy": 0,
+        "fromEngineTick": 0,
+        "grid": { "cells": [], "fill": 0 },
+        "silRatio": 0,
+        "toEngineTickExclusive": 600
+      },
+      {
+        "energy": 64,
+        "fromEngineTick": 600,
+        "grid": { "cells": [[27, 255], [28, 255], [35, 255], [36, 255]], "fill": 0 },
+        "silRatio": 16,
+        "toEngineTickExclusive": 1800
+      },
+      {
+        "energy": 0,
+        "fromEngineTick": 1800,
+        "grid": { "cells": [], "fill": 0 },
+        "silRatio": 0,
+        "toEngineTickExclusive": 3600
+      }
+    ]
+  }
+}

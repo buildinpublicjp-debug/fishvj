@@ -1,6 +1,6 @@
 # FishVJ Performance Map Contract v0
 
-> status: frozen / hard mapping boundary / X review P0=0 / implementation not started
+> status: frozen / X-W01〜X-W08 + F-W01〜F-W07 patched / active P0=0 / active P1=0 / implementation not started
 >
 > purpose: 物理操作、操作文法、対象scope、source能力を分離する
 
@@ -76,7 +76,8 @@ interface PerformanceBinding {
 | absolute/relative canonical rate | aggregate `8Hz`のshared replay cap（frozen contract） |
 | operator-facing interpolation | `30–60Hz`（Instrument v1 contract） |
 
-content hashは自身のhash fieldを除くcanonical JSONのSHA-256（contract）である。
+content hashは自身の`contentHash` fieldを除く[RFC 8785 JCS](https://www.rfc-editor.org/rfc/rfc8785.html)
+UTF-8 byte列のSHA-256（contract）である。lowercase hex `sha256:` + `64文字`へ固定する。
 
 ## 3. target scope — 全体と個別を曖昧にしない
 
@@ -142,7 +143,9 @@ type SetPerformanceMapPayload = {
 
 Instrument v1のplay/cue/jog/tempo/hotcueを変更しない。WorldSourceでもDJ gestureはdeckの
 transportとmixerを操作する。worldがbounded timelineを持たない場合、manifestはDJ-compatibleを
-宣言できず、そのworldはVJ grammarだけでload可能とする。
+宣言できず、そのworldはVJ grammarだけでload可能とする。bounded worldのCUE/jog/hotcue/reverse/
+loop wrapとtempoの意味は[WORLD_SOURCE_V0 §3.5](./WORLD_SOURCE_V0.md#35-bounded-transport-semantics)を正とし、
+Performance Mapが別のseek規則を定義してはならない。
 
 ### 6.2 VJ grammar — classic stack
 

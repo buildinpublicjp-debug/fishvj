@@ -7,6 +7,8 @@
 > method: single adversarial pass
 >
 > result: X-W01〜X-W08 adopted and patched / active P0=0 / active P1=0
+>
+> follow-up: 2026-07-22の独立再監査は[WORLD_REVIEW_F](./WORLD_REVIEW_F.md)を正とする
 
 ## X-W01
 
