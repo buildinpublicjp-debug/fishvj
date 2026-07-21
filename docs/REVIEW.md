@@ -50,6 +50,16 @@
 | R-025 | adopted | P0 | 装飾円を除き、群れ構造を独立切替できる必要がある | adopt（4 SWARM） |
 | R-026 | adopted | P0 | 剛体回転ではなく個体が泳いで見える運動が必要 | adopt（個体GPU泳動） |
 | R-027 | adopted | P1 | 魚の可読サイズとVORTEXの密度を現場調整できない | adopt（独立SIZE + 層圧縮） |
+| R-028 | adopted | P0 | 曼荼羅と自由遊泳を独立sceneとして切り替える | adopt（2 SCENE） |
+| R-029 | adopted | P1 | 魚種ごとの速度と揺れが同じテンポに見える | adopt（motion分離） |
+| R-030 | adopted | P0 | frozen SpacePayloadへsurface IDを暗黙追加していた | adopt（profile routing） |
+| R-031 | adopted | P0 | world loadとperformance map選択がatomicでない | adopt（2 hash payload） |
+| R-032 | adopted | P0 | world param targetとu16量子化が5B replay recordに閉じない | adopt（compound dictionary） |
+| R-033 | adopted | P0 | system kernel/config不在でworld hashが挙動を固定しない | adopt（versioned kernels） |
+| R-034 | adopted | P0 | World output形式が共通EQ/mixerへ接続不能 | adopt（linear premultiplied RGBA8） |
+| R-035 | adopted | P0 | worldのbounded/continuous timelineが未定義 | adopt（timeline union） |
+| R-036 | adopted | P1 | asset memory gateにbyte上限とdecoded算術がない | adopt（2段ceiling） |
+| R-037 | adopted | P1 | p95計測が平均fpsで代用できる | adopt（warm-up + 3,600 tick） |
 
 ## 指摘詳細
 
@@ -415,6 +425,19 @@
 - priority: P1
 - 採用内容: 移動速度と尾振り周期を分離し、SCHOOLは速い小刻みな尾振り、GLIDEは直進中心、WAVEは大きな全身うねり、FLOATは遅い上下漂流へ調整。MYSTIC / SENSUAL / EUPHORICの全体速度差、4遊泳スタイル、RUSH、2,000匹最速状態をブラウザE2Eで確認する。
 - 反映先: `TECH.md`「魚群」、魚頂点シェーダー
+
+### R-030〜R-037 — WorldSource増築の一回攻撃監査
+
+- status: `adopted / patched / active P0=0 / active P1=0`
+- source: [WORLD_REVIEW_X](./WORLD_REVIEW_X.md) X-W01〜X-W08
+- priority: P0×6 / P1×2
+- 対象: `WORLD_SOURCE_V0`、`PERFORMANCE_MAP_V0`、`OUTPUT_SURFACES_V0`、
+  `WORLD_PROOFS_V0`、`FISHVJ_INSTRUMENT_V2`
+- 採用内容: frozen SpacePayloadをsession profile routingへ戻した。world/mapの2 hashをload eventへ
+  atomicに同梱した。world paramのdeck/target/rangeをdictionary codeへ固定し、live時点でu16往復後の
+  Q16へcanonicalizeした。systemごとのversioned kernel/config、bounded/continuous timeline、
+  linear-premultiplied RGBA8出力、asset memory ceiling、warm-up付きp95測定を追加した。
+- 反映先: 上記5文書。詳細な破壊シナリオとpatch auditは`WORLD_REVIEW_X.md`を正とする。
 - 棄却理由: —
 
 ## 判断履歴
@@ -439,3 +462,5 @@
 | 2026-07-18 | R-025〜R-027 | adopted / implemented | 装飾円削除、4 SWARMモーフ、個体泳動、独立FISH SIZE、VORTEX層圧縮を実装し、2,000匹 + DIVEで60fpsを確認 |
 | 2026-07-18 | R-028 | adopted / implemented | MANDALA / FREE SWIM、自由遊泳4スタイル、SCHOOL RUSHを実装し、2,000匹で60fpsを確認 |
 | 2026-07-18 | R-029 | adopted / implemented | 魚種別の移動速度・尾振り周期・上下揺れを分離し、4スタイルと2,000匹最速状態をE2E確認 |
+| 2026-07-21 | Z-01 | adopted | DJ/VJ 2文法を維持し、WorldSourceを新source種別として増築。物理multi-surfaceは契約のみ |
+| 2026-07-21 | R-030〜R-037 | adopted / patched | World設計を一回攻撃監査。P0×6・P1×2を全件反映し、active P0/P1を0件へ閉じた |
