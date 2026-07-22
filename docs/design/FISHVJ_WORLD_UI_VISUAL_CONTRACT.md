@@ -1,10 +1,10 @@
-# FishVJ World Operator UI Visual Contract v1
+# FishVJ World Operator UI Visual Contract v2
 
-> status: frozen / R-045〜R-046 patched / owner approved / implementation not started
+> status: frozen / R-045〜R-047 patched / owner approved / implementation not started
 >
-> canonical image: [`fishvj-world-operator-master-v1.png`](./fishvj-world-operator-master-v1.png)
+> canonical image: [`fishvj-world-operator-master-v2.png`](./fishvj-world-operator-master-v2.png)
 >
-> image SHA-256: `45a9dfcf68f4027b5a4a405eb02a0ec543f57bd231a9325d54f4778fd768d57b`
+> image SHA-256: `bb5df5b8f0d2b844e18320d82b08764ce6f37e630d690e70b305043703f73006`
 >
 > reference viewport: `1920×1080`, DPR `1`
 
@@ -16,6 +16,8 @@ DOM pixel diffのgoldenにはしない。レイアウト、情報階層、contro
 
 現行FishVJ console、Performance Map editor、source browser全画面、surface topology/calibration画面は
 別screen contractである。本画像はそれらを置換・凍結しない。
+
+旧`fishvj-world-operator-master-v1.png`は監査履歴として保持するが、normativeではない。
 
 ## 2. 凍結する画面構造
 
@@ -36,10 +38,15 @@ DOM pixel diffのgoldenにはしない。レイアウト、情報階層、contro
 
 ### bounded world
 
-`RIVER DELTA / BOUNDED WORLD`側だけが`PLAY / CUE / LOOP`、cue points、orbital world-time controlを持つ。
+`RIVER DELTA / BOUNDED WORLD`側だけが`PLAY / CUE / HOT CUE`、cue points、orbital world-time controlを持つ。
 orbital controlには`STATE SEEK · BASELINE(p)`を表示し、seekが
 [WORLD_SOURCE_V0 §3.5](../WORLD_SOURCE_V0.md#35-bounded-transport-semantics)のcanonical resimulationで
 あることを隠さない。
+
+loopはmanifestの`loopStartTick..loopEndTickExclusive`から導出する固定範囲で、ring内に
+`MANIFEST LOOP / 0–240 TICKS`形式でread-only表示する。`0–240`は正典画像内のfixture値であり、runtimeでは
+loaded manifest値へ置換する。演者が4/8拍などの長さを選ぶbeat-loop controlとactive `LOOP` buttonを
+表示してはならない。
 
 world速度は`TIME SCALE 0.50–2.00×`で表示し、BPMとして表示しない。BPMはBeatStateの情報であって
 WorldSource固有transport値ではない。
@@ -72,6 +79,7 @@ WorldSource固有transport値ではない。
 
 - continuous worldへactive DJ transportを追加する。
 - time scaleをBPMとして表示する。
+- bounded worldへperformer-selectable beat loop、`4/8`長表示、active `LOOP` buttonを追加する。
 - fixed mixerをPerformance Map編集対象に見せる。
 - target未選択時に暗黙で別scopeへfallbackする表示。
 - 1 padを複数eventへ見せるsplit mapping。
@@ -81,8 +89,10 @@ WorldSource固有transport値ではない。
 ## 7. 実装後の合格条件
 
 1. `1920×1080`, DPR `1`でcanonical構造を再現したgoldenを採取する。
-2. bounded/continuousのtransport control存在判定をDOM testで分離する。
+2. bounded deckに`PLAY / CUE / HOT CUE`が各1件あり、active `LOOP` buttonと`4/8`表記が各0件である。
 3. UI内の文字列に`BPM`が`0件`、continuous deck内のactive seek/cue/loop controlが`0件`である。
 4. EQ 3 band×2 deck、opacity 2本、crossfader 1本、verb pad 8枚、target scope 3種をDOMで数える。
 5. grammar switch前後のRenderSnapshotとPROGRAM pixel diffが`0`である。
 6. common mixerはbounded/continuous両sourceで操作可能である。
+7. bounded ringのmanifest loop範囲がloaded manifestの`loopStartTick..loopEndTickExclusive`と一致し、
+   operator操作で変化しない。

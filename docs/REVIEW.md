@@ -69,6 +69,7 @@
 | R-044 | adopted | P2 | 複数graph伝播とmulti-blobに機械判定がない | adopt（dual trigger + 2 blob） |
 | R-045 | adopted | P0 | continuous worldへactive DJ transportを表示していた | adopt（VJ-only disabled panel） |
 | R-046 | adopted | P1 | world time scaleをBPM表示しbounded seek意味論がUIから読めない | adopt（倍率 + Baseline label） |
+| R-047 | adopted | P1 | bounded deckへschemaにない4/8 beat loop操作を表示していた | adopt（HOT CUE + fixed manifest loop表示） |
 
 ## 指摘詳細
 
@@ -476,6 +477,20 @@
 - 反映先: `docs/design/FISHVJ_WORLD_UI_VISUAL_CONTRACT.md`、同正典PNG、本書§10。
 - 棄却理由: —
 
+### R-047 — bounded deckの未契約beat loop
+
+- status: `adopted / patched / frozen`
+- source: プロジェクトオーナーの正典画像レビュー
+- priority: P1
+- 対象: `fishvj-world-operator-master-v1.png`、`PERFORMANCE_MAP_V0 §6.1`、
+  `WORLD_SOURCE_V0 §3.5`、`FISHVJ_INSTRUMENT_V2 §10`
+- 採用内容: DJ parityに存在しないactive `LOOP` buttonと`4/8 LOOP`選択を削除し、transportは
+  `PLAY / CUE / HOT CUE`へ固定した。loopはmanifestの`loopStartTick..loopEndTickExclusive`を
+  `MANIFEST LOOP / 0–240 TICKS`形式でread-only表示し、session中にoperatorから変更できない契約を
+  Performance MapとWorldSourceへ明記した。
+- 反映先: 上記3文書、`docs/design/FISHVJ_WORLD_UI_VISUAL_CONTRACT.md`、正典PNG v2、本書§10。
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -502,3 +517,4 @@
 | 2026-07-21 | R-030〜R-037 | adopted / patched | World設計を一回攻撃監査。P0×6・P1×2を全件反映し、active P0/P1を0件へ閉じた |
 | 2026-07-22 | R-038〜R-044 | adopted / patched | Fable独立監査P0×1・P1×4・P2×2を全件反映し、fixture hash再計算後active P0/P1を0件へ閉じた |
 | 2026-07-22 | R-045〜R-046 | adopted / patched / frozen | World operator UIのcontinuous transportとBPM表記を修正し、正典画像v1をfreeze |
+| 2026-07-22 | R-047 | adopted / patched / frozen | bounded deckの未契約beat loopを削除し、HOT CUEと固定manifest loop表示で正典画像v2をfreeze |

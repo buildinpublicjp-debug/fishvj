@@ -147,6 +147,10 @@ transportとmixerを操作する。worldがbounded timelineを持たない場合
 loop wrapとtempoの意味は[WORLD_SOURCE_V0 §3.5](./WORLD_SOURCE_V0.md#35-bounded-transport-semantics)を正とし、
 Performance Mapが別のseek規則を定義してはならない。
 
+v0のloop区間はmanifestの`loopStartTick..loopEndTickExclusive`で固定し、operator UIはその範囲を
+read-only表示する。演者が4/8拍などの長さを選ぶbeat-loop controlと、その変更eventはv0 schemaに
+存在しない（hard）。
+
 ### 6.2 VJ grammar — classic stack
 
 `fishvj-classic-v0`はInstrument v1 §5.3のpad mapをそのまま維持する。
