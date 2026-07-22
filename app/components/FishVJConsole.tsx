@@ -4,20 +4,20 @@ import {
   ChangeEvent,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
-import {
+import { engine, ParamEventCoalescer, type EngineEventInput } from "../engine";
+import type {
   AudioLevels,
   ColorPreset,
-  FishCanvas,
   ModeName,
   SceneMode,
   SwarmType,
   SwimType,
-  VisualConfig,
-} from "./FishCanvas";
+} from "../engine";
+import { FishCanvas } from "./FishCanvas";
 
 const FISH = [
   { name: "SARDINE", motion: "SCHOOL" },
@@ -107,19 +107,26 @@ function RangeControl({
 }
 
 export function FishVJConsole() {
-  const [scene, setScene] = useState<SceneMode>("MANDALA");
-  const [mode, setMode] = useState<ModeName>("MYSTIC");
-  const [colorPreset, setColorPreset] = useState<ColorPreset>("PUNCH");
-  const [colorDrive, setColorDrive] = useState(0.72);
-  const [fishCount, setFishCount] = useState(800);
-  const [fishSize, setFishSize] = useState(1.5);
-  const [speed, setSpeed] = useState(0.68);
-  const [depth, setDepth] = useState(0.74);
-  const [dive, setDive] = useState(false);
-  const [blackout, setBlackout] = useState(false);
-  const [selectedSpecies, setSelectedSpecies] = useState(0);
-  const [swimType, setSwimType] = useState<SwimType>("SCHOOL");
-  const [swarm, setSwarm] = useState<SwarmType>("SPIRAL");
+  const engineState = useSyncExternalStore(
+    engine.subscribe,
+    engine.getState,
+    engine.getState,
+  );
+  const {
+    scene,
+    mode,
+    colorPreset,
+    colorDrive,
+    fishCount,
+    fishSize,
+    speed,
+    depth,
+    dive,
+    blackout,
+    selectedSpecies,
+    swimType,
+    swarm,
+  } = engineState;
   const [fps, setFps] = useState(60);
   const [audioLevels, setAudioLevels] = useState<AudioLevels>(EMPTY_LEVELS);
   const [audioInput, setAudioInput] = useState("demo");
@@ -131,38 +138,21 @@ export function FishVJConsole() {
   const fileRef = useRef<HTMLInputElement>(null);
   const audioRuntimeRef = useRef<AudioRuntime | null>(null);
   const demoFrameRef = useRef(0);
-  const beatStartRef = useRef(performance.now());
+  const beatStartRef = useRef<number | null>(null);
 
-  const config = useMemo<VisualConfig>(
-    () => ({
-      scene,
-      mode,
-      colorPreset,
-      colorDrive,
-      fishCount,
-      fishSize,
-      speed,
-      depth,
-      dive,
-      selectedSpecies,
-      swimType,
-      swarm,
-    }),
-    [
-      scene,
-      mode,
-      colorPreset,
-      colorDrive,
-      fishCount,
-      fishSize,
-      speed,
-      depth,
-      dive,
-      selectedSpecies,
-      swimType,
-      swarm,
-    ],
+  const dispatch = useCallback((input: EngineEventInput) => engine.dispatch(input), []);
+  const continuousParamsRef = useRef<ParamEventCoalescer | null>(null);
+  continuousParamsRef.current ??= new ParamEventCoalescer((payload, sourceT) => {
+    dispatch({ v: 1, producerId: "ui", sourceT, type: "param", payload });
+  });
+  const dispatchContinuous = useCallback(
+    (payload: Parameters<ParamEventCoalescer["push"]>[0]) => {
+      continuousParamsRef.current?.push(payload);
+    },
+    [],
   );
+
+  useEffect(() => () => continuousParamsRef.current?.dispose(), []);
 
   const stopAudio = useCallback(() => {
     const runtime = audioRuntimeRef.current;
@@ -280,6 +270,7 @@ export function FishVJConsole() {
   useEffect(() => {
     const updateDemo = (now: number) => {
       if (audioInput === "demo") {
+        beatStartRef.current ??= now;
         const beatMs = 60000 / bpm;
         const beat = ((now - beatStartRef.current) % beatMs) / beatMs;
         const kick = Math.exp(-beat * 11);
@@ -307,20 +298,13 @@ export function FishVJConsole() {
   }, []);
 
   const reset = useCallback(() => {
-    setScene("MANDALA");
-    setMode("MYSTIC");
-    setColorPreset("PUNCH");
-    setColorDrive(0.72);
-    setFishCount(800);
-    setFishSize(1.5);
-    setSpeed(0.68);
-    setDepth(0.74);
-    setDive(false);
-    setBlackout(false);
-    setSelectedSpecies(0);
-    setSwimType("SCHOOL");
-    setSwarm("SPIRAL");
-  }, []);
+    dispatch({
+      v: 1,
+      producerId: "ui",
+      type: "oneshot",
+      payload: { id: "reset", update: "trigger" },
+    });
+  }, [dispatch]);
 
   const toggleFullscreen = useCallback(async () => {
     if (document.fullscreenElement) {
@@ -335,19 +319,46 @@ export function FishVJConsole() {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
         return;
       }
-      if (event.key === "1") setMode("MYSTIC");
-      if (event.key === "2") setMode("SENSUAL");
-      if (event.key === "3") setMode("EUPHORIC");
-      if (event.key === "0") {
-        setScene((value) => (value === "MANDALA" ? "FREE_SWIM" : "MANDALA"));
+      if (event.repeat) return;
+      if (event.key === "1" || event.key === "2" || event.key === "3") {
+        const value = event.key === "1" ? "MYSTIC" : event.key === "2" ? "SENSUAL" : "EUPHORIC";
+        dispatch({
+          v: 1,
+          producerId: "keys",
+          type: "mode",
+          payload: { update: "absolute", value },
+        });
       }
-      if (event.key.toLowerCase() === "d") setDive((value) => !value);
-      if (event.key.toLowerCase() === "b") setBlackout((value) => !value);
+      if (event.key === "0") {
+        const value = engine.getState().scene === "MANDALA" ? "FREE_SWIM" : "MANDALA";
+        dispatch({
+          v: 1,
+          producerId: "keys",
+          type: "scene",
+          payload: { update: "absolute", value },
+        });
+      }
+      if (event.key.toLowerCase() === "d") {
+        dispatch({
+          v: 1,
+          producerId: "keys",
+          type: "param",
+          payload: { id: "dive", update: "absolute", value: !engine.getState().dive },
+        });
+      }
+      if (event.key.toLowerCase() === "b") {
+        dispatch({
+          v: 1,
+          producerId: "keys",
+          type: "param",
+          payload: { id: "blackout", update: "absolute", value: !engine.getState().blackout },
+        });
+      }
       if (event.key.toLowerCase() === "f") void toggleFullscreen();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [toggleFullscreen]);
+  }, [dispatch, toggleFullscreen]);
 
   const handleAudioInput = async (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
@@ -399,8 +410,17 @@ export function FishVJConsole() {
                 } as React.CSSProperties
               }
               onClick={() => {
-                setSelectedSpecies(index);
-                setSwimType(fish.motion);
+                dispatch({
+                  v: 1,
+                  producerId: "ui",
+                  type: "param",
+                  payload: {
+                    id: "fishSelection",
+                    update: "atomic",
+                    selectedSpecies: index,
+                    swimType: fish.motion,
+                  },
+                });
               }}
               aria-pressed={selectedSpecies === index}
               aria-label={`${fish.name}, ${fish.motion} movement`}
@@ -416,7 +436,14 @@ export function FishVJConsole() {
             <button
               key={swim}
               className={swimType === swim ? "is-active" : ""}
-              onClick={() => setSwimType(swim)}
+              onClick={() =>
+                dispatch({
+                  v: 1,
+                  producerId: "ui",
+                  type: "param",
+                  payload: { id: "swimType", update: "absolute", value: swim },
+                })
+              }
               aria-pressed={swimType === swim}
             >
               <span aria-hidden>{swim === "SCHOOL" ? "≋" : swim === "GLIDE" ? "⟶" : swim === "WAVE" ? "〰" : "⠿"}</span>
@@ -432,7 +459,7 @@ export function FishVJConsole() {
           className={`live-output ${dive ? "is-diving" : ""} ${isFullscreen ? "is-fullscreen" : ""}`}
           ref={outputRef}
         >
-          <FishCanvas config={config} audio={audioLevels} onFps={setFps} />
+          <FishCanvas audio={audioLevels} onFps={setFps} />
           <div className="scanlines" aria-hidden />
           <div className="output-badges">
             <span>
@@ -462,7 +489,14 @@ export function FishVJConsole() {
               <button
                 key={item.id}
                 className={scene === item.id ? "is-active" : ""}
-                onClick={() => setScene(item.id)}
+                onClick={() =>
+                  dispatch({
+                    v: 1,
+                    producerId: "ui",
+                    type: "scene",
+                    payload: { update: "absolute", value: item.id },
+                  })
+                }
                 aria-pressed={scene === item.id}
               >
                 <strong>{item.label}</strong>
@@ -479,7 +513,14 @@ export function FishVJConsole() {
               <button
                 key={item}
                 className={mode === item ? "is-active" : ""}
-                onClick={() => setMode(item)}
+                onClick={() =>
+                  dispatch({
+                    v: 1,
+                    producerId: "ui",
+                    type: "mode",
+                    payload: { update: "absolute", value: item },
+                  })
+                }
                 aria-pressed={mode === item}
               >
                 {item}
@@ -496,7 +537,14 @@ export function FishVJConsole() {
                 key={color}
                 data-color={color}
                 className={colorPreset === color ? "is-active" : ""}
-                onClick={() => setColorPreset(color)}
+                onClick={() =>
+                  dispatch({
+                    v: 1,
+                    producerId: "ui",
+                    type: "macro",
+                    payload: { update: "absolute", value: color },
+                  })
+                }
                 aria-pressed={colorPreset === color}
               >
                 {color}
@@ -510,7 +558,9 @@ export function FishVJConsole() {
             max={1}
             step={0.01}
             display={`${Math.round(colorDrive * 100)}%`}
-            onChange={setColorDrive}
+            onChange={(value) =>
+              dispatchContinuous({ id: "colorDrive", update: "absolute", value })
+            }
           />
         </section>
 
@@ -527,7 +577,14 @@ export function FishVJConsole() {
                 <button
                   key={item}
                   className={swarm === item ? "is-active" : ""}
-                  onClick={() => setSwarm(item)}
+                  onClick={() =>
+                    dispatch({
+                      v: 1,
+                      producerId: "ui",
+                      type: "param",
+                      payload: { id: "swarm", update: "absolute", value: item },
+                    })
+                  }
                   aria-pressed={swarm === item}
                 >
                   {scene === "MANDALA" ? item : FREE_SWIM_STYLES[item]}
@@ -542,7 +599,9 @@ export function FishVJConsole() {
             max={2000}
             step={50}
             display={fishCount.toLocaleString()}
-            onChange={setFishCount}
+            onChange={(value) =>
+              dispatchContinuous({ id: "fishCount", update: "absolute", value })
+            }
           />
           <RangeControl
             label="FISH SIZE"
@@ -551,7 +610,9 @@ export function FishVJConsole() {
             max={3}
             step={0.05}
             display={`${fishSize.toFixed(1)}x`}
-            onChange={setFishSize}
+            onChange={(value) =>
+              dispatchContinuous({ id: "fishSize", update: "absolute", value })
+            }
           />
           <RangeControl
             label="SPEED"
@@ -560,7 +621,9 @@ export function FishVJConsole() {
             max={1.6}
             step={0.01}
             display={`${Math.round(speed * 100)}`}
-            onChange={setSpeed}
+            onChange={(value) =>
+              dispatchContinuous({ id: "speed", update: "absolute", value })
+            }
           />
           <RangeControl
             label="DEPTH"
@@ -569,20 +632,40 @@ export function FishVJConsole() {
             max={1}
             step={0.01}
             display={`${Math.round(depth * 100)}`}
-            onChange={setDepth}
+            onChange={(value) =>
+              dispatchContinuous({ id: "depth", update: "absolute", value })
+            }
           />
         </section>
 
         <div className="dive-controls">
           <button
             className={`dive-button ${dive ? "is-active" : ""}`}
-            onClick={() => setDive(true)}
+            onClick={() =>
+              dispatch({
+                v: 1,
+                producerId: "ui",
+                type: "param",
+                payload: { id: "dive", update: "absolute", value: true },
+              })
+            }
             aria-pressed={dive}
           >
             <b>{scene === "MANDALA" ? "∞" : "≋"}</b>
             <span>{scene === "MANDALA" ? "INFINITE DIVE" : "SCHOOL RUSH"}</span>
           </button>
-          <button className="exit-button" onClick={() => setDive(false)} disabled={!dive}>
+          <button
+            className="exit-button"
+            onClick={() =>
+              dispatch({
+                v: 1,
+                producerId: "ui",
+                type: "param",
+                payload: { id: "dive", update: "absolute", value: false },
+              })
+            }
+            disabled={!dive}
+          >
             {scene === "MANDALA" ? "EXIT DIVE" : "EXIT RUSH"}
           </button>
         </div>
@@ -636,7 +719,14 @@ export function FishVJConsole() {
         <section className="safety-controls">
           <button
             className={blackout ? "is-active danger" : ""}
-            onClick={() => setBlackout((value) => !value)}
+            onClick={() =>
+              dispatch({
+                v: 1,
+                producerId: "ui",
+                type: "param",
+                payload: { id: "blackout", update: "absolute", value: !blackout },
+              })
+            }
             aria-pressed={blackout}
           >
             ◉ BLACKOUT
