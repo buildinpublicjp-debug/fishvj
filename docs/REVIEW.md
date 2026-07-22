@@ -67,6 +67,8 @@
 | R-042 | adopted | P1 | proof fixtureがcontent hashでpinされていない | adopt（pinned fixtures） |
 | R-043 | adopted | P2 | 死亡entityへのinvokeが未定義 | adopt（no-op + diagnostic） |
 | R-044 | adopted | P2 | 複数graph伝播とmulti-blobに機械判定がない | adopt（dual trigger + 2 blob） |
+| R-045 | adopted | P0 | continuous worldへactive DJ transportを表示していた | adopt（VJ-only disabled panel） |
+| R-046 | adopted | P1 | world time scaleをBPM表示しbounded seek意味論がUIから読めない | adopt（倍率 + Baseline label） |
 
 ## 指摘詳細
 
@@ -461,6 +463,19 @@
 - 反映先: 上記5文書、`fixtures/world/`。詳細な破壊シナリオとpatch auditは`WORLD_REVIEW_F.md`を正とする。
 - 棄却理由: —
 
+### R-045〜R-046 — World operator UIのschema整合監査
+
+- status: `adopted / patched / frozen`
+- source: プロジェクトオーナーの正典画像レビュー
+- priority: P0×1 / P1×1
+- 対象: `fishvj-world-operator-master-v1.png`、`PERFORMANCE_MAP_V0 §6`、
+  `WORLD_SOURCE_V0 §3.5`、`FISHVJ_INSTRUMENT_V2 §10`
+- 採用内容: continuous deckからPLAY/CUE/LOOP、jog ring、cue points、BPM/SYNCを除き、
+  `CONTINUOUS · VJ ONLY / AUTO-RUN · 1.00× / NO SEEK · NO CUE · NO LOOP`へ置換した。
+  bounded deckはtime scaleを`0.50–2.00×`へ直し、`STATE SEEK · BASELINE(p)`を明示した。
+- 反映先: `docs/design/FISHVJ_WORLD_UI_VISUAL_CONTRACT.md`、同正典PNG、本書§10。
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -486,3 +501,4 @@
 | 2026-07-21 | Z-01 | adopted | DJ/VJ 2文法を維持し、WorldSourceを新source種別として増築。物理multi-surfaceは契約のみ |
 | 2026-07-21 | R-030〜R-037 | adopted / patched | World設計を一回攻撃監査。P0×6・P1×2を全件反映し、active P0/P1を0件へ閉じた |
 | 2026-07-22 | R-038〜R-044 | adopted / patched | Fable独立監査P0×1・P1×4・P2×2を全件反映し、fixture hash再計算後active P0/P1を0件へ閉じた |
+| 2026-07-22 | R-045〜R-046 | adopted / patched / frozen | World operator UIのcontinuous transportとBPM表記を修正し、正典画像v1をfreeze |
