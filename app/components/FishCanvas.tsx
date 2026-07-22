@@ -2,37 +2,19 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import {
+  createSeededRandom,
+  engine,
+  FixedStepClock,
+  installCaptureBridge,
+  isCaptureEnabled,
+  type AudioLevels,
+  type RenderSnapshot,
+} from "../engine";
 
-export type ModeName = "MYSTIC" | "SENSUAL" | "EUPHORIC";
-export type ColorPreset = "CLEAN" | "PUNCH" | "ACID" | "DEEP";
-export type SwimType = "SCHOOL" | "GLIDE" | "WAVE" | "FLOAT";
-export type SwarmType = "SPIRAL" | "VORTEX" | "WAVE" | "BLOOM";
-export type SceneMode = "MANDALA" | "FREE_SWIM";
-
-export type AudioLevels = {
-  kick: number;
-  bass: number;
-  mid: number;
-  high: number;
-};
-
-export type VisualConfig = {
-  scene: SceneMode;
-  mode: ModeName;
-  colorPreset: ColorPreset;
-  colorDrive: number;
-  fishCount: number;
-  fishSize: number;
-  speed: number;
-  depth: number;
-  dive: boolean;
-  selectedSpecies: number;
-  swimType: SwimType;
-  swarm: SwarmType;
-};
+export type { AudioLevels } from "../engine";
 
 type FishCanvasProps = {
-  config: VisualConfig;
   audio: AudioLevels;
   onFps: (fps: number) => void;
 };
@@ -694,39 +676,10 @@ const KaleidoShader = {
   `,
 };
 
-function modeValue(mode: ModeName) {
-  return mode === "MYSTIC" ? 0 : mode === "SENSUAL" ? 1 : 2;
-}
-
-function segmentValue(mode: ModeName) {
-  return mode === "MYSTIC" ? 6 : mode === "SENSUAL" ? 8 : 12;
-}
-
-function colorValue(color: ColorPreset) {
-  return color === "CLEAN" ? 0 : color === "PUNCH" ? 1 : color === "ACID" ? 2 : 3;
-}
-
-function swimValue(swim: SwimType) {
-  return swim === "SCHOOL" ? 0 : swim === "GLIDE" ? 1 : swim === "WAVE" ? 2 : 3;
-}
-
-function swarmValue(swarm: SwarmType) {
-  return swarm === "SPIRAL" ? 0 : swarm === "VORTEX" ? 1 : swarm === "WAVE" ? 2 : 3;
-}
-
-function sceneValue(scene: SceneMode) {
-  return scene === "MANDALA" ? 0 : 1;
-}
-
-export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
+export function FishCanvas({ audio, onFps }: FishCanvasProps) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const configRef = useRef(config);
   const audioRef = useRef(audio);
   const onFpsRef = useRef(onFps);
-
-  useEffect(() => {
-    configRef.current = config;
-  }, [config]);
 
   useEffect(() => {
     audioRef.current = audio;
@@ -757,18 +710,19 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     const scene = new THREE.Scene();
     const camera = new THREE.Camera();
 
+    const initialSnapshot = engine.getRenderSnapshot();
     const sharedUniforms = {
       uTime: { value: 0 },
-      uAspect: { value: 16 / 9 },
-      uSegments: { value: 6 },
+      uAspect: { value: initialSnapshot.uAspect },
+      uSegments: { value: initialSnapshot.uSegments },
       uKick: { value: 0 },
       uBass: { value: 0 },
       uHigh: { value: 0 },
-      uDive: { value: 0 },
-      uMode: { value: 0 },
-      uDrive: { value: 0.72 },
-      uColorPreset: { value: 1 },
-      uSceneMix: { value: sceneValue(configRef.current.scene) },
+      uDive: { value: initialSnapshot.uDive },
+      uMode: { value: initialSnapshot.uMode },
+      uDrive: { value: initialSnapshot.uDrive },
+      uColorPreset: { value: initialSnapshot.uColorPreset },
+      uSceneMix: { value: initialSnapshot.uSceneMix },
     };
 
     const backgroundGeometry = new THREE.PlaneGeometry(2, 2);
@@ -800,20 +754,21 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     const speciesScales = [0.72, 1.1, 0.92, 1.14, 0.82, 1.2, 0.9, 0.8];
     const speciesMotions = [0, 1, 3, 1, 3, 2, 3, 0];
 
+    const random = createSeededRandom(engine.getState().seed);
     for (let index = 0; index < MAX_SOURCE_FISH; index += 1) {
       const speciesIndex = index % 8;
       const ringIndex = index % RING_COUNT;
       const motif = Math.floor(index / RING_COUNT) % 5;
       offsets[index * 3] = (motif + 0.5) / 5;
-      offsets[index * 3 + 1] = (Math.random() - 0.5) * (0.012 + ringIndex * 0.012);
-      offsets[index * 3 + 2] = Math.random();
+      offsets[index * 3 + 1] = (random() - 0.5) * (0.012 + ringIndex * 0.012);
+      offsets[index * 3 + 2] = random();
       rings[index] = ringIndex;
       scales[index] =
-        speciesScales[speciesIndex] * (0.72 + Math.random() * 0.5);
-      phases[index] = Math.random() * Math.PI * 2;
+        speciesScales[speciesIndex] * (0.72 + random() * 0.5);
+      phases[index] = random() * Math.PI * 2;
       species[index] = speciesIndex;
       motions[index] = speciesMotions[speciesIndex];
-      velocities[index] = 0.7 + Math.random() * 0.6;
+      velocities[index] = 0.7 + random() * 0.6;
       populations[index] = index / (MAX_SOURCE_FISH - 1);
     }
 
@@ -829,7 +784,10 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       new THREE.InstancedBufferAttribute(populations, 1),
     );
 
-    const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png");
+    let atlasLoaded = false;
+    const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png", () => {
+      atlasLoaded = true;
+    });
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
@@ -838,15 +796,15 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     const fishUniforms = {
       ...sharedUniforms,
       uAtlas: { value: texture },
-      uSpeed: { value: 0.68 },
-      uFishSize: { value: 1.5 },
-      uDepth: { value: 0.74 },
-      uSelectedSpecies: { value: 0 },
-      uSwimFocus: { value: 0 },
-      uSwarmFrom: { value: swarmValue(configRef.current.swarm) },
-      uSwarmTo: { value: swarmValue(configRef.current.swarm) },
-      uSwarmMix: { value: 1 },
-      uMandalaPopulation: { value: 1 },
+      uSpeed: { value: initialSnapshot.uSpeed },
+      uFishSize: { value: initialSnapshot.uFishSize },
+      uDepth: { value: initialSnapshot.uDepth },
+      uSelectedSpecies: { value: initialSnapshot.uSelectedSpecies },
+      uSwimFocus: { value: initialSnapshot.uSwimFocus },
+      uSwarmFrom: { value: initialSnapshot.uSwarmFrom },
+      uSwarmTo: { value: initialSnapshot.uSwarmTo },
+      uSwarmMix: { value: initialSnapshot.uSwarmMix },
+      uMandalaPopulation: { value: initialSnapshot.uMandalaPopulation },
     };
 
     const fishMaterial = new THREE.ShaderMaterial({
@@ -875,8 +833,10 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
     const postScene = new THREE.Scene();
     const postCamera = new THREE.Camera();
     const postGeometry = new THREE.PlaneGeometry(2, 2);
-    const postUniforms = THREE.UniformsUtils.clone(KaleidoShader.uniforms);
-    postUniforms.tDiffuse.value = renderTarget.texture;
+    const postUniforms = {
+      ...THREE.UniformsUtils.clone(KaleidoShader.uniforms),
+      tDiffuse: { value: renderTarget.texture },
+    };
     const postMaterial = new THREE.ShaderMaterial({
       uniforms: postUniforms,
       vertexShader: KaleidoShader.vertexShader,
@@ -895,31 +855,70 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
       height = Math.max(1, Math.floor(bounds.height));
       renderer.setSize(width, height, false);
       renderTarget.setSize(width, height);
-      sharedUniforms.uAspect.value = width / height;
-      postUniforms.uAspect.value = width / height;
-      postUniforms.uResolution.value.set(width, height);
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(host);
     resize();
 
-    const startTime = performance.now();
-    let lastFrame = performance.now();
+    const clock = new FixedStepClock();
+    let lastFrame: number | null = null;
     let fpsAccumulator = 0;
     let fpsFrames = 0;
-    let currentDive = configRef.current.dive ? 1 : 0;
     let smoothKick = 0;
     let smoothBass = 0;
     let smoothHigh = 0;
-    let observedSwarm = configRef.current.swarm;
-    let swarmFrom = swarmValue(observedSwarm);
-    let swarmTo = swarmFrom;
-    let swarmTransitionStart = startTime - 1500;
-    let currentScene = sceneValue(configRef.current.scene);
 
-    const render = () => {
-      const now = performance.now();
-      const deltaMs = Math.max(0.1, now - lastFrame);
+    const applySnapshot = (snapshot: Readonly<RenderSnapshot>) => {
+      sharedUniforms.uTime.value = snapshot.uTime;
+      sharedUniforms.uAspect.value = snapshot.uAspect;
+      sharedUniforms.uSegments.value = snapshot.uSegments;
+      sharedUniforms.uKick.value = snapshot.uKick;
+      sharedUniforms.uBass.value = snapshot.uBass;
+      sharedUniforms.uHigh.value = snapshot.uHigh;
+      sharedUniforms.uDive.value = snapshot.uDive;
+      sharedUniforms.uMode.value = snapshot.uMode;
+      sharedUniforms.uDrive.value = snapshot.uDrive;
+      sharedUniforms.uColorPreset.value = snapshot.uColorPreset;
+      sharedUniforms.uSceneMix.value = snapshot.uSceneMix;
+
+      fishUniforms.uSpeed.value = snapshot.uSpeed;
+      fishUniforms.uFishSize.value = snapshot.uFishSize;
+      fishUniforms.uDepth.value = snapshot.uDepth;
+      fishUniforms.uSelectedSpecies.value = snapshot.uSelectedSpecies;
+      fishUniforms.uSwimFocus.value = snapshot.uSwimFocus;
+      fishUniforms.uSwarmFrom.value = snapshot.uSwarmFrom;
+      fishUniforms.uSwarmTo.value = snapshot.uSwarmTo;
+      fishUniforms.uSwarmMix.value = snapshot.uSwarmMix;
+      fishUniforms.uMandalaPopulation.value = snapshot.uMandalaPopulation;
+      fishGeometry.instanceCount = snapshot.instanceCount;
+
+      postUniforms.uTime.value = snapshot.uTime;
+      postUniforms.uAspect.value = snapshot.uAspect;
+      postUniforms.uSegments.value = snapshot.uSegments;
+      postUniforms.uDive.value = snapshot.uDive;
+      postUniforms.uDrive.value = snapshot.uDrive;
+      postUniforms.uColorPreset.value = snapshot.uColorPreset;
+      postUniforms.uMode.value = snapshot.uMode;
+      postUniforms.uKick.value = snapshot.uKick;
+      postUniforms.uSceneMix.value = snapshot.uSceneMix;
+      postUniforms.uResolution.value.set(...snapshot.uResolution);
+      renderer.toneMappingExposure = snapshot.toneMappingExposure;
+    };
+
+    const drawFrame = (levels: Pick<AudioLevels, "kick" | "bass" | "high">) => {
+      const snapshot = engine.getRenderSnapshot({ audio: levels, width, height });
+      applySnapshot(snapshot);
+
+      renderer.setRenderTarget(renderTarget);
+      renderer.clear();
+      renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+      renderer.clear();
+      renderer.render(postScene, postCamera);
+    };
+
+    const render = (now: DOMHighResTimeStamp) => {
+      const deltaMs = lastFrame === null ? 0 : Math.max(0.1, now - lastFrame);
       lastFrame = now;
       fpsAccumulator += deltaMs;
       fpsFrames += 1;
@@ -929,84 +928,40 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
         fpsFrames = 0;
       }
 
-      const cfg = configRef.current;
-      const levels = audioRef.current;
-      const elapsed = (now - startTime) / 1000;
-      const mode = modeValue(cfg.mode);
-      const segments = segmentValue(cfg.mode);
-      const targetScene = sceneValue(cfg.scene);
-      if (cfg.swarm !== observedSwarm) {
-        const previousMix = Math.min(1, (now - swarmTransitionStart) / 1500);
-        swarmFrom = previousMix >= 0.5 ? swarmTo : swarmFrom;
-        swarmTo = swarmValue(cfg.swarm);
-        observedSwarm = cfg.swarm;
-        swarmTransitionStart = now;
+      clock.accumulate(now);
+      const tickCount = clock.takeTicks(5);
+      for (let index = 0; index < tickCount; index += 1) {
+        const levels = audioRef.current;
+        smoothKick += (levels.kick - smoothKick) * 0.2;
+        smoothBass += (levels.bass - smoothBass) * 0.14;
+        smoothHigh += (levels.high - smoothHigh) * 0.18;
+        engine.advanceTick();
       }
-      const swarmMix = Math.min(1, (now - swarmTransitionStart) / 1500);
-      currentScene +=
-        (targetScene - currentScene) * Math.min(1, deltaMs / 360);
-      currentDive +=
-        ((cfg.dive ? 1 : 0) - currentDive) * Math.min(1, deltaMs / 760);
-      smoothKick += (levels.kick - smoothKick) * 0.2;
-      smoothBass += (levels.bass - smoothBass) * 0.14;
-      smoothHigh += (levels.high - smoothHigh) * 0.18;
 
-      sharedUniforms.uTime.value = elapsed;
-      sharedUniforms.uSegments.value = segments;
-      sharedUniforms.uKick.value = smoothKick;
-      sharedUniforms.uBass.value = smoothBass;
-      sharedUniforms.uHigh.value = smoothHigh;
-      sharedUniforms.uDive.value = currentDive;
-      sharedUniforms.uMode.value = mode;
-      sharedUniforms.uDrive.value = cfg.colorDrive;
-      sharedUniforms.uColorPreset.value = colorValue(cfg.colorPreset);
-      sharedUniforms.uSceneMix.value = currentScene;
+      if (clock.pendingTicks > 0) {
+        animationId = requestAnimationFrame(render);
+        return;
+      }
 
-      fishUniforms.uSpeed.value = cfg.speed;
-      fishUniforms.uFishSize.value = cfg.fishSize;
-      fishUniforms.uDepth.value = cfg.depth;
-      fishUniforms.uSelectedSpecies.value = cfg.selectedSpecies;
-      fishUniforms.uSwimFocus.value = swimValue(cfg.swimType);
-      fishUniforms.uSwarmFrom.value = swarmFrom;
-      fishUniforms.uSwarmTo.value = swarmTo;
-      fishUniforms.uSwarmMix.value = swarmMix;
-      const mandalaCount = Math.min(
-        MAX_SOURCE_FISH,
-        Math.max(24, Math.ceil(cfg.fishCount / (segments * 2))),
-      );
-      const freeSwimCount = Math.min(MAX_SOURCE_FISH, Math.max(100, cfg.fishCount));
-      fishUniforms.uMandalaPopulation.value = mandalaCount / MAX_SOURCE_FISH;
-      fishGeometry.instanceCount =
-        currentScene > 0.01 ? Math.max(mandalaCount, freeSwimCount) : mandalaCount;
-
-      postUniforms.uTime.value = elapsed;
-      postUniforms.uSegments.value = segments;
-      postUniforms.uDive.value = currentDive;
-      postUniforms.uDrive.value = cfg.colorDrive;
-      postUniforms.uColorPreset.value = colorValue(cfg.colorPreset);
-      postUniforms.uMode.value = mode;
-      postUniforms.uKick.value = smoothKick;
-      postUniforms.uSceneMix.value = currentScene;
-      renderer.toneMappingExposure =
-        cfg.colorPreset === "DEEP"
-          ? 0.86
-          : cfg.colorPreset === "PUNCH"
-            ? 1.24
-            : 1.1;
-
-      renderer.setRenderTarget(renderTarget);
-      renderer.clear();
-      renderer.render(scene, camera);
-      renderer.setRenderTarget(null);
-      renderer.clear();
-      renderer.render(postScene, postCamera);
+      drawFrame({ kick: smoothKick, bass: smoothBass, high: smoothHigh });
       animationId = requestAnimationFrame(render);
     };
 
-    let animationId = requestAnimationFrame(render);
+    let animationId = 0;
+    let uninstallCapture: (() => void) | null = null;
+    if (isCaptureEnabled()) {
+      uninstallCapture = installCaptureBridge({
+        isReady: () => atlasLoaded,
+        getSize: () => ({ width, height }),
+        draw: () => drawFrame({ kick: 0, bass: 0, high: 0 }),
+      });
+    } else {
+      animationId = requestAnimationFrame(render);
+    }
 
     return () => {
-      cancelAnimationFrame(animationId);
+      if (animationId) cancelAnimationFrame(animationId);
+      uninstallCapture?.();
       resizeObserver.disconnect();
       scene.remove(backgroundMesh, fishMesh);
       backgroundGeometry.dispose();
