@@ -25,7 +25,7 @@ export function createInitialEngineState(seed = DEFAULT_SEED): EngineState {
     swarmFrom: 0,
     swarmTo: 0,
     swarmMix: 1,
-    swarmTransitionStartTick: -90,
+    swarmTransitionStartTick: 0,
   };
 }
 
