@@ -200,6 +200,15 @@ acceptance:
 - sparse invokeはsource tick、concrete target、verb IDをJSON trackへ保存する。
 - unresolved/unsupported bindingは演奏開始前にrejectし、途中で別scopeへfallbackしない。
 
+### 8.1 editor save rule
+
+`fishvj-world-v0`は既定bindingを固定したfrozen default mapであり、editorで直接上書きしない（hard）。
+編集開始時に別IDのcopyを作り、save時にcopy自身のIDを含むJCSから新しいcontent hashを計算する。
+同じID/hashのままbindingが異なるfileはvalidation errorとする。
+
+variable bindingのtarget selectorでは`program`をdisabledにする。v0のprogram scopeは§4のfixed mixerだけが
+内部利用でき、pad、Shift pad、追加MIDI、keyboard/UI gestureのtargetへ選べない（hard）。
+
 ## 9. Escalation
 
 - **E-P01 — fixed mixerを可変化したい**: 空間周波数EQ zero-point、A/B合成、replay laneの

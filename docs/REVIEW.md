@@ -70,6 +70,9 @@
 | R-045 | adopted | P0 | continuous worldへactive DJ transportを表示していた | adopt（VJ-only disabled panel） |
 | R-046 | adopted | P1 | world time scaleをBPM表示しbounded seek意味論がUIから読めない | adopt（倍率 + Baseline label） |
 | R-047 | adopted | P1 | bounded deckへschemaにない4/8 beat loop操作を表示していた | adopt（HOT CUE + fixed manifest loop表示） |
+| R-048 | adopted | P1 | Source Browserでsource/map選択とcompatibility判定が分離し得る | adopt（atomic load + fail closed） |
+| R-049 | adopted | P1 | Map Editorがprogram targetとfrozen default上書きを許すように見える | adopt（program lock + copy ID/hash） |
+| R-050 | adopted | P1 | Surface Editorがv0外の複数physical/camera routingを示し得る | adopt（1 physical + offscreen fixture） |
 
 ## 指摘詳細
 
@@ -491,6 +494,24 @@
 - 反映先: 上記3文書、`docs/design/FISHVJ_WORLD_UI_VISUAL_CONTRACT.md`、正典PNG v2、本書§10。
 - 棄却理由: —
 
+### R-048〜R-050 — World補助3画面のschema整合監査
+
+- status: `adopted / patched / frozen`
+- source: プロジェクトオーナーの正典画像レビュー
+- priority: P1×3
+- 対象: Source Browser、Performance Map Editor、Surface Topology / Calibrationの正典候補、
+  `WORLD_SOURCE_V0`、`PERFORMANCE_MAP_V0`、`OUTPUT_SURFACES_V0`、`FISHVJ_INSTRUMENT_V2 §10`
+- R-048採用内容: sourceとcompatible mapを`LOAD SOURCE + MAP`のatomic `1 event`で確定し、
+  continuous/DJ incompatibility、hash/capability不一致をload前にfail closedとした。
+- R-049採用内容: fixed mixer 6 controlに加え、variable bindingの`PROGRAM` scopeをlockした。
+  frozen default `fishvj-world-v0`は直接編集せず、`fishvj-world-v0 (copy)`から別IDと別content hashを
+  保存するeditor規則を追加した。
+- R-050採用内容: physical programを1面に限定し、2面目はoffscreen fixture、cameraはSurface Aだけ、
+  Surface Bはcamera grid zero、calibrationModeはDOM overlay OFFとして固定した。
+- 反映先: `docs/design/FISHVJ_WORLD_AUX_SCREENS_VISUAL_CONTRACT.md`、正典PNG 3枚、
+  `docs/PERFORMANCE_MAP_V0.md`、`docs/FISHVJ_INSTRUMENT_V2.md`。
+- 棄却理由: —
+
 ## 判断履歴
 
 | 日付 | ID | 判断 | コメント |
@@ -518,3 +539,4 @@
 | 2026-07-22 | R-038〜R-044 | adopted / patched | Fable独立監査P0×1・P1×4・P2×2を全件反映し、fixture hash再計算後active P0/P1を0件へ閉じた |
 | 2026-07-22 | R-045〜R-046 | adopted / patched / frozen | World operator UIのcontinuous transportとBPM表記を修正し、正典画像v1をfreeze |
 | 2026-07-22 | R-047 | adopted / patched / frozen | bounded deckの未契約beat loopを削除し、HOT CUEと固定manifest loop表示で正典画像v2をfreeze |
+| 2026-07-22 | R-048〜R-050 | adopted / patched / frozen | World補助3画面をschema監査し、program lockとdefault map copy規則を反映してfreeze |
