@@ -6,6 +6,8 @@ import {
   createSeededRandom,
   engine,
   FixedStepClock,
+  installCaptureBridge,
+  isCaptureEnabled,
   type AudioLevels,
   type RenderSnapshot,
 } from "../engine";
@@ -782,7 +784,10 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
       new THREE.InstancedBufferAttribute(populations, 1),
     );
 
-    const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png");
+    let atlasLoaded = false;
+    const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png", () => {
+      atlasLoaded = true;
+    });
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
@@ -900,6 +905,18 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
       renderer.toneMappingExposure = snapshot.toneMappingExposure;
     };
 
+    const drawFrame = (levels: Pick<AudioLevels, "kick" | "bass" | "high">) => {
+      const snapshot = engine.getRenderSnapshot({ audio: levels, width, height });
+      applySnapshot(snapshot);
+
+      renderer.setRenderTarget(renderTarget);
+      renderer.clear();
+      renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+      renderer.clear();
+      renderer.render(postScene, postCamera);
+    };
+
     const render = (now: DOMHighResTimeStamp) => {
       const deltaMs = lastFrame === null ? 0 : Math.max(0.1, now - lastFrame);
       lastFrame = now;
@@ -926,26 +943,25 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
         return;
       }
 
-      const snapshot = engine.getRenderSnapshot({
-        audio: { kick: smoothKick, bass: smoothBass, high: smoothHigh },
-        width,
-        height,
-      });
-      applySnapshot(snapshot);
-
-      renderer.setRenderTarget(renderTarget);
-      renderer.clear();
-      renderer.render(scene, camera);
-      renderer.setRenderTarget(null);
-      renderer.clear();
-      renderer.render(postScene, postCamera);
+      drawFrame({ kick: smoothKick, bass: smoothBass, high: smoothHigh });
       animationId = requestAnimationFrame(render);
     };
 
-    let animationId = requestAnimationFrame(render);
+    let animationId = 0;
+    let uninstallCapture: (() => void) | null = null;
+    if (isCaptureEnabled()) {
+      uninstallCapture = installCaptureBridge({
+        isReady: () => atlasLoaded,
+        getSize: () => ({ width, height }),
+        draw: () => drawFrame({ kick: 0, bass: 0, high: 0 }),
+      });
+    } else {
+      animationId = requestAnimationFrame(render);
+    }
 
     return () => {
-      cancelAnimationFrame(animationId);
+      if (animationId) cancelAnimationFrame(animationId);
+      uninstallCapture?.();
       resizeObserver.disconnect();
       scene.remove(backgroundMesh, fishMesh);
       backgroundGeometry.dispose();

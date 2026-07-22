@@ -41,3 +41,6 @@ next-env.d.ts
 /outputs/
 /work/
 /artifacts/
+/capture/frames/
+/capture/runs/
+/capture/ab/

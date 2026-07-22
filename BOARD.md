@@ -1,0 +1,62 @@
+# FishVJ BOARD
+
+**このfileが状態の入口である。** 再開する者は旧goal・旧handoffの続きを実行せず、まずここから intake すること。
+
+| 項目 | 値 |
+|---|---|
+| 更新 | 2026-07-22 |
+| 現driver | Claude Code (このMac) |
+| 対象branch | `agent/fishvj-s1a-ssot` (HEAD `20ee2c4` + S1a検証commit) |
+| 凍結文書 | `docs/FISHVJ_DESIGN_V2.md` / `docs/FISHVJ_INSTRUMENT_V1.md` (branch `agent/fishvj-instrument-v1`) / `docs/design/FISHVJ_UI_VISUAL_CONTRACT.md` — **変更絶対禁止** |
+
+## 1. 現状態
+
+**S1a は CC 側で検証完了。zDOG の merge 判断待ち。**
+
+- 実装 (SSOT移行) は `8ff3114` + `20ee2c4` に入っている。実装agent (Sol) は利用枠切れで 7/29 まで停止。
+- Sol の sandbox に取り残された golden / current capture は**回収していない**。このMac上で別途採取し直した。
+- 検証結果は `docs/S1A_VERIFY.md`。
+
+## 2. 完了項目 (2026-07-22)
+
+| gate | 結果 |
+|---|---|
+| CI 5 gate (lint / tsc / test:engine 8-8 / build / SSR test) | 全 exit 0 |
+| SSR markup SHA-256 pre/post | 一致 (`aba5461d…`、stripped 11,522 B) |
+| 決定論 2-run: semantic hash trace | 131/131 完全一致 |
+| 決定論 2-run: raw sample JSON | byte一致 |
+| 決定論 2-run: 同tick pixel | 78 frame 全て 1920×1080、平均SSIM 0.999999 / 最小 0.999998 (閾値 0.999) |
+| 手動A/B | **未判定 — zDOG目視待ち** (`capture/ab-sheet-base-vs-s1a.png`) |
+
+付随して作成したもの: flag-gate (`?capture=1`) された in-app capture bridge、`capture/manifest.json`
+(v2 §9.2 網羅)、依存ゼロの CDP / PNG / SSIM / hash harness、contact sheet、A/B sheet。
+
+## 3. zDOG待ち
+
+1. `capture/ab-sheet-base-vs-s1a.png` の目視。違和感があればこのfileへ追記して停止させること。
+2. PR の merge 判断。
+
+## 4. 既知の差異・注記
+
+- **PR本文の SSR markup 値**: PR は 11,492 bytes、本Macでの測定は 11,522 bytes (30 B差)。
+  pre/post が同一strip規則で一致していることが gate なので判定は変わらない。絶対値をgate化するなら S1b で strip規則を固定する。
+- **`fishvj-s1a-pr.md` はこのMac上に存在しなかった**。PR本文は `docs/S1A_VERIFY.md` から起草し、
+  引き継ぎ差分で指定された Scope boundary の線引きをそのまま維持した。
+- **semantic hash は §5.2 の S1部分集合**。beat/audio、space、verb、deck ID、atlas content hash は未実装 (S2/S3)。
+  完全版 encoder は S2 の `Hash` task。
+- **capture harness の性格**: S1a の決定論2-runを回すための最小版であり、
+  `2275308` + T0-A を基準点とする committed golden ではない。S1b がそれを作る。
+
+## 5. 次キュー
+
+1. **S1b** — committed golden / SSIM harness (v2 §9.1準拠、`2275308` + T0-A 基準点の正式構築込み) + deck v0 外部化。
+   「見た目完全不変」(v2 §7.2) の主張は **S1b gate 通過後に初めて行う**。
+2. **S2** — v2 §11.2 (T0-B / Recorder / Playback / Hash / Test)。
+3. **instrument S1b以降** — `FISHVJ_INSTRUMENT_V1.md` §9 の Sprint積算。
+
+## 6. 7/29 再開者 (Sol) への注意
+
+- **S1a は CC 側で完了済み。** 旧goalの続き (golden採取・SSIM判定・S1a実装の残り) を実行しないこと。
+- 状態は本 file から intake する。
+- sandbox 内に SSIM 判定結果が残っていれば**回収し、S1b の追認資料として本fileへ添付**すること。
+  S1a の合否をそれで上書きしない。

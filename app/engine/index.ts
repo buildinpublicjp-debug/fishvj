@@ -1,3 +1,4 @@
+export { installCaptureBridge, isCaptureEnabled } from "./capture";
 export { FixedStepClock, DeterministicClock } from "./clock";
 export { ParamEventCoalescer } from "./coalesce";
 export { advanceEngineTick, createRenderSnapshot } from "./frame";

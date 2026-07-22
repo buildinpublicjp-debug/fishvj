@@ -1,0 +1,1213 @@
+{
+  "version": 1,
+  "description": "FishVJ S1a determinism manifest. Covers FISHVJ_DESIGN_V2.md §9.2 control axes with transition start/mid/end ticks.",
+  "seed": 1179210568,
+  "simHz": 60,
+  "hashSampleEvery": 30,
+  "totalTicks": 3900,
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "deviceScaleFactor": 1
+  },
+  "audio": {
+    "kick": 0,
+    "bass": 0,
+    "high": 0
+  },
+  "events": [
+    {
+      "tick": 60,
+      "label": "mode-SENSUAL",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "mode",
+        "payload": {
+          "update": "absolute",
+          "value": "SENSUAL"
+        }
+      }
+    },
+    {
+      "tick": 120,
+      "label": "mode-EUPHORIC",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "mode",
+        "payload": {
+          "update": "absolute",
+          "value": "EUPHORIC"
+        }
+      }
+    },
+    {
+      "tick": 180,
+      "label": "mode-MYSTIC",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "mode",
+        "payload": {
+          "update": "absolute",
+          "value": "MYSTIC"
+        }
+      }
+    },
+    {
+      "tick": 230,
+      "label": "macro-CLEAN",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "macro",
+        "payload": {
+          "update": "absolute",
+          "value": "CLEAN"
+        }
+      }
+    },
+    {
+      "tick": 260,
+      "label": "macro-ACID",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "macro",
+        "payload": {
+          "update": "absolute",
+          "value": "ACID"
+        }
+      }
+    },
+    {
+      "tick": 290,
+      "label": "macro-DEEP",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "macro",
+        "payload": {
+          "update": "absolute",
+          "value": "DEEP"
+        }
+      }
+    },
+    {
+      "tick": 320,
+      "label": "macro-PUNCH",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "macro",
+        "payload": {
+          "update": "absolute",
+          "value": "PUNCH"
+        }
+      }
+    },
+    {
+      "tick": 360,
+      "label": "swarm-VORTEX",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "VORTEX"
+        }
+      }
+    },
+    {
+      "tick": 480,
+      "label": "swarm-WAVE",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "WAVE"
+        }
+      }
+    },
+    {
+      "tick": 600,
+      "label": "swarm-BLOOM",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "BLOOM"
+        }
+      }
+    },
+    {
+      "tick": 720,
+      "label": "swarm-SPIRAL",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "SPIRAL"
+        }
+      }
+    },
+    {
+      "tick": 825,
+      "label": "species-0",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 0,
+          "swimType": "SCHOOL"
+        }
+      }
+    },
+    {
+      "tick": 845,
+      "label": "species-1",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 1,
+          "swimType": "GLIDE"
+        }
+      }
+    },
+    {
+      "tick": 865,
+      "label": "species-2",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 2,
+          "swimType": "FLOAT"
+        }
+      }
+    },
+    {
+      "tick": 885,
+      "label": "species-3",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 3,
+          "swimType": "GLIDE"
+        }
+      }
+    },
+    {
+      "tick": 905,
+      "label": "species-4",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 4,
+          "swimType": "FLOAT"
+        }
+      }
+    },
+    {
+      "tick": 925,
+      "label": "species-5",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 5,
+          "swimType": "WAVE"
+        }
+      }
+    },
+    {
+      "tick": 945,
+      "label": "species-6",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 6,
+          "swimType": "FLOAT"
+        }
+      }
+    },
+    {
+      "tick": 965,
+      "label": "species-7",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 7,
+          "swimType": "SCHOOL"
+        }
+      }
+    },
+    {
+      "tick": 985,
+      "label": "species-0-restore",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 0,
+          "swimType": "SCHOOL"
+        }
+      }
+    },
+    {
+      "tick": 1005,
+      "label": "swim-GLIDE",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swimType",
+          "update": "absolute",
+          "value": "GLIDE"
+        }
+      }
+    },
+    {
+      "tick": 1025,
+      "label": "swim-WAVE",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swimType",
+          "update": "absolute",
+          "value": "WAVE"
+        }
+      }
+    },
+    {
+      "tick": 1045,
+      "label": "swim-FLOAT",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swimType",
+          "update": "absolute",
+          "value": "FLOAT"
+        }
+      }
+    },
+    {
+      "tick": 1065,
+      "label": "swim-SCHOOL",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swimType",
+          "update": "absolute",
+          "value": "SCHOOL"
+        }
+      }
+    },
+    {
+      "tick": 1090,
+      "label": "fishCount-100",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishCount",
+          "update": "absolute",
+          "value": 100
+        }
+      }
+    },
+    {
+      "tick": 1120,
+      "label": "fishCount-2000",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishCount",
+          "update": "absolute",
+          "value": 2000
+        }
+      }
+    },
+    {
+      "tick": 1150,
+      "label": "fishCount-800",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishCount",
+          "update": "absolute",
+          "value": 800
+        }
+      }
+    },
+    {
+      "tick": 1180,
+      "label": "fishSize-0.5",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSize",
+          "update": "absolute",
+          "value": 0.5
+        }
+      }
+    },
+    {
+      "tick": 1210,
+      "label": "fishSize-3",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSize",
+          "update": "absolute",
+          "value": 3
+        }
+      }
+    },
+    {
+      "tick": 1240,
+      "label": "fishSize-1.5",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSize",
+          "update": "absolute",
+          "value": 1.5
+        }
+      }
+    },
+    {
+      "tick": 1270,
+      "label": "speed-0.2",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "speed",
+          "update": "absolute",
+          "value": 0.2
+        }
+      }
+    },
+    {
+      "tick": 1300,
+      "label": "speed-1.6",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "speed",
+          "update": "absolute",
+          "value": 1.6
+        }
+      }
+    },
+    {
+      "tick": 1330,
+      "label": "speed-0.68",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "speed",
+          "update": "absolute",
+          "value": 0.68
+        }
+      }
+    },
+    {
+      "tick": 1360,
+      "label": "depth-0.15",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "depth",
+          "update": "absolute",
+          "value": 0.15
+        }
+      }
+    },
+    {
+      "tick": 1390,
+      "label": "depth-1",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "depth",
+          "update": "absolute",
+          "value": 1
+        }
+      }
+    },
+    {
+      "tick": 1420,
+      "label": "depth-0.74",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "depth",
+          "update": "absolute",
+          "value": 0.74
+        }
+      }
+    },
+    {
+      "tick": 1450,
+      "label": "colorDrive-0",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "colorDrive",
+          "update": "absolute",
+          "value": 0
+        }
+      }
+    },
+    {
+      "tick": 1480,
+      "label": "colorDrive-1",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "colorDrive",
+          "update": "absolute",
+          "value": 1
+        }
+      }
+    },
+    {
+      "tick": 1510,
+      "label": "colorDrive-0.72",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "colorDrive",
+          "update": "absolute",
+          "value": 0.72
+        }
+      }
+    },
+    {
+      "tick": 1550,
+      "label": "scene-FREE_SWIM",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "scene",
+        "payload": {
+          "update": "absolute",
+          "value": "FREE_SWIM"
+        }
+      }
+    },
+    {
+      "tick": 1820,
+      "label": "free-style-VORTEX",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "VORTEX"
+        }
+      }
+    },
+    {
+      "tick": 1940,
+      "label": "free-style-WAVE",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "WAVE"
+        }
+      }
+    },
+    {
+      "tick": 2060,
+      "label": "free-style-BLOOM",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "BLOOM"
+        }
+      }
+    },
+    {
+      "tick": 2180,
+      "label": "free-style-SPIRAL",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "SPIRAL"
+        }
+      }
+    },
+    {
+      "tick": 2300,
+      "label": "free-dive-enter",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "dive",
+          "update": "absolute",
+          "value": true
+        }
+      }
+    },
+    {
+      "tick": 2510,
+      "label": "free-dive-exit",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "dive",
+          "update": "absolute",
+          "value": false
+        }
+      }
+    },
+    {
+      "tick": 2720,
+      "label": "scene-MANDALA",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "scene",
+        "payload": {
+          "update": "absolute",
+          "value": "MANDALA"
+        }
+      }
+    },
+    {
+      "tick": 2960,
+      "label": "mandala-dive-enter",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "dive",
+          "update": "absolute",
+          "value": true
+        }
+      }
+    },
+    {
+      "tick": 3170,
+      "label": "mandala-dive-exit",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "dive",
+          "update": "absolute",
+          "value": false
+        }
+      }
+    },
+    {
+      "tick": 3380,
+      "label": "blackout-on",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "blackout",
+          "update": "absolute",
+          "value": true
+        }
+      }
+    },
+    {
+      "tick": 3420,
+      "label": "blackout-off",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "blackout",
+          "update": "absolute",
+          "value": false
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-mode",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "mode",
+        "payload": {
+          "update": "absolute",
+          "value": "EUPHORIC"
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-macro",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "macro",
+        "payload": {
+          "update": "absolute",
+          "value": "ACID"
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-swarm",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "swarm",
+          "update": "absolute",
+          "value": "BLOOM"
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-fishCount",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishCount",
+          "update": "absolute",
+          "value": 2000
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-fishSize",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSize",
+          "update": "absolute",
+          "value": 3
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-speed",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "speed",
+          "update": "absolute",
+          "value": 1.6
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-depth",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "depth",
+          "update": "absolute",
+          "value": 1
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-colorDrive",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "colorDrive",
+          "update": "absolute",
+          "value": 1
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-species",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "fishSelection",
+          "update": "atomic",
+          "selectedSpecies": 5,
+          "swimType": "WAVE"
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-scene",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "scene",
+        "payload": {
+          "update": "absolute",
+          "value": "FREE_SWIM"
+        }
+      }
+    },
+    {
+      "tick": 3460,
+      "label": "pre-reset-dive",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "param",
+        "payload": {
+          "id": "dive",
+          "update": "absolute",
+          "value": true
+        }
+      }
+    },
+    {
+      "tick": 3640,
+      "label": "reset",
+      "input": {
+        "v": 1,
+        "producerId": "ui",
+        "type": "oneshot",
+        "payload": {
+          "id": "reset",
+          "update": "trigger"
+        }
+      }
+    }
+  ],
+  "captures": [
+    {
+      "tick": 0,
+      "label": "initial"
+    },
+    {
+      "tick": 30,
+      "label": "default-settled"
+    },
+    {
+      "tick": 62,
+      "label": "mode-SENSUAL-enter"
+    },
+    {
+      "tick": 90,
+      "label": "mode-SENSUAL-settled"
+    },
+    {
+      "tick": 122,
+      "label": "mode-EUPHORIC-enter"
+    },
+    {
+      "tick": 150,
+      "label": "mode-EUPHORIC-settled"
+    },
+    {
+      "tick": 182,
+      "label": "mode-MYSTIC-enter"
+    },
+    {
+      "tick": 210,
+      "label": "mode-MYSTIC-settled"
+    },
+    {
+      "tick": 240,
+      "label": "macro-CLEAN"
+    },
+    {
+      "tick": 270,
+      "label": "macro-ACID"
+    },
+    {
+      "tick": 300,
+      "label": "macro-DEEP"
+    },
+    {
+      "tick": 330,
+      "label": "macro-PUNCH"
+    },
+    {
+      "tick": 361,
+      "label": "swarm-VORTEX-transition-start"
+    },
+    {
+      "tick": 405,
+      "label": "swarm-VORTEX-transition-mid"
+    },
+    {
+      "tick": 450,
+      "label": "swarm-VORTEX-transition-end"
+    },
+    {
+      "tick": 481,
+      "label": "swarm-WAVE-transition-start"
+    },
+    {
+      "tick": 525,
+      "label": "swarm-WAVE-transition-mid"
+    },
+    {
+      "tick": 570,
+      "label": "swarm-WAVE-transition-end"
+    },
+    {
+      "tick": 601,
+      "label": "swarm-BLOOM-transition-start"
+    },
+    {
+      "tick": 645,
+      "label": "swarm-BLOOM-transition-mid"
+    },
+    {
+      "tick": 690,
+      "label": "swarm-BLOOM-transition-end"
+    },
+    {
+      "tick": 721,
+      "label": "swarm-SPIRAL-transition-start"
+    },
+    {
+      "tick": 765,
+      "label": "swarm-SPIRAL-transition-mid"
+    },
+    {
+      "tick": 810,
+      "label": "swarm-SPIRAL-transition-end"
+    },
+    {
+      "tick": 830,
+      "label": "species-0"
+    },
+    {
+      "tick": 850,
+      "label": "species-1"
+    },
+    {
+      "tick": 870,
+      "label": "species-2"
+    },
+    {
+      "tick": 890,
+      "label": "species-3"
+    },
+    {
+      "tick": 910,
+      "label": "species-4"
+    },
+    {
+      "tick": 930,
+      "label": "species-5"
+    },
+    {
+      "tick": 950,
+      "label": "species-6"
+    },
+    {
+      "tick": 970,
+      "label": "species-7"
+    },
+    {
+      "tick": 990,
+      "label": "species-0-restore"
+    },
+    {
+      "tick": 1010,
+      "label": "swim-GLIDE"
+    },
+    {
+      "tick": 1030,
+      "label": "swim-WAVE"
+    },
+    {
+      "tick": 1050,
+      "label": "swim-FLOAT"
+    },
+    {
+      "tick": 1070,
+      "label": "swim-SCHOOL"
+    },
+    {
+      "tick": 1100,
+      "label": "fishCount-100"
+    },
+    {
+      "tick": 1130,
+      "label": "fishCount-2000"
+    },
+    {
+      "tick": 1160,
+      "label": "fishCount-800"
+    },
+    {
+      "tick": 1190,
+      "label": "fishSize-0.5"
+    },
+    {
+      "tick": 1220,
+      "label": "fishSize-3"
+    },
+    {
+      "tick": 1250,
+      "label": "fishSize-1.5"
+    },
+    {
+      "tick": 1280,
+      "label": "speed-0.2"
+    },
+    {
+      "tick": 1310,
+      "label": "speed-1.6"
+    },
+    {
+      "tick": 1340,
+      "label": "speed-0.68"
+    },
+    {
+      "tick": 1370,
+      "label": "depth-0.15"
+    },
+    {
+      "tick": 1400,
+      "label": "depth-1"
+    },
+    {
+      "tick": 1430,
+      "label": "depth-0.74"
+    },
+    {
+      "tick": 1460,
+      "label": "colorDrive-0"
+    },
+    {
+      "tick": 1490,
+      "label": "colorDrive-1"
+    },
+    {
+      "tick": 1520,
+      "label": "colorDrive-0.72"
+    },
+    {
+      "tick": 1551,
+      "label": "scene-FREE_SWIM-transition-start"
+    },
+    {
+      "tick": 1580,
+      "label": "scene-FREE_SWIM-transition-mid"
+    },
+    {
+      "tick": 1670,
+      "label": "scene-FREE_SWIM-transition-late"
+    },
+    {
+      "tick": 1790,
+      "label": "scene-FREE_SWIM-settled"
+    },
+    {
+      "tick": 1910,
+      "label": "free-style-VORTEX"
+    },
+    {
+      "tick": 2030,
+      "label": "free-style-WAVE"
+    },
+    {
+      "tick": 2150,
+      "label": "free-style-BLOOM"
+    },
+    {
+      "tick": 2270,
+      "label": "free-style-SPIRAL"
+    },
+    {
+      "tick": 2301,
+      "label": "free-dive-enter-start"
+    },
+    {
+      "tick": 2345,
+      "label": "free-dive-enter-mid"
+    },
+    {
+      "tick": 2480,
+      "label": "free-dive-enter-settled"
+    },
+    {
+      "tick": 2511,
+      "label": "free-dive-exit-start"
+    },
+    {
+      "tick": 2690,
+      "label": "free-dive-exit-settled"
+    },
+    {
+      "tick": 2721,
+      "label": "scene-MANDALA-transition-start"
+    },
+    {
+      "tick": 2750,
+      "label": "scene-MANDALA-transition-mid"
+    },
+    {
+      "tick": 2930,
+      "label": "scene-MANDALA-settled"
+    },
+    {
+      "tick": 2961,
+      "label": "mandala-dive-enter-start"
+    },
+    {
+      "tick": 3005,
+      "label": "mandala-dive-enter-mid"
+    },
+    {
+      "tick": 3140,
+      "label": "mandala-dive-enter-settled"
+    },
+    {
+      "tick": 3350,
+      "label": "mandala-dive-exit-settled"
+    },
+    {
+      "tick": 3390,
+      "label": "blackout-on"
+    },
+    {
+      "tick": 3430,
+      "label": "blackout-off"
+    },
+    {
+      "tick": 3610,
+      "label": "pre-reset-drifted"
+    },
+    {
+      "tick": 3641,
+      "label": "reset-start"
+    },
+    {
+      "tick": 3670,
+      "label": "reset-mid"
+    },
+    {
+      "tick": 3880,
+      "label": "reset-settled"
+    }
+  ]
+}
