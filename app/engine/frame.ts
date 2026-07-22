@@ -52,10 +52,13 @@ export function advanceEngineTick(state: EngineState): EngineState {
     swarmTransitionStartTick = tick;
   }
 
-  const swarmMix = Math.min(
-    1,
-    Math.max(0, (tick - swarmTransitionStartTick) / SWARM_TRANSITION_TICKS),
-  );
+  const swarmMix =
+    observedSwarm === state.observedSwarm && state.swarmMix >= 1
+      ? 1
+      : Math.min(
+          1,
+          Math.max(0, (tick - swarmTransitionStartTick) / SWARM_TRANSITION_TICKS),
+        );
   const targetScene = sceneValue(state.scene);
   const sceneMix = state.sceneMix + (targetScene - state.sceneMix) * SCENE_ALPHA;
   const targetDive = state.dive ? 1 : 0;

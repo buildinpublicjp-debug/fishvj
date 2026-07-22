@@ -144,6 +144,13 @@ test("identical event and tick sequences produce identical transition snapshots"
   assert.equal(snapshot.uAspect, 16 / 9);
 });
 
+test("an idle swarm remains fully settled across simulation ticks", () => {
+  const store = createEngineStore({ now: () => 0 });
+  for (let tick = 0; tick < 120; tick += 1) store.advanceTick();
+  assert.equal(store.getState().swarmMix, 1);
+  assert.equal(store.getRenderSnapshot().uSwarmMix, 1);
+});
+
 test("S1 rejects disabled producers and out-of-range params before reduction", () => {
   const store = createEngineStore({ now: () => 0 });
   assert.throws(
