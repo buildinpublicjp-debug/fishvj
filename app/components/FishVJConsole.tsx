@@ -8,7 +8,12 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { engine, ParamEventCoalescer, type EngineEventInput } from "../engine";
+import {
+  engine,
+  isCaptureEnabled,
+  ParamEventCoalescer,
+  type EngineEventInput,
+} from "../engine";
 import type {
   AudioLevels,
   ColorPreset,
@@ -268,6 +273,8 @@ export function FishVJConsole() {
   );
 
   useEffect(() => {
+    // Deterministic capture runs with every audio band pinned to 0.
+    if (isCaptureEnabled()) return;
     const updateDemo = (now: number) => {
       if (audioInput === "demo") {
         beatStartRef.current ??= now;
