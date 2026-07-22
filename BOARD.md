@@ -4,20 +4,22 @@
 
 | 項目 | 値 |
 |---|---|
-| 更新 | 2026-07-22 |
+| 更新 | 2026-07-23 |
 | 現driver | Claude Code (このMac) |
-| 対象branch | `agent/fishvj-s1a-ssot` (HEAD `20ee2c4` + S1a検証commit) |
+| 対象branch | main HEAD `7c8a059` (S1a merged) / 次作業 `agent/fishvj-s1b-golden` |
 | 凍結文書 | `docs/FISHVJ_DESIGN_V2.md` / `docs/FISHVJ_INSTRUMENT_V1.md` (branch `agent/fishvj-instrument-v1`) / `docs/design/FISHVJ_UI_VISUAL_CONTRACT.md` — **変更絶対禁止** |
 
 ## 1. 現状態
 
-**S1a は CC 側で検証完了。zDOG の merge 判断待ち。**
+**S1a は merge 済み（PR #7、rebase → main `7c8a059`）。次は S1b。**
 
-- 実装 (SSOT移行) は `8ff3114` + `20ee2c4` に入っている。実装agent (Sol) は利用枠切れで 7/29 まで停止。
-- Sol の sandbox に取り残された golden / current capture は**回収していない**。このMac上で別途採取し直した。
+- SSOT移行 + capture harness + S1a検証は main に乗った（`3214735`→`bdd1480`→`6dca7be`→`7c8a059`）。
+- 手動A/B は zDOG が 9 行フル目視で承認（同じ楽器・per-fish配置はseed差で不一致=設計通り）。
 - 検証結果は `docs/S1A_VERIFY.md`。
+- **次作業のCC指示文は `docs/S1B_INSTRUCTIONS.md`。** S1bの最難関（T0-A patchのPRNG消費順一致）は突き合わせ表を同文書に埋めて解決済み。
+- 実装agent (Sol) は利用枠切れで 7/29 まで停止。
 
-## 2. 完了項目 (2026-07-22)
+## 2. S1a 完了項目 (2026-07-22 検証 / 2026-07-23 merge)
 
 | gate | 結果 |
 |---|---|
@@ -26,15 +28,19 @@
 | 決定論 2-run: semantic hash trace | 131/131 完全一致 |
 | 決定論 2-run: raw sample JSON | byte一致 |
 | 決定論 2-run: 同tick pixel | 78 frame 全て 1920×1080、平均SSIM 0.999999 / 最小 0.999998 (閾値 0.999) |
-| 手動A/B | **未判定 — zDOG目視待ち** (`capture/ab-sheet-base-vs-s1a.png`) |
+| 手動A/B | **zDOG承認済** (`capture/ab-sheet-base-vs-s1a.png`、9行フル目視) |
 
 付随して作成したもの: flag-gate (`?capture=1`) された in-app capture bridge、`capture/manifest.json`
 (v2 §9.2 網羅)、依存ゼロの CDP / PNG / SSIM / hash harness、contact sheet、A/B sheet。
 
-## 3. zDOG待ち
+## 3. 進行中: S1b
 
-1. `capture/ab-sheet-base-vs-s1a.png` の目視。違和感があればこのfileへ追記して停止させること。
-2. PR の merge 判断。
+`docs/S1B_INSTRUCTIONS.md` を参照。要旨:
+- `2275308` + T0-A を基準点に committed golden + SSIM gate を張り、main HEAD の視覚退行を機械判定。
+- T0-A patch = `Math.random` 5箇所を mulberry32 (seed `0x46495348`) 単一streamへ 1:1 置換（消費順一致は確認済）。
+- deck v0（scale/motion のみ外部化）。
+- golden gate 通過をもって初めて §7.2「見た目完全不変」を主張する。
+- 未着手。基準worktree `~/dev/fishvj-base` 再利用可。
 
 ## 4. 既知の差異・注記
 
@@ -49,14 +55,14 @@
 
 ## 5. 次キュー
 
-1. **S1b** — committed golden / SSIM harness (v2 §9.1準拠、`2275308` + T0-A 基準点の正式構築込み) + deck v0 外部化。
-   「見た目完全不変」(v2 §7.2) の主張は **S1b gate 通過後に初めて行う**。
-2. **S2** — v2 §11.2 (T0-B / Recorder / Playback / Hash / Test)。
+1. **S1b（進行中）** — committed golden / SSIM harness (v2 §9.1準拠、`2275308` + T0-A 基準点の正式構築込み) + deck v0 外部化。
+   指示文 `docs/S1B_INSTRUCTIONS.md`。「見た目完全不変」(v2 §7.2) の主張は **S1b gate 通過後に初めて行う**。
+2. **S2** — v2 §11.2 (T0-B / Recorder / Playback / Hash / Test)。zDOG は当初 S2 を先にと発話したが、golden gate を先に張るため S1b を先行に確定 (2026-07-23)。
 3. **instrument S1b以降** — `FISHVJ_INSTRUMENT_V1.md` §9 の Sprint積算。
 
 ## 6. 7/29 再開者 (Sol) への注意
 
-- **S1a は CC 側で完了済み。** 旧goalの続き (golden採取・SSIM判定・S1a実装の残り) を実行しないこと。
-- 状態は本 file から intake する。
-- sandbox 内に SSIM 判定結果が残っていれば**回収し、S1b の追認資料として本fileへ添付**すること。
+- **S1a は完了・merge済み。** 旧goalの続き (S1a実装の残り) を実行しないこと。
+- 状態は本 file から intake する。現在の作業対象は S1b（`docs/S1B_INSTRUCTIONS.md`）。
+- sandbox 内に S1a時代の SSIM 判定結果が残っていれば**回収し、S1b の追認資料として本fileへ添付**すること。
   S1a の合否をそれで上書きしない。
