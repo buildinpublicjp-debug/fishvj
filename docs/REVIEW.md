@@ -50,6 +50,29 @@
 | R-025 | adopted | P0 | 装飾円を除き、群れ構造を独立切替できる必要がある | adopt（4 SWARM） |
 | R-026 | adopted | P0 | 剛体回転ではなく個体が泳いで見える運動が必要 | adopt（個体GPU泳動） |
 | R-027 | adopted | P1 | 魚の可読サイズとVORTEXの密度を現場調整できない | adopt（独立SIZE + 層圧縮） |
+| R-028 | adopted | P0 | 曼荼羅と自由遊泳を独立sceneとして切り替える | adopt（2 SCENE） |
+| R-029 | adopted | P1 | 魚種ごとの速度と揺れが同じテンポに見える | adopt（motion分離） |
+| R-030 | adopted | P0 | frozen SpacePayloadへsurface IDを暗黙追加していた | adopt（profile routing） |
+| R-031 | adopted | P0 | world loadとperformance map選択がatomicでない | adopt（2 hash payload） |
+| R-032 | adopted | P0 | world param targetとu16量子化が5B replay recordに閉じない | adopt（compound dictionary） |
+| R-033 | adopted | P0 | system kernel/config不在でworld hashが挙動を固定しない | adopt（versioned kernels） |
+| R-034 | adopted | P0 | World output形式が共通EQ/mixerへ接続不能 | adopt（linear premultiplied RGBA8） |
+| R-035 | adopted | P0 | worldのbounded/continuous timelineが未定義 | adopt（timeline union） |
+| R-036 | adopted | P1 | asset memory gateにbyte上限とdecoded算術がない | adopt（2段ceiling） |
+| R-037 | adopted | P1 | p95計測が平均fpsで代用できる | adopt（warm-up + 3,600 tick） |
+| R-038 | adopted | P0 | bounded worldのseek/tempoからstateが一意に決まらない | adopt（Baseline + Q32.32） |
+| R-039 | adopted | P1 | manifest/session seedとPRNG substream導出が曖昧 | adopt（seed一本化） |
+| R-040 | adopted | P1 | composite entity IDのcanonical順序がない | adopt（numeric tuple order） |
+| R-041 | adopted | P1 | shared 2,000B metadataのbinary layoutがない | adopt（world.dict） |
+| R-042 | adopted | P1 | proof fixtureがcontent hashでpinされていない | adopt（pinned fixtures） |
+| R-043 | adopted | P2 | 死亡entityへのinvokeが未定義 | adopt（no-op + diagnostic） |
+| R-044 | adopted | P2 | 複数graph伝播とmulti-blobに機械判定がない | adopt（dual trigger + 2 blob） |
+| R-045 | adopted | P0 | continuous worldへactive DJ transportを表示していた | adopt（VJ-only disabled panel） |
+| R-046 | adopted | P1 | world time scaleをBPM表示しbounded seek意味論がUIから読めない | adopt（倍率 + Baseline label） |
+| R-047 | adopted | P1 | bounded deckへschemaにない4/8 beat loop操作を表示していた | adopt（HOT CUE + fixed manifest loop表示） |
+| R-048 | adopted | P1 | Source Browserでsource/map選択とcompatibility判定が分離し得る | adopt（atomic load + fail closed） |
+| R-049 | adopted | P1 | Map Editorがprogram targetとfrozen default上書きを許すように見える | adopt（program lock + copy ID/hash） |
+| R-050 | adopted | P1 | Surface Editorがv0外の複数physical/camera routingを示し得る | adopt（1 physical + offscreen fixture） |
 
 ## 指摘詳細
 
@@ -415,6 +438,78 @@
 - priority: P1
 - 採用内容: 移動速度と尾振り周期を分離し、SCHOOLは速い小刻みな尾振り、GLIDEは直進中心、WAVEは大きな全身うねり、FLOATは遅い上下漂流へ調整。MYSTIC / SENSUAL / EUPHORICの全体速度差、4遊泳スタイル、RUSH、2,000匹最速状態をブラウザE2Eで確認する。
 - 反映先: `TECH.md`「魚群」、魚頂点シェーダー
+
+### R-030〜R-037 — WorldSource増築の一回攻撃監査
+
+- status: `adopted / patched / active P0=0 / active P1=0`
+- source: [WORLD_REVIEW_X](./WORLD_REVIEW_X.md) X-W01〜X-W08
+- priority: P0×6 / P1×2
+- 対象: `WORLD_SOURCE_V0`、`PERFORMANCE_MAP_V0`、`OUTPUT_SURFACES_V0`、
+  `WORLD_PROOFS_V0`、`FISHVJ_INSTRUMENT_V2`
+- 採用内容: frozen SpacePayloadをsession profile routingへ戻した。world/mapの2 hashをload eventへ
+  atomicに同梱した。world paramのdeck/target/rangeをdictionary codeへ固定し、live時点でu16往復後の
+  Q16へcanonicalizeした。systemごとのversioned kernel/config、bounded/continuous timeline、
+  linear-premultiplied RGBA8出力、asset memory ceiling、warm-up付きp95測定を追加した。
+- 反映先: 上記5文書。詳細な破壊シナリオとpatch auditは`WORLD_REVIEW_X.md`を正とする。
+- 棄却理由: —
+
+### R-038〜R-044 — World設計の独立再監査
+
+- status: `adopted / patched / active P0=0 / active P1=0`
+- source: [WORLD_REVIEW_F](./WORLD_REVIEW_F.md) F-W01〜F-W07
+- priority: P0×1 / P1×4 / P2×2
+- 対象: `WORLD_SOURCE_V0`、`PERFORMANCE_MAP_V0`、`OUTPUT_SURFACES_V0`、
+  `WORLD_PROOFS_V0`、`FISHVJ_INSTRUMENT_V2`
+- 採用内容: bounded worldを`Baseline(p)`で定義し、後方seek/reverse/loopとQ32.32 tempoを固定した。
+  manifest seedへ一本化したPCG32、numeric entity tuple順、fixed `world.dict` layoutを追加した。
+  proof manifest/input/expectedをrepo fixtureへ置いてJCS SHA-256でpinし、water decay、dead entity no-op、
+  dual-trigger graph merge、2-blob入力、60秒DJ transportを機械判定可能にした。
+- 反映先: 上記5文書、`fixtures/world/`。詳細な破壊シナリオとpatch auditは`WORLD_REVIEW_F.md`を正とする。
+- 棄却理由: —
+
+### R-045〜R-046 — World operator UIのschema整合監査
+
+- status: `adopted / patched / frozen`
+- source: プロジェクトオーナーの正典画像レビュー
+- priority: P0×1 / P1×1
+- 対象: `fishvj-world-operator-master-v1.png`、`PERFORMANCE_MAP_V0 §6`、
+  `WORLD_SOURCE_V0 §3.5`、`FISHVJ_INSTRUMENT_V2 §10`
+- 採用内容: continuous deckからPLAY/CUE/LOOP、jog ring、cue points、BPM/SYNCを除き、
+  `CONTINUOUS · VJ ONLY / AUTO-RUN · 1.00× / NO SEEK · NO CUE · NO LOOP`へ置換した。
+  bounded deckはtime scaleを`0.50–2.00×`へ直し、`STATE SEEK · BASELINE(p)`を明示した。
+- 反映先: `docs/design/FISHVJ_WORLD_UI_VISUAL_CONTRACT.md`、同正典PNG、本書§10。
+- 棄却理由: —
+
+### R-047 — bounded deckの未契約beat loop
+
+- status: `adopted / patched / frozen`
+- source: プロジェクトオーナーの正典画像レビュー
+- priority: P1
+- 対象: `fishvj-world-operator-master-v1.png`、`PERFORMANCE_MAP_V0 §6.1`、
+  `WORLD_SOURCE_V0 §3.5`、`FISHVJ_INSTRUMENT_V2 §10`
+- 採用内容: DJ parityに存在しないactive `LOOP` buttonと`4/8 LOOP`選択を削除し、transportは
+  `PLAY / CUE / HOT CUE`へ固定した。loopはmanifestの`loopStartTick..loopEndTickExclusive`を
+  `MANIFEST LOOP / 0–240 TICKS`形式でread-only表示し、session中にoperatorから変更できない契約を
+  Performance MapとWorldSourceへ明記した。
+- 反映先: 上記3文書、`docs/design/FISHVJ_WORLD_UI_VISUAL_CONTRACT.md`、正典PNG v2、本書§10。
+- 棄却理由: —
+
+### R-048〜R-050 — World補助3画面のschema整合監査
+
+- status: `adopted / patched / frozen`
+- source: プロジェクトオーナーの正典画像レビュー
+- priority: P1×3
+- 対象: Source Browser、Performance Map Editor、Surface Topology / Calibrationの正典候補、
+  `WORLD_SOURCE_V0`、`PERFORMANCE_MAP_V0`、`OUTPUT_SURFACES_V0`、`FISHVJ_INSTRUMENT_V2 §10`
+- R-048採用内容: sourceとcompatible mapを`LOAD SOURCE + MAP`のatomic `1 event`で確定し、
+  continuous/DJ incompatibility、hash/capability不一致をload前にfail closedとした。
+- R-049採用内容: fixed mixer 6 controlに加え、variable bindingの`PROGRAM` scopeをlockした。
+  frozen default `fishvj-world-v0`は直接編集せず、`fishvj-world-v0 (copy)`から別IDと別content hashを
+  保存するeditor規則を追加した。
+- R-050採用内容: physical programを1面に限定し、2面目はoffscreen fixture、cameraはSurface Aだけ、
+  Surface Bはcamera grid zero、calibrationModeはDOM overlay OFFとして固定した。
+- 反映先: `docs/design/FISHVJ_WORLD_AUX_SCREENS_VISUAL_CONTRACT.md`、正典PNG 3枚、
+  `docs/PERFORMANCE_MAP_V0.md`、`docs/FISHVJ_INSTRUMENT_V2.md`。
 - 棄却理由: —
 
 ## 判断履歴
@@ -439,3 +534,9 @@
 | 2026-07-18 | R-025〜R-027 | adopted / implemented | 装飾円削除、4 SWARMモーフ、個体泳動、独立FISH SIZE、VORTEX層圧縮を実装し、2,000匹 + DIVEで60fpsを確認 |
 | 2026-07-18 | R-028 | adopted / implemented | MANDALA / FREE SWIM、自由遊泳4スタイル、SCHOOL RUSHを実装し、2,000匹で60fpsを確認 |
 | 2026-07-18 | R-029 | adopted / implemented | 魚種別の移動速度・尾振り周期・上下揺れを分離し、4スタイルと2,000匹最速状態をE2E確認 |
+| 2026-07-21 | Z-01 | adopted | DJ/VJ 2文法を維持し、WorldSourceを新source種別として増築。物理multi-surfaceは契約のみ |
+| 2026-07-21 | R-030〜R-037 | adopted / patched | World設計を一回攻撃監査。P0×6・P1×2を全件反映し、active P0/P1を0件へ閉じた |
+| 2026-07-22 | R-038〜R-044 | adopted / patched | Fable独立監査P0×1・P1×4・P2×2を全件反映し、fixture hash再計算後active P0/P1を0件へ閉じた |
+| 2026-07-22 | R-045〜R-046 | adopted / patched / frozen | World operator UIのcontinuous transportとBPM表記を修正し、正典画像v1をfreeze |
+| 2026-07-22 | R-047 | adopted / patched / frozen | bounded deckの未契約beat loopを削除し、HOT CUEと固定manifest loop表示で正典画像v2をfreeze |
+| 2026-07-22 | R-048〜R-050 | adopted / patched / frozen | World補助3画面をschema監査し、program lockとdefault map copy規則を反映してfreeze |

@@ -1,0 +1,101 @@
+{
+  "fixtureHash": "sha256:3aa393f21756be2feb4d998c60c6e14b1c25f48c62474cd1850971cc8cba6be0",
+  "id": "proof-graph-v0",
+  "expected": {
+    "activationCountPerNodePerOriginMaximum": 1,
+    "collisionCount": 2,
+    "collisionNodeU16": [64, 192],
+    "collisionWorldTick": 664,
+    "winnerOriginEventId": { "orderInTickU8": 0, "sourceTickU32": 600 }
+  },
+  "v": 0,
+  "worldManifest": {
+    "assets": [],
+    "bindings": [
+      {
+        "capability": "graph.propagate",
+        "entryNodeU16": 0,
+        "target": { "id": "graph", "scope": "system" },
+        "verbId": "graph.left"
+      },
+      {
+        "capability": "graph.propagate",
+        "entryNodeU16": 128,
+        "target": { "id": "graph", "scope": "system" },
+        "verbId": "graph.right"
+      }
+    ],
+    "contentHash": "sha256:99e7cab28c5bc9228188b3b4654d865b6f309b7de6ad84e244598c1172c4bdd5",
+    "groups": [],
+    "id": "proof-graph-world-v0",
+    "limits": {
+      "maxAssets": 0,
+      "maxEntities": 1,
+      "maxGroups": 1,
+      "maxParameters": 0,
+      "maxSystems": 1
+    },
+    "logicalSize": { "height": 540, "width": 960 },
+    "name": "Proof Graph World v0",
+    "output": {
+      "alpha": "premultiplied",
+      "colorSpace": "linear-srgb",
+      "format": "rgba8"
+    },
+    "parameters": [],
+    "provenance": { "author": "FishVJ", "license": "CC0-1.0" },
+    "runtime": "fishvj-world-v0",
+    "seed": { "algorithm": "pcg32-v1", "valueU64": "0x0000000000000004" },
+    "surfaces": {
+      "maximum": 1,
+      "minimum": 1,
+      "singleSurfaceFallback": "supported"
+    },
+    "systems": [
+      {
+        "config": { "hopTicks": 1, "merge": "first-arrival-v0" },
+        "id": "graph",
+        "kernel": "propagation-graph-v0",
+        "nodeCount": 256,
+        "topology": { "kind": "ring-bidirectional-v0" },
+        "type": "propagationGraph"
+      }
+    ],
+    "tickHz": 60,
+    "timeline": { "djCompatible": false, "kind": "continuous" },
+    "v": 0
+  },
+  "tracks": {
+    "durationEngineTicks": 3600,
+    "events": [
+      {
+        "orderInTick": 0,
+        "payload": {
+          "action": "invoke",
+          "deck": "A",
+          "phase": "trigger",
+          "strengthQ8": 255,
+          "target": { "id": "graph", "scope": "system" },
+          "update": "atomic",
+          "verbId": "graph.left"
+        },
+        "sourceTick": 600,
+        "type": "world"
+      },
+      {
+        "orderInTick": 1,
+        "payload": {
+          "action": "invoke",
+          "deck": "A",
+          "phase": "trigger",
+          "strengthQ8": 255,
+          "target": { "id": "graph", "scope": "system" },
+          "update": "atomic",
+          "verbId": "graph.right"
+        },
+        "sourceTick": 600,
+        "type": "world"
+      }
+    ]
+  }
+}

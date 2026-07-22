@@ -1,0 +1,129 @@
+{
+  "fixtureHash": "sha256:ae213aa9454bfd091de1e512e0081e75204cbd9cba4fb1cd70652c534701067a",
+  "id": "proof-dj-transport-v0",
+  "expected": {
+    "hashSamplesPerRun": 120,
+    "replayHashMismatches": 0,
+    "runs": 2,
+    "transportActionsCovered": ["rate", "jogSeek", "cue", "hotCue", "direction", "loopWrap"],
+    "worldStateDefinition": "Baseline(p)"
+  },
+  "initialTransport": {
+    "direction": "forward",
+    "hotCues": { "1": 120 },
+    "playing": true,
+    "rateQ16": 65536
+  },
+  "v": 0,
+  "worldManifest": {
+    "assets": [],
+    "bindings": [],
+    "contentHash": "sha256:6b28c9247994d7f2490e570b26124c462d6dfe4e9ad2ae61316364e9968281b9",
+    "groups": [
+      { "id": "transport-entities", "systemId": "lifecycle", "tags": ["transport-proof"] }
+    ],
+    "id": "proof-dj-transport-world-v0",
+    "limits": {
+      "maxAssets": 0,
+      "maxEntities": 32,
+      "maxGroups": 1,
+      "maxParameters": 0,
+      "maxSystems": 1
+    },
+    "logicalSize": { "height": 540, "width": 960 },
+    "name": "Proof DJ Transport World v0",
+    "output": {
+      "alpha": "premultiplied",
+      "colorSpace": "linear-srgb",
+      "format": "rgba8"
+    },
+    "parameters": [],
+    "provenance": { "author": "FishVJ", "license": "CC0-1.0" },
+    "runtime": "fishvj-world-v0",
+    "seed": { "algorithm": "pcg32-v1", "valueU64": "0x0000000000000005" },
+    "surfaces": {
+      "maximum": 1,
+      "minimum": 1,
+      "singleSurfaceFallback": "supported"
+    },
+    "systems": [
+      {
+        "capacity": 32,
+        "config": {
+          "dwellGainQ16": 0,
+          "motionDamageQ16": 0,
+          "phaseTicks": [24, 24, 48, 24, 120]
+        },
+        "groupId": "transport-entities",
+        "id": "lifecycle",
+        "initialCount": 32,
+        "kernel": "lifecycle-v0",
+        "type": "lifecycle"
+      }
+    ],
+    "tickHz": 60,
+    "timeline": {
+      "djCompatible": true,
+      "durationTicks": 240,
+      "initialTick": 0,
+      "kind": "bounded",
+      "loopEndTickExclusive": 240,
+      "loopStartTick": 0,
+      "seekModel": "canonical-resim-v0"
+    },
+    "v": 0
+  },
+  "tracks": {
+    "durationEngineTicks": 3600,
+    "events": [
+      {
+        "orderInTick": 0,
+        "payload": { "action": "rate", "deck": "A", "update": "absolute", "valueQ16": 98304 },
+        "sourceTick": 60,
+        "type": "transport"
+      },
+      {
+        "orderInTick": 0,
+        "payload": {
+          "action": "jogSeek",
+          "deck": "A",
+          "deltaQ16Frames": -65536,
+          "target": "program",
+          "update": "relative"
+        },
+        "sourceTick": 300,
+        "type": "transport"
+      },
+      {
+        "orderInTick": 0,
+        "payload": { "action": "cue", "deck": "A", "update": "trigger" },
+        "sourceTick": 600,
+        "type": "transport"
+      },
+      {
+        "orderInTick": 0,
+        "payload": { "action": "hotCue", "deck": "A", "index": 1, "update": "trigger" },
+        "sourceTick": 900,
+        "type": "transport"
+      },
+      {
+        "orderInTick": 0,
+        "payload": { "action": "direction", "deck": "A", "update": "absolute", "value": "reverse" },
+        "sourceTick": 1200,
+        "type": "transport"
+      },
+      {
+        "orderInTick": 0,
+        "payload": { "action": "direction", "deck": "A", "update": "absolute", "value": "forward" },
+        "sourceTick": 1500,
+        "type": "transport"
+      },
+      {
+        "orderInTick": 0,
+        "payload": { "action": "rate", "deck": "A", "update": "absolute", "valueQ16": 32768 },
+        "sourceTick": 1800,
+        "type": "transport"
+      }
+    ]
+  }
+}

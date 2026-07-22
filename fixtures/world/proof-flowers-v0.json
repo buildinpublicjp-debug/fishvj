@@ -1,0 +1,150 @@
+{
+  "fixtureHash": "sha256:37f7833b96dd493b1c158f4a3f619022e44e510f4d0facb72c14e49475d3fbb4",
+  "id": "proof-flowers-v0",
+  "expected": {
+    "duplicateEntityIds": 0,
+    "entityCountEveryTick": 512,
+    "multiBlob": {
+      "activeFromEngineTick": 1200,
+      "activeToEngineTickExclusive": 1500,
+      "minimumLifecycleAdvancesPerRegion": 1,
+      "regionCellSets": [[9, 10, 17, 18], [45, 46, 53, 54]]
+    },
+    "zeroInputFirstPhaseTicks": {
+      "bloom": 240,
+      "bud": 120,
+      "dead": 600,
+      "seed": 0,
+      "wither": 480
+    }
+  },
+  "derivedComparators": {
+    "zeroSpace": {
+      "durationEngineTicks": 3600,
+      "energy": 0,
+      "gridFill": 0,
+      "silRatio": 0
+    }
+  },
+  "v": 0,
+  "worldManifest": {
+    "assets": [],
+    "bindings": [
+      {
+        "capability": "lifecycle.advance",
+        "target": { "id": "flowers", "scope": "group" },
+        "verbId": "flowers.advance"
+      },
+      {
+        "capability": "entity.scatter",
+        "target": { "id": "flowers", "scope": "group" },
+        "verbId": "flowers.scatter"
+      }
+    ],
+    "contentHash": "sha256:5cf8dcffc6cbb780658b87be1da5b3b021856550d4622d1bbf7048ddb6b9c387",
+    "groups": [
+      { "id": "flowers", "systemId": "lifecycle", "tags": ["flower"] }
+    ],
+    "id": "proof-flowers-world-v0",
+    "limits": {
+      "maxAssets": 0,
+      "maxEntities": 512,
+      "maxGroups": 1,
+      "maxParameters": 0,
+      "maxSystems": 2
+    },
+    "logicalSize": { "height": 540, "width": 960 },
+    "name": "Proof Flowers World v0",
+    "output": {
+      "alpha": "premultiplied",
+      "colorSpace": "linear-srgb",
+      "format": "rgba8"
+    },
+    "parameters": [],
+    "provenance": { "author": "FishVJ", "license": "CC0-1.0" },
+    "runtime": "fishvj-world-v0",
+    "seed": { "algorithm": "pcg32-v1", "valueU64": "0x0000000000000002" },
+    "surfaces": {
+      "maximum": 1,
+      "minimum": 1,
+      "singleSurfaceFallback": "supported"
+    },
+    "systems": [
+      {
+        "config": { "decayQ16": 57344, "diffusionQ16": 0, "inputGainQ16": 65536 },
+        "height": 18,
+        "id": "presence",
+        "kernel": "field2d-v0",
+        "type": "field2d",
+        "width": 32
+      },
+      {
+        "capacity": 512,
+        "config": {
+          "dwellGainQ16": 65536,
+          "motionDamageQ16": 65536,
+          "phaseTicks": [120, 120, 240, 120, 60]
+        },
+        "groupId": "flowers",
+        "id": "lifecycle",
+        "initialCount": 512,
+        "kernel": "lifecycle-v0",
+        "type": "lifecycle"
+      }
+    ],
+    "tickHz": 60,
+    "timeline": { "djCompatible": false, "kind": "continuous" },
+    "v": 0
+  },
+  "tracks": {
+    "durationEngineTicks": 3600,
+    "sampleEveryEngineTicks": 12,
+    "spaceSegments": [
+      {
+        "energy": 0,
+        "fromEngineTick": 0,
+        "grid": { "cells": [], "fill": 0 },
+        "silRatio": 0,
+        "toEngineTickExclusive": 600
+      },
+      {
+        "energy": 8,
+        "fromEngineTick": 600,
+        "grid": { "cells": [[27, 255], [28, 255], [35, 255], [36, 255]], "fill": 0 },
+        "silRatio": 16,
+        "toEngineTickExclusive": 900
+      },
+      {
+        "energy": 255,
+        "fromEngineTick": 900,
+        "grid": { "cells": [[18, 255], [19, 255], [20, 255], [21, 255]], "fill": 0 },
+        "silRatio": 16,
+        "toEngineTickExclusive": 960
+      },
+      {
+        "energy": 0,
+        "fromEngineTick": 960,
+        "grid": { "cells": [], "fill": 0 },
+        "silRatio": 0,
+        "toEngineTickExclusive": 1200
+      },
+      {
+        "energy": 8,
+        "fromEngineTick": 1200,
+        "grid": {
+          "cells": [[9, 255], [10, 255], [17, 255], [18, 255], [45, 255], [46, 255], [53, 255], [54, 255]],
+          "fill": 0
+        },
+        "silRatio": 32,
+        "toEngineTickExclusive": 1500
+      },
+      {
+        "energy": 0,
+        "fromEngineTick": 1500,
+        "grid": { "cells": [], "fill": 0 },
+        "silRatio": 0,
+        "toEngineTickExclusive": 3600
+      }
+    ]
+  }
+}

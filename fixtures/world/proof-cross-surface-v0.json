@@ -1,0 +1,117 @@
+{
+  "fixtureHash": "sha256:71af8ee6b4260c1315622782418d74c516c730b4d53b2968a974cc7b501bb8c7",
+  "id": "proof-cross-surface-v0",
+  "expected": {
+    "duplicateEntityIdsEveryTick": 0,
+    "entityCountEveryTick": 200,
+    "lostEntityIdsEveryTick": 0,
+    "transferredEntity": { "spawnCounterU32": 0, "systemIndexU8": 0 },
+    "transferOccurrences": 1
+  },
+  "initialOverrides": [
+    {
+      "entity": { "spawnCounterU32": 0, "systemIndexU8": 0 },
+      "ownerSurfaceId": "A",
+      "positionQ16": [31391744, 17694720],
+      "velocityQ16": [131072, 0]
+    }
+  ],
+  "surfaceProfile": {
+    "cameras": [],
+    "contentHash": "sha256:657b3eaa69546f789b6d2146f44a81a7feb1f97b75c821f685cf597c5214e27c",
+    "id": "proof-two-surface-v0",
+    "logicalWorld": { "heightQ16": 35389440, "widthQ16": 62914560 },
+    "name": "Proof Two Surface v0",
+    "portals": [
+      {
+        "direction": "two-way",
+        "fromEdge": "right",
+        "fromRangeQ16": [0, 65536],
+        "fromSurface": "A",
+        "id": "A-B",
+        "toEdge": "left",
+        "toRangeQ16": [0, 65536],
+        "toSurface": "B"
+      }
+    ],
+    "surfaces": [
+      {
+        "calibrationHash": "sha256:6db260d3c515d7848ded620ad07afe328ba211a69bcddcdc5007030d9113a62a",
+        "id": "A",
+        "logicalRectQ16": { "height": 35389440, "width": 31457280, "x": 0, "y": 0 },
+        "pixelViewport": { "height": 540, "width": 480 },
+        "renderOrder": 0,
+        "role": "offscreen-fixture"
+      },
+      {
+        "calibrationHash": "sha256:6db260d3c515d7848ded620ad07afe328ba211a69bcddcdc5007030d9113a62a",
+        "id": "B",
+        "logicalRectQ16": { "height": 35389440, "width": 31457280, "x": 31457280, "y": 0 },
+        "pixelViewport": { "height": 540, "width": 480 },
+        "renderOrder": 1,
+        "role": "offscreen-fixture"
+      }
+    ],
+    "v": 0
+  },
+  "v": 0,
+  "worldManifest": {
+    "assets": [],
+    "bindings": [
+      {
+        "capability": "surface.transfer",
+        "target": { "id": "fish", "scope": "group" },
+        "verbId": "surface.transfer"
+      }
+    ],
+    "contentHash": "sha256:6fff1cdd91372be065005bb33c41fd0a3d77594ac40a081dbf3364b2a5b67120",
+    "groups": [
+      { "id": "fish", "systemId": "boids", "tags": ["surface-proof"] }
+    ],
+    "id": "proof-cross-surface-world-v0",
+    "limits": {
+      "maxAssets": 0,
+      "maxEntities": 200,
+      "maxGroups": 1,
+      "maxParameters": 0,
+      "maxSystems": 1
+    },
+    "logicalSize": { "height": 540, "width": 960 },
+    "name": "Proof Cross Surface World v0",
+    "output": {
+      "alpha": "premultiplied",
+      "colorSpace": "linear-srgb",
+      "format": "rgba8"
+    },
+    "parameters": [],
+    "provenance": { "author": "FishVJ", "license": "CC0-1.0" },
+    "runtime": "fishvj-world-v0",
+    "seed": { "algorithm": "pcg32-v1", "valueU64": "0x0000000000000006" },
+    "surfaces": {
+      "maximum": 2,
+      "minimum": 2,
+      "singleSurfaceFallback": "reject"
+    },
+    "systems": [
+      {
+        "capacity": 200,
+        "config": {
+          "alignmentQ16": 0,
+          "cohesionQ16": 0,
+          "maxSpeedQ16": 131072,
+          "neighborRadiusQ16": 65536,
+          "separationQ16": 0
+        },
+        "groupId": "fish",
+        "id": "boids",
+        "initialCount": 200,
+        "kernel": "boids-v0",
+        "type": "boids"
+      }
+    ],
+    "tickHz": 60,
+    "timeline": { "djCompatible": false, "kind": "continuous" },
+    "v": 0
+  },
+  "tracks": { "durationEngineTicks": 7200 }
+}
