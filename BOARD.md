@@ -78,8 +78,7 @@ frozen 2文書の実装スコープを機材待ち以外全部閉じる。sprint
 - [x] S1a（SSOT/決定論）— merged
 - [x] S1b（golden gate + deck v0）— merged
 - [x] S2（replay + T0-B + 完全版hash）— PR #9
-- [~] 楽器 INSTRUMENT_V1 §9: S4 PR #10 / S5(EQ/MIDI/FLX4/mode) PR #11 / S6 残
-- [ ] 楽器残: S6(source/parity + instrument.bin §5.5)
+- [x] 楽器 INSTRUMENT_V1 §9: S4 #10 / S5 #11 / S6(source/launch/instrument.bin) #12
 - [ ] S3 ソフト側（実機受入は BLOCKED）
 - 完了定義: 「software complete / 残: hardware-gated一覧」+ 全PR draft + VERIFY群
 

@@ -7,9 +7,9 @@
     "hashSamples": 131,
     "hashTraceIdentical": true,
     "rawSamplesIdentical": false,
-    "byteIdenticalFrames": 71,
+    "byteIdenticalFrames": 33,
     "dimensionsOk": true,
-    "meanSsim": 1,
+    "meanSsim": 0.999999,
     "minSsim": 0.999998,
     "frameThreshold": 0.99,
     "meanThreshold": 0.995,
@@ -371,11 +371,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 0.999998,
-      "minWindow": 0.996685,
-      "identical": false,
-      "diffPixels": 2384,
-      "maxChannelDiff": 2
+      "ssim": 1,
+      "minWindow": 1,
+      "identical": true,
+      "diffPixels": 0,
+      "maxChannelDiff": 0
     },
     {
       "tick": 950,
@@ -383,10 +383,10 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 0.999998,
-      "minWindow": 0.996685,
+      "ssim": 0.999999,
+      "minWindow": 0.997595,
       "identical": false,
-      "diffPixels": 2381,
+      "diffPixels": 1833,
       "maxChannelDiff": 2
     },
     {
@@ -396,9 +396,9 @@
       "height": 1080,
       "dimensionsOk": true,
       "ssim": 0.999998,
-      "minWindow": 0.996685,
+      "minWindow": 0.997595,
       "identical": false,
-      "diffPixels": 2906,
+      "diffPixels": 2358,
       "maxChannelDiff": 2
     },
     {
@@ -407,11 +407,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 0.999999,
-      "minWindow": 0.998359,
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 520,
-      "maxChannelDiff": 1
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1010,
@@ -419,11 +419,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 0.999999,
-      "minWindow": 0.998359,
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 553,
-      "maxChannelDiff": 1
+      "diffPixels": 2052,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1030,
@@ -431,11 +431,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 0.99984,
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 3,
-      "maxChannelDiff": 1
+      "diffPixels": 2052,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1050,
@@ -443,11 +443,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2052,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1070,
@@ -455,11 +455,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1100,
@@ -467,11 +467,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1130,
@@ -479,11 +479,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1160,
@@ -491,11 +491,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1190,
@@ -503,11 +503,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1220,
@@ -515,11 +515,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1250,
@@ -527,11 +527,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1280,
@@ -539,11 +539,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1310,
@@ -551,11 +551,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1340,
@@ -563,11 +563,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1370,
@@ -575,11 +575,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1400,
@@ -587,11 +587,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1430,
@@ -599,11 +599,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1460,
@@ -611,11 +611,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1490,
@@ -623,11 +623,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1520,
@@ -635,11 +635,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1551,
@@ -647,11 +647,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1580,
@@ -659,11 +659,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1670,
@@ -671,11 +671,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1790,
@@ -683,11 +683,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 1910,
@@ -695,11 +695,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2030,
@@ -707,11 +707,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2150,
@@ -719,11 +719,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2270,
@@ -731,11 +731,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2301,
@@ -743,11 +743,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2345,
@@ -755,11 +755,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2480,
@@ -767,11 +767,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2511,
@@ -779,11 +779,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2690,
@@ -791,11 +791,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2721,
@@ -803,11 +803,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2750,
@@ -815,11 +815,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2930,
@@ -827,11 +827,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 2961,
@@ -839,11 +839,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 3005,
@@ -851,11 +851,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 3140,
@@ -863,11 +863,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 3350,
@@ -875,11 +875,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 3390,
@@ -887,11 +887,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 3430,
@@ -899,11 +899,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 1,
-      "minWindow": 1,
-      "identical": true,
-      "diffPixels": 0,
-      "maxChannelDiff": 0
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
+      "identical": false,
+      "diffPixels": 2019,
+      "maxChannelDiff": 2
     },
     {
       "tick": 3610,
