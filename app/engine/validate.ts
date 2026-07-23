@@ -6,7 +6,8 @@ import type {
   SpacePayload,
 } from "./types";
 
-const S1_PRODUCERS = new Set<ProducerId>(["keys", "ui"]);
+// S1 enabled keys/ui; S2 adds the audio and replay producers (FISHVJ_DESIGN_V2.md §4.2).
+const ENABLED_PRODUCERS = new Set<ProducerId>(["keys", "ui", "audio", "replay"]);
 const MODES = new Set(["MYSTIC", "SENSUAL", "EUPHORIC"]);
 const SCENES = new Set(["MANDALA", "FREE_SWIM"]);
 const MACROS = new Set(["CLEAN", "PUNCH", "ACID", "DEEP"]);
@@ -92,8 +93,8 @@ function validateSpace(payload: SpacePayload) {
 
 export function validateEngineEventInput(input: EngineEventInput) {
   if (input.v !== 1) throw new RangeError("EngineEvent schema version must be 1");
-  if (!S1_PRODUCERS.has(input.producerId)) {
-    throw new RangeError(`producer ${input.producerId} is not enabled in S1`);
+  if (!ENABLED_PRODUCERS.has(input.producerId)) {
+    throw new RangeError(`producer ${input.producerId} is not enabled`);
   }
   if (input.sourceT !== undefined && (!Number.isFinite(input.sourceT) || input.sourceT < 0)) {
     throw new RangeError("sourceT must be a non-negative finite millisecond value");
