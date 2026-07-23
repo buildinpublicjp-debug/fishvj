@@ -7,12 +7,33 @@ import type {
   SwarmType,
   SwimType,
 } from "./types";
-import { SIM_HZ } from "./types";
+import {
+  SIM_HZ,
+  SLEW_HIGH_PER_SEC,
+  SLEW_KICK_PER_SEC,
+  TAU_BASS_SEC,
+  TAU_HIGH_SEC,
+  TAU_KICK_SEC,
+} from "./types";
 
 const MAX_SOURCE_FISH = 2000;
 const SWARM_TRANSITION_TICKS = 90;
 const SCENE_ALPHA = Math.min(1, 1000 / SIM_HZ / 360);
 const DIVE_ALPHA = Math.min(1, 1000 / SIM_HZ / 760);
+const DT_SEC = 1 / SIM_HZ;
+// smoothExp coefficient: 1 - exp(-dt/tau) (FISHVJ_DESIGN_V2.md §2.2).
+const ALPHA_KICK = 1 - Math.exp(-DT_SEC / TAU_KICK_SEC);
+const ALPHA_BASS = 1 - Math.exp(-DT_SEC / TAU_BASS_SEC);
+const ALPHA_HIGH = 1 - Math.exp(-DT_SEC / TAU_HIGH_SEC);
+const SLEW_KICK_STEP = SLEW_KICK_PER_SEC * DT_SEC;
+const SLEW_HIGH_STEP = SLEW_HIGH_PER_SEC * DT_SEC;
+
+function slew(current: number, target: number, maxStep: number) {
+  const delta = target - current;
+  if (delta > maxStep) return current + maxStep;
+  if (delta < -maxStep) return current - maxStep;
+  return target;
+}
 
 export function modeValue(mode: ModeName) {
   return mode === "MYSTIC" ? 0 : mode === "SENSUAL" ? 1 : 2;
@@ -64,6 +85,13 @@ export function advanceEngineTick(state: EngineState): EngineState {
   const targetDive = state.dive ? 1 : 0;
   const currentDive = state.currentDive + (targetDive - state.currentDive) * DIVE_ALPHA;
 
+  // T0-B: fixed-step audio smoothing + soft slew limiter on the luma-facing values.
+  const smoothKick = state.smoothKick + (state.rawKick - state.smoothKick) * ALPHA_KICK;
+  const smoothBass = state.smoothBass + (state.rawBass - state.smoothBass) * ALPHA_BASS;
+  const smoothHigh = state.smoothHigh + (state.rawHigh - state.smoothHigh) * ALPHA_HIGH;
+  const kickLuma = slew(state.kickLuma, smoothKick, SLEW_KICK_STEP);
+  const highLuma = slew(state.highLuma, smoothHigh, SLEW_HIGH_STEP);
+
   return {
     ...state,
     tick,
@@ -74,6 +102,11 @@ export function advanceEngineTick(state: EngineState): EngineState {
     swarmTo,
     swarmMix,
     swarmTransitionStartTick,
+    smoothKick,
+    smoothBass,
+    smoothHigh,
+    kickLuma,
+    highLuma,
   };
 }
 
@@ -83,7 +116,6 @@ export function createRenderSnapshot(
 ): RenderSnapshot {
   const width = Math.max(1, Math.floor(context.width ?? 1));
   const height = Math.max(1, Math.floor(context.height ?? 1));
-  const audio = context.audio ?? { kick: 0, bass: 0, high: 0 };
   const segments = segmentValue(state.mode);
   const mandalaCount = Math.min(
     MAX_SOURCE_FISH,
@@ -96,9 +128,9 @@ export function createRenderSnapshot(
     uTime: state.tick / SIM_HZ,
     uAspect: width / height,
     uSegments: segments,
-    uKick: audio.kick,
-    uBass: audio.bass,
-    uHigh: audio.high,
+    uKick: state.kickLuma,
+    uBass: state.smoothBass,
+    uHigh: state.highLuma,
     uDive: state.currentDive,
     uMode: modeValue(state.mode),
     uDrive: state.colorDrive,

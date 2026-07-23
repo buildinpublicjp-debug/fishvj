@@ -66,12 +66,22 @@
 
 ## 5. 次キュー
 
-1. ~~**S1b**~~ — **完了**（§3）。golden/SSIM gate + deck v0、§7.2 成立。PR #8 は zDOG merge待ち。
-2. **S2（次）** — v2 §11.2 (T0-B / Recorder / Playback / Hash / Test)。
-   - T0-B: audio smoothing を固定tick化、15Hz量子化、soft slew limiter。
-   - semantic hash を §5.2 完全版へ拡張（beat/audio/space/verb/deck ID/atlas hash）。現状は S1部分集合。
-   - CC指示文は未作成。着手時に `docs/S2_INSTRUCTIONS.md` を起票。
-3. **instrument S1b以降** — `FISHVJ_INSTRUMENT_V1.md` §9 の Sprint積算。
+1. ~~**S1b**~~ — **完了**（§3）。golden/SSIM gate + deck v0、§7.2 成立。PR #8 merged。
+2. ~~**S2**~~ — **完了**（検証 `docs/S2_VERIFY.md`、PR #9）。T0-B + replay record/playback/binary + §5.2完全版hash。60s record→replay hash 121/121一致、archive 5,210B、golden不変、CI 15/15。
+3. **楽器実装（次）** — `FISHVJ_INSTRUMENT_V1.md` §9 の Sprint表を上から。deck v0 は engine S1b で実装済み扱い。FLX4実機依存（F-B系）は BLOCKED(hardware) で skip。Web MIDI adapter は実機なしで進む範囲（mapping table + 仮想MIDI unit test）。
+4. **S3 ソフト側のみ** — v2 §10。内蔵webcamで開発、実機受入（レイテンシ等）は BLOCKED(hardware: projector)。契約受入は主張せず「ソフト完成・実機受入待ち」で止める。
+
+## 7. パイプライン進行（2026-07-23 完走指示）
+
+frozen 2文書の実装スコープを機材待ち以外全部閉じる。sprint毎に gated PR。
+
+- [x] S1a（SSOT/決定論）— merged
+- [x] S1b（golden gate + deck v0）— merged
+- [x] S2（replay + T0-B + 完全版hash）— PR #9
+- [~] 楽器 INSTRUMENT_V1 §9: S4(stack/transport/mixer/composite) PR #10 / S5,S6 残
+- [ ] 楽器残: S5(EQ/FLX4/mode), S6(source/parity)
+- [ ] S3 ソフト側（実機受入は BLOCKED）
+- 完了定義: 「software complete / 残: hardware-gated一覧」+ 全PR draft + VERIFY群
 
 ## 6. 7/29 再開者 (Sol) への注意
 
