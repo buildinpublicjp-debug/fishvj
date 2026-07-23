@@ -1,0 +1,507 @@
+diff --git a/app/capture-bus.ts b/app/capture-bus.ts
+new file mode 100644
+index 0000000..58acfdd
+--- /dev/null
++++ b/app/capture-bus.ts
+@@ -0,0 +1,309 @@
++// S1b golden baseline — capture bus for the PRE-SSOT commit (2275308) + T0-A.
++//
++// This file exists ONLY in the golden worktree. It is not part of main.
++// It reproduces 2275308's per-frame transition math on a fixed 60Hz tick so a
++// deterministic golden can be captured with the same manifest and the same
++// `window.__fishvjCapture` API the merged (main) build exposes.
++//
++// Fidelity notes (verified 2026-07-23 by diffing 2275308 vs main):
++//   - The GLSL shaders in FishCanvas.tsx are byte-identical between the two.
++//   - globals.css / page.tsx / layout.tsx are unchanged.
++//   - The transition math below is transcribed from 2275308's FishCanvas render
++//     loop. At exactly 60fps it equals main's app/engine/frame.ts:
++//       scene: min(1, deltaMs/360) with deltaMs=1000/60 == SCENE_ALPHA
++//       dive:  min(1, deltaMs/760) with deltaMs=1000/60 == DIVE_ALPHA
++//       swarm: (now-start)/1500 with now=tick/60*1000 == (tick-start)/90
++//   - Event ordering is the T0-A determinization: events are applied at the
++//     current tick before advanceTick (dispatch-before-advance), matching main's
++//     reducer, instead of 2275308's per-render-frame swarm detection. That
++//     per-frame detection is exactly the nondeterminism T0-A removes.
++//
++// If a golden frame fails SSIM against current, the first suspect is a
++// transcription bug in THIS file, not a regression in main (the shaders and math
++// are proven identical). Stop and report per docs/S1B_INSTRUCTIONS.md.
++
++export const SIM_HZ = 60;
++export const TICK_MS = 1000 / SIM_HZ;
++export const DEFAULT_SEED = 0x46495348;
++const MAX_SOURCE_FISH = 2000;
++const SWARM_TRANSITION_TICKS = 90;
++const SCENE_ALPHA = Math.min(1, 1000 / SIM_HZ / 360);
++const DIVE_ALPHA = Math.min(1, 1000 / SIM_HZ / 760);
++
++type ModeName = "MYSTIC" | "SENSUAL" | "EUPHORIC";
++type SceneMode = "MANDALA" | "FREE_SWIM";
++type ColorPreset = "CLEAN" | "PUNCH" | "ACID" | "DEEP";
++type SwimType = "SCHOOL" | "GLIDE" | "WAVE" | "FLOAT";
++type SwarmType = "SPIRAL" | "VORTEX" | "WAVE" | "BLOOM";
++
++const modeValue = (m: ModeName) => (m === "MYSTIC" ? 0 : m === "SENSUAL" ? 1 : 2);
++const segmentValue = (m: ModeName) => (m === "MYSTIC" ? 6 : m === "SENSUAL" ? 8 : 12);
++const colorValue = (c: ColorPreset) =>
++  c === "CLEAN" ? 0 : c === "PUNCH" ? 1 : c === "ACID" ? 2 : 3;
++const swimValue = (s: SwimType) => (s === "SCHOOL" ? 0 : s === "GLIDE" ? 1 : s === "WAVE" ? 2 : 3);
++const swarmValue = (s: SwarmType) => (s === "SPIRAL" ? 0 : s === "VORTEX" ? 1 : s === "WAVE" ? 2 : 3);
++const sceneValue = (s: SceneMode) => (s === "MANDALA" ? 0 : 1);
++
++export type CaptureConfig = {
++  scene: SceneMode;
++  mode: ModeName;
++  colorPreset: ColorPreset;
++  colorDrive: number;
++  fishCount: number;
++  fishSize: number;
++  speed: number;
++  depth: number;
++  dive: boolean;
++  blackout: boolean;
++  selectedSpecies: number;
++  swimType: SwimType;
++  swarm: SwarmType;
++};
++
++function defaults(): CaptureConfig {
++  return {
++    scene: "MANDALA",
++    mode: "MYSTIC",
++    colorPreset: "PUNCH",
++    colorDrive: 0.72,
++    fishCount: 800,
++    fishSize: 1.5,
++    speed: 0.68,
++    depth: 0.74,
++    dive: false,
++    blackout: false,
++    selectedSpecies: 0,
++    swimType: "SCHOOL",
++    swarm: "SPIRAL",
++  };
++}
++
++// EngineEvent inputs, mirrored from main's app/engine/types.ts (subset used by
++// capture/manifest.json).
++type EngineEventInput =
++  | { type: "mode"; payload: { update: "absolute"; value: ModeName } }
++  | { type: "scene"; payload: { update: "absolute"; value: SceneMode } }
++  | { type: "macro"; payload: { update: "absolute"; value: ColorPreset } }
++  | { type: "param"; payload: ParamInput }
++  | { type: "oneshot"; payload: { id: "reset"; update: "trigger" } }
++  | { type: string; payload: unknown };
++
++type ParamInput =
++  | { id: "colorDrive"; update: "absolute"; value: number }
++  | { id: "fishCount"; update: "absolute"; value: number }
++  | { id: "fishSize"; update: "absolute"; value: number }
++  | { id: "speed"; update: "absolute"; value: number }
++  | { id: "depth"; update: "absolute"; value: number }
++  | { id: "dive"; update: "absolute"; value: boolean }
++  | { id: "blackout"; update: "absolute"; value: boolean }
++  | { id: "swimType"; update: "absolute"; value: SwimType }
++  | { id: "swarm"; update: "absolute"; value: SwarmType }
++  | { id: "fishSelection"; update: "atomic"; selectedSpecies: number; swimType: SwimType };
++
++class CaptureBus {
++  seed = DEFAULT_SEED >>> 0;
++  tick = 0;
++  config = defaults();
++  // Transition state, transcribed from 2275308's render-loop locals.
++  currentDive = this.config.dive ? 1 : 0;
++  sceneMix = sceneValue(this.config.scene);
++  observedSwarm: SwarmType = this.config.swarm;
++  swarmFrom = swarmValue(this.config.swarm);
++  swarmTo = swarmValue(this.config.swarm);
++  swarmMix = 1;
++  swarmTransitionStartTick = 0;
++  private listeners = new Set<() => void>();
++
++  subscribe(listener: () => void) {
++    this.listeners.add(listener);
++    return () => this.listeners.delete(listener);
++  }
++
++  private notify() {
++    this.listeners.forEach((l) => l());
++  }
++
++  dispatch(input: EngineEventInput) {
++    const c = this.config;
++    switch (input.type) {
++      case "mode":
++        c.mode = (input.payload as { value: ModeName }).value;
++        break;
++      case "scene":
++        c.scene = (input.payload as { value: SceneMode }).value;
++        break;
++      case "macro":
++        c.colorPreset = (input.payload as { value: ColorPreset }).value;
++        break;
++      case "param":
++        this.applyParam(input.payload as ParamInput);
++        break;
++      case "oneshot":
++        this.config = defaults();
++        break;
++      default:
++        break;
++    }
++    this.notify();
++  }
++
++  private applyParam(payload: ParamInput) {
++    const c = this.config;
++    if (payload.id === "fishSelection") {
++      c.selectedSpecies = payload.selectedSpecies;
++      c.swimType = payload.swimType;
++      return;
++    }
++    if (payload.id === "swarm") {
++      if (payload.value !== this.observedSwarm) {
++        // Mirror main's reducer: start the transition at the current tick.
++        this.swarmFrom = this.swarmMix >= 0.5 ? this.swarmTo : this.swarmFrom;
++        this.swarmTo = swarmValue(payload.value);
++        this.observedSwarm = payload.value;
++        this.swarmMix = 0;
++        this.swarmTransitionStartTick = this.tick;
++      }
++      c.swarm = payload.value;
++      return;
++    }
++    // colorDrive/fishCount/fishSize/speed/depth/dive/blackout/swimType
++    (c as unknown as Record<string, unknown>)[payload.id] = (
++      payload as { value: unknown }
++    ).value;
++  }
++
++  advanceTick() {
++    // Mirror main's app/engine/frame.ts advanceEngineTick exactly, including the
++    // "observed swarm unchanged AND prior mix >= 1 -> hold at 1" guard, so the
++    // semantic hash matches (not just the pixels).
++    const prevObservedSwarm = this.observedSwarm;
++    const prevSwarmMix = this.swarmMix;
++    this.tick += 1;
++    if (this.config.swarm !== this.observedSwarm) {
++      this.swarmFrom = this.swarmMix >= 0.5 ? this.swarmTo : this.swarmFrom;
++      this.swarmTo = swarmValue(this.config.swarm);
++      this.observedSwarm = this.config.swarm;
++      this.swarmTransitionStartTick = this.tick;
++    }
++    this.swarmMix =
++      this.observedSwarm === prevObservedSwarm && prevSwarmMix >= 1
++        ? 1
++        : Math.min(
++            1,
++            Math.max(0, (this.tick - this.swarmTransitionStartTick) / SWARM_TRANSITION_TICKS),
++          );
++    const targetScene = sceneValue(this.config.scene);
++    this.sceneMix += (targetScene - this.sceneMix) * SCENE_ALPHA;
++    const targetDive = this.config.dive ? 1 : 0;
++    this.currentDive += (targetDive - this.currentDive) * DIVE_ALPHA;
++  }
++
++  snapshot(width: number, height: number) {
++    const c = this.config;
++    const segments = segmentValue(c.mode);
++    const mandalaCount = Math.min(
++      MAX_SOURCE_FISH,
++      Math.max(24, Math.ceil(c.fishCount / (segments * 2))),
++    );
++    const freeSwimCount = Math.min(MAX_SOURCE_FISH, Math.max(100, c.fishCount));
++    return {
++      tick: this.tick,
++      uTime: this.tick / SIM_HZ,
++      uAspect: width / height,
++      uSegments: segments,
++      uKick: 0,
++      uBass: 0,
++      uHigh: 0,
++      uDive: this.currentDive,
++      uMode: modeValue(c.mode),
++      uDrive: c.colorDrive,
++      uColorPreset: colorValue(c.colorPreset),
++      uSceneMix: this.sceneMix,
++      uSpeed: c.speed,
++      uFishSize: c.fishSize,
++      uDepth: c.depth,
++      uSelectedSpecies: c.selectedSpecies,
++      uSwimFocus: swimValue(c.swimType),
++      uSwarmFrom: this.swarmFrom,
++      uSwarmTo: this.swarmTo,
++      uSwarmMix: this.swarmMix,
++      uMandalaPopulation: mandalaCount / MAX_SOURCE_FISH,
++      uResolution: [width, height] as [number, number],
++      mandalaCount,
++      freeSwimCount,
++      instanceCount: this.sceneMix > 0.01 ? Math.max(mandalaCount, freeSwimCount) : mandalaCount,
++      toneMappingExposure:
++        c.colorPreset === "DEEP" ? 0.86 : c.colorPreset === "PUNCH" ? 1.24 : 1.1,
++    };
++  }
++
++  // Same shape as main's engine.getState() for the semantic hash.
++  state() {
++    return {
++      seed: this.seed,
++      tick: this.tick,
++      ...this.config,
++      currentDive: this.currentDive,
++      sceneMix: this.sceneMix,
++      observedSwarm: this.observedSwarm,
++      swarmFrom: this.swarmFrom,
++      swarmTo: this.swarmTo,
++      swarmMix: this.swarmMix,
++      swarmTransitionStartTick: this.swarmTransitionStartTick,
++    };
++  }
++}
++
++export const captureBus = new CaptureBus();
++
++const CAPTURE_GLOBAL = "__fishvjCapture";
++
++export function isCaptureEnabled() {
++  if (typeof window === "undefined") return false;
++  try {
++    return new URLSearchParams(window.location.search).get("capture") === "1";
++  } catch {
++    return false;
++  }
++}
++
++export function installCaptureBridge(host: {
++  isReady(): boolean;
++  getSize(): { width: number; height: number };
++  draw(): void;
++}) {
++  const sample = () => ({
++    tick: captureBus.tick,
++    state: captureBus.state(),
++    snapshot: captureBus.snapshot(host.getSize().width, host.getSize().height),
++  });
++
++  const bridge = {
++    version: 1,
++    isReady: () => host.isReady(),
++    size: () => host.getSize(),
++    sample,
++    runTo(
++      targetTick: number,
++      eventsByTick: Record<string, EngineEventInput[]>,
++      sampleEvery: number,
++    ) {
++      const samples: ReturnType<typeof sample>[] = [];
++      while (captureBus.tick < targetTick) {
++        const nextTick = captureBus.tick + 1;
++        const scheduled = eventsByTick[String(nextTick)];
++        if (scheduled) for (const input of scheduled) captureBus.dispatch(input);
++        captureBus.advanceTick();
++        if (sampleEvery > 0 && nextTick % sampleEvery === 0) samples.push(sample());
++      }
++      return samples;
++    },
++    draw: () => host.draw(),
++  };
++
++  const scope = window as unknown as Record<string, unknown>;
++  scope[CAPTURE_GLOBAL] = bridge;
++  return () => {
++    delete scope[CAPTURE_GLOBAL];
++  };
++}
+diff --git a/app/components/FishCanvas.tsx b/app/components/FishCanvas.tsx
+index 017e6a0..129b825 100644
+--- a/app/components/FishCanvas.tsx
++++ b/app/components/FishCanvas.tsx
+@@ -2,6 +2,23 @@
+ 
+ import { useEffect, useRef } from "react";
+ import * as THREE from "three";
++import {
++  captureBus,
++  installCaptureBridge,
++  isCaptureEnabled,
++} from "../capture-bus";
++
++// S1b golden baseline only: seeded PRNG (mulberry32, matches main app/engine/prng.ts).
++function createSeededRandom(seed = 0x46495348) {
++  let state = seed >>> 0;
++  return () => {
++    state = (state + 0x6d2b79f5) >>> 0;
++    let value = state;
++    value = Math.imul(value ^ (value >>> 15), value | 1);
++    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
++    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
++  };
++}
+ 
+ export type ModeName = "MYSTIC" | "SENSUAL" | "EUPHORIC";
+ export type ColorPreset = "CLEAN" | "PUNCH" | "ACID" | "DEEP";
+@@ -800,20 +817,21 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
+     const speciesScales = [0.72, 1.1, 0.92, 1.14, 0.82, 1.2, 0.9, 0.8];
+     const speciesMotions = [0, 1, 3, 1, 3, 2, 3, 0];
+ 
++    const random = createSeededRandom();
+     for (let index = 0; index < MAX_SOURCE_FISH; index += 1) {
+       const speciesIndex = index % 8;
+       const ringIndex = index % RING_COUNT;
+       const motif = Math.floor(index / RING_COUNT) % 5;
+       offsets[index * 3] = (motif + 0.5) / 5;
+-      offsets[index * 3 + 1] = (Math.random() - 0.5) * (0.012 + ringIndex * 0.012);
+-      offsets[index * 3 + 2] = Math.random();
++      offsets[index * 3 + 1] = (random() - 0.5) * (0.012 + ringIndex * 0.012);
++      offsets[index * 3 + 2] = random();
+       rings[index] = ringIndex;
+       scales[index] =
+-        speciesScales[speciesIndex] * (0.72 + Math.random() * 0.5);
+-      phases[index] = Math.random() * Math.PI * 2;
++        speciesScales[speciesIndex] * (0.72 + random() * 0.5);
++      phases[index] = random() * Math.PI * 2;
+       species[index] = speciesIndex;
+       motions[index] = speciesMotions[speciesIndex];
+-      velocities[index] = 0.7 + Math.random() * 0.6;
++      velocities[index] = 0.7 + random() * 0.6;
+       populations[index] = index / (MAX_SOURCE_FISH - 1);
+     }
+ 
+@@ -829,7 +847,10 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
+       new THREE.InstancedBufferAttribute(populations, 1),
+     );
+ 
+-    const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png");
++    let atlasLoaded = false;
++    const texture = new THREE.TextureLoader().load("/seeds/fish-atlas-v1.png", () => {
++      atlasLoaded = true;
++    });
+     texture.colorSpace = THREE.SRGBColorSpace;
+     texture.minFilter = THREE.LinearMipmapLinearFilter;
+     texture.magFilter = THREE.LinearFilter;
+@@ -917,6 +938,51 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
+     let swarmTransitionStart = startTime - 1500;
+     let currentScene = sceneValue(configRef.current.scene);
+ 
++    const applySnapshot = (s: ReturnType<typeof captureBus.snapshot>) => {
++      sharedUniforms.uTime.value = s.uTime;
++      sharedUniforms.uAspect.value = s.uAspect;
++      sharedUniforms.uSegments.value = s.uSegments;
++      sharedUniforms.uKick.value = s.uKick;
++      sharedUniforms.uBass.value = s.uBass;
++      sharedUniforms.uHigh.value = s.uHigh;
++      sharedUniforms.uDive.value = s.uDive;
++      sharedUniforms.uMode.value = s.uMode;
++      sharedUniforms.uDrive.value = s.uDrive;
++      sharedUniforms.uColorPreset.value = s.uColorPreset;
++      sharedUniforms.uSceneMix.value = s.uSceneMix;
++      fishUniforms.uSpeed.value = s.uSpeed;
++      fishUniforms.uFishSize.value = s.uFishSize;
++      fishUniforms.uDepth.value = s.uDepth;
++      fishUniforms.uSelectedSpecies.value = s.uSelectedSpecies;
++      fishUniforms.uSwimFocus.value = s.uSwimFocus;
++      fishUniforms.uSwarmFrom.value = s.uSwarmFrom;
++      fishUniforms.uSwarmTo.value = s.uSwarmTo;
++      fishUniforms.uSwarmMix.value = s.uSwarmMix;
++      fishUniforms.uMandalaPopulation.value = s.uMandalaPopulation;
++      fishGeometry.instanceCount = s.instanceCount;
++      postUniforms.uTime.value = s.uTime;
++      postUniforms.uAspect.value = s.uAspect;
++      postUniforms.uSegments.value = s.uSegments;
++      postUniforms.uDive.value = s.uDive;
++      postUniforms.uDrive.value = s.uDrive;
++      postUniforms.uColorPreset.value = s.uColorPreset;
++      postUniforms.uMode.value = s.uMode;
++      postUniforms.uKick.value = s.uKick;
++      postUniforms.uSceneMix.value = s.uSceneMix;
++      postUniforms.uResolution.value.set(s.uResolution[0], s.uResolution[1]);
++      renderer.toneMappingExposure = s.toneMappingExposure;
++    };
++
++    const drawFrame = () => {
++      applySnapshot(captureBus.snapshot(width, height));
++      renderer.setRenderTarget(renderTarget);
++      renderer.clear();
++      renderer.render(scene, camera);
++      renderer.setRenderTarget(null);
++      renderer.clear();
++      renderer.render(postScene, postCamera);
++    };
++
+     const render = () => {
+       const now = performance.now();
+       const deltaMs = Math.max(0.1, now - lastFrame);
+@@ -1003,10 +1069,21 @@ export function FishCanvas({ config, audio, onFps }: FishCanvasProps) {
+       animationId = requestAnimationFrame(render);
+     };
+ 
+-    let animationId = requestAnimationFrame(render);
++    let animationId = 0;
++    let uninstallCapture: (() => void) | null = null;
++    if (isCaptureEnabled()) {
++      uninstallCapture = installCaptureBridge({
++        isReady: () => atlasLoaded,
++        getSize: () => ({ width, height }),
++        draw: () => drawFrame(),
++      });
++    } else {
++      animationId = requestAnimationFrame(render);
++    }
+ 
+     return () => {
+-      cancelAnimationFrame(animationId);
++      if (animationId) cancelAnimationFrame(animationId);
++      uninstallCapture?.();
+       resizeObserver.disconnect();
+       scene.remove(backgroundMesh, fishMesh);
+       backgroundGeometry.dispose();
+diff --git a/app/components/FishVJConsole.tsx b/app/components/FishVJConsole.tsx
+index 9fdf341..a35dbfa 100644
+--- a/app/components/FishVJConsole.tsx
++++ b/app/components/FishVJConsole.tsx
+@@ -18,6 +18,7 @@ import {
+   SwimType,
+   VisualConfig,
+ } from "./FishCanvas";
++import { captureBus, isCaptureEnabled } from "../capture-bus";
+ 
+ const FISH = [
+   { name: "SARDINE", motion: "SCHOOL" },
+@@ -278,6 +279,7 @@ export function FishVJConsole() {
+   );
+ 
+   useEffect(() => {
++    if (isCaptureEnabled()) return; // golden baseline: audio pinned to 0
+     const updateDemo = (now: number) => {
+       if (audioInput === "demo") {
+         const beatMs = 60000 / bpm;
+@@ -298,6 +300,28 @@ export function FishVJConsole() {
+     return () => cancelAnimationFrame(demoFrameRef.current);
+   }, [audioInput, bpm]);
+ 
++  useEffect(() => {
++    if (!isCaptureEnabled()) return;
++    const sync = () => {
++      const cfg = captureBus.config;
++      setScene(cfg.scene);
++      setMode(cfg.mode);
++      setColorPreset(cfg.colorPreset);
++      setColorDrive(cfg.colorDrive);
++      setFishCount(cfg.fishCount);
++      setFishSize(cfg.fishSize);
++      setSpeed(cfg.speed);
++      setDepth(cfg.depth);
++      setDive(cfg.dive);
++      setBlackout(cfg.blackout);
++      setSelectedSpecies(cfg.selectedSpecies);
++      setSwimType(cfg.swimType);
++      setSwarm(cfg.swarm);
++    };
++    sync();
++    return captureBus.subscribe(sync);
++  }, []);
++
+   useEffect(() => stopAudio, [stopAudio]);
+ 
+   useEffect(() => {

@@ -33,14 +33,27 @@
 付随して作成したもの: flag-gate (`?capture=1`) された in-app capture bridge、`capture/manifest.json`
 (v2 §9.2 網羅)、依存ゼロの CDP / PNG / SSIM / hash harness、contact sheet、A/B sheet。
 
-## 3. 進行中: S1b
+## 3. S1b golden gate — PASS（2026-07-23）
 
-`docs/S1B_INSTRUCTIONS.md` を参照。要旨:
-- `2275308` + T0-A を基準点に committed golden + SSIM gate を張り、main HEAD の視覚退行を機械判定。
-- T0-A patch = `Math.random` 5箇所を mulberry32 (seed `0x46495348`) 単一streamへ 1:1 置換（消費順一致は確認済）。
-- deck v0（scale/motion のみ外部化）。
-- golden gate 通過をもって初めて §7.2「見た目完全不変」を主張する。
-- 未着手。基準worktree `~/dev/fishvj-base` 再利用可。
+指示文 `docs/S1B_INSTRUCTIONS.md` / 検証 `docs/S1B_VERIFY.md`。
+
+**main HEAD（SSOT移行）は pre-SSOT 視覚から退行していないことを機械判定済み。**
+
+| gate | 結果 |
+|---|---|
+| コード等価証明 | シェーダ5/5 byte一致・CSS 0差・遷移数式60fps一致・placement同一seed/順 |
+| semantic hash trace（golden vs current） | 131/131 完全一致 |
+| SSIM（v2 §9.1/§9.3、閾値 0.990/0.995） | mean 0.999998 / min 0.999997、全frame 1920×1080 |
+| CI 5 gate | 全 exit 0 |
+
+- golden baseline = `2275308` + T0-A（patch `capture/golden/t0a-baseline-2275308.patch`）。base専用 `app/capture-bus.ts` で base の遷移数式を固定tick化、`?capture=1` gate。**mainには入れない**。
+- 発見した唯一の fidelity 差（`swarmTransitionStartTick` 初期値）は bus 側で修正、pixelでなくhashが捕捉。
+- storage（judgment 1）: metadata を repo `capture/golden/`、full-res 78×2 は GitHub Release `golden-t0a-2275308-chrome150`（tar.gz、sha256 記録）。golden は環境固定資産（browser/GPU更新→再基準化）。
+- 基準worktree `~/dev/fishvj-base`（patch適用済）は再利用のため残置。
+
+### 未決（zDOG判断）
+**deck v0（手順5、未着手）**: `speciesScales`/`speciesMotions` を deck JSON へ外部化 + validator。抽出前後で本golden gate + CI を再通過させて初めて §7.2「見た目完全不変」を主張できる。
+今回の authorized scope（手順1〜3 + storage + BOARD + PR）に deck v0 は含めていない。**S1bに畳んで続けるか、S2の前後どちらに置くか**を指示待ち。
 
 ## 4. 既知の差異・注記
 
