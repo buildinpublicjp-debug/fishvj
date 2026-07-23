@@ -71,20 +71,33 @@
 3. **楽器実装（次）** — `FISHVJ_INSTRUMENT_V1.md` §9 の Sprint表を上から。deck v0 は engine S1b で実装済み扱い。FLX4実機依存（F-B系）は BLOCKED(hardware) で skip。Web MIDI adapter は実機なしで進む範囲（mapping table + 仮想MIDI unit test）。
 4. **S3 ソフト側のみ** — v2 §10。内蔵webcamで開発、実機受入（レイテンシ等）は BLOCKED(hardware: projector)。契約受入は主張せず「ソフト完成・実機受入待ち」で止める。
 
-## 7. パイプライン進行（2026-07-23 完走指示）
+## 7. パイプライン進行（2026-07-23/24 完走指示）— **SOFTWARE COMPLETE**
 
-frozen 2文書の実装スコープを機材待ち以外全部閉じる。sprint毎に gated PR。
+frozen 2文書（v2 / INSTRUMENT_V1）の実装スコープを、機材待ち以外**全部閉じた**。sprint毎に gated PR、各 sprint で CI 5 gate + golden 再gate 通過。
 
-- [x] S1a（SSOT/決定論）— merged
-- [x] S1b（golden gate + deck v0）— merged
-- [x] S2（replay + T0-B + 完全版hash）— PR #9
-- [x] 楽器 INSTRUMENT_V1 §9: S4 #10 / S5 #11 / S6(source/launch/instrument.bin) #12
-- [ ] S3 ソフト側（実機受入は BLOCKED）
-- 完了定義: 「software complete / 残: hardware-gated一覧」+ 全PR draft + VERIFY群
+| sprint | 内容 | PR | 検証 |
+|---|---|---|---|
+| S1a | SSOT / 決定論 | #7 merged | S1A_VERIFY |
+| S1b | golden gate + deck v0（§7.2 成立） | #8 merged | S1B_VERIFY |
+| S2 | replay + T0-B + §5.2完全版hash | #9 | S2_VERIFY |
+| S4 | stack / transport / mixer / composite | #10 | S4_VERIFY |
+| S5 | spatial EQ / Web MIDI / FLX4 / mode | #11 | S5_VERIFY |
+| S6 | quantized launch / source IF / instrument.bin | #12 | S6_VERIFY |
+| S3 | CV v0 ソフト（homography/absdiff/8×8/ring） | #13 | S3_VERIFY |
+
+- CI: **test:engine 53/53**（engine11 + replay4 + instrument9 + s5 11 + s6 11 + cv7）、lint/tsc/build/SSR 全 exit 0。
+- golden: 全 sprint で fish 視覚不変（hash 131/131、mean SSIM ≥0.999999）。npm 依存追加ゼロ。
+
+### 残: hardware-gated 一覧（実機 sprint で解錠）
+- **S4**: WebCodecs access bench（§6.4 5値・120-frame fixture）、dual-output multi-display（§7.4）、WebGL stack 実描画。
+- **S5**: FLX4 F-B01〜11（keepalive 必要性 F-B03 / SysEx / LED / 実機 I/O・jitter F-B04）。`sysex:false`・keepalive 無しが正の既定。
+- **S6**: live camera 実収録、hosted provider 実接続（fixture 代替済）、background removal 実推論。
+- **S3**: 実 camera（`requestVideoFrameCallback`）、projector、lag 実測、4点 calib UI、§10.6 minimum acceptance 全項目。
+- frozen 契約の hardware acceptance（FLX4 / projector / camera）は実機到達まで**表明しない**。
 
 ## 6. 7/29 再開者 (Sol) への注意
 
-- **S1a は完了・merge済み。** 旧goalの続き (S1a実装の残り) を実行しないこと。
-- 状態は本 file から intake する。現在の作業対象は S1b（`docs/S1B_INSTRUCTIONS.md`）。
-- sandbox 内に S1a時代の SSIM 判定結果が残っていれば**回収し、S1b の追認資料として本fileへ添付**すること。
-  S1a の合否をそれで上書きしない。
+- **S1a〜S6 + S3ソフトは完了・PR 済み（#7〜#13）。** 旧goalの続きを実行しないこと。状態は本 file から intake。
+- 未 merge PR は #9〜#13（S2以降）。merge 順は zDOG。
+- 次に実機がある時の入口は上記「hardware-gated 一覧」。各 VERIFY の §hardware-gated が詳細。
+- sandbox 内に S1a時代の SSIM 判定結果が残っていれば S1b 追認資料として本fileへ添付（S1a 合否は上書きしない）。
