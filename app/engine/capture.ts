@@ -39,12 +39,7 @@ export function installCaptureBridge(host: CaptureHost) {
   const sample = (): CaptureSample => ({
     tick: engine.getState().tick,
     state: { ...engine.getState() },
-    snapshot: {
-      ...engine.getRenderSnapshot({
-        audio: { kick: 0, bass: 0, high: 0 },
-        ...host.getSize(),
-      }),
-    },
+    snapshot: { ...engine.getRenderSnapshot({ ...host.getSize() }) },
   });
 
   const bridge = {

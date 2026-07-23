@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import {
+  AUDIO_TICK_INTERVAL,
   createSeededRandom,
   deck,
   engine,
@@ -22,6 +23,11 @@ type FishCanvasProps = {
 
 const MAX_SOURCE_FISH = 2000;
 const RING_COUNT = 6;
+
+// Quantize an analyser band to the 8-bit resolution the replay format stores,
+// so a live session and its replay feed the reducer identical values.
+const quantizeBand = (value: number) =>
+  Math.round(Math.min(1, Math.max(0, value)) * 255) / 255;
 
 const fullscreenVertex = `
   varying vec2 vUv;
@@ -867,9 +873,6 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
     let lastFrame: number | null = null;
     let fpsAccumulator = 0;
     let fpsFrames = 0;
-    let smoothKick = 0;
-    let smoothBass = 0;
-    let smoothHigh = 0;
 
     const applySnapshot = (snapshot: Readonly<RenderSnapshot>) => {
       sharedUniforms.uTime.value = snapshot.uTime;
@@ -908,8 +911,8 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
       renderer.toneMappingExposure = snapshot.toneMappingExposure;
     };
 
-    const drawFrame = (levels: Pick<AudioLevels, "kick" | "bass" | "high">) => {
-      const snapshot = engine.getRenderSnapshot({ audio: levels, width, height });
+    const drawFrame = () => {
+      const snapshot = engine.getRenderSnapshot({ width, height });
       applySnapshot(snapshot);
 
       renderer.setRenderTarget(renderTarget);
@@ -934,10 +937,25 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
       clock.accumulate(now);
       const tickCount = clock.takeTicks(5);
       for (let index = 0; index < tickCount; index += 1) {
-        const levels = audioRef.current;
-        smoothKick += (levels.kick - smoothKick) * 0.2;
-        smoothBass += (levels.bass - smoothBass) * 0.14;
-        smoothHigh += (levels.high - smoothHigh) * 0.18;
+        // Audio producer: quantize the analyser bands to 15Hz (every 4 ticks)
+        // and inject them; the engine owns the smoothing and slew limiting.
+        if (engine.getState().tick % AUDIO_TICK_INTERVAL === 0) {
+          const levels = audioRef.current;
+          engine.dispatch({
+            v: 1,
+            producerId: "audio",
+            type: "beat",
+            payload: {
+              kind: "bands",
+              bands: [
+                quantizeBand(levels.kick),
+                quantizeBand(levels.bass),
+                quantizeBand(levels.mid),
+                quantizeBand(levels.high),
+              ],
+            },
+          });
+        }
         engine.advanceTick();
       }
 
@@ -946,7 +964,7 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
         return;
       }
 
-      drawFrame({ kick: smoothKick, bass: smoothBass, high: smoothHigh });
+      drawFrame();
       animationId = requestAnimationFrame(render);
     };
 
@@ -956,7 +974,7 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
       uninstallCapture = installCaptureBridge({
         isReady: () => atlasLoaded,
         getSize: () => ({ width, height }),
-        draw: () => drawFrame({ kick: 0, bass: 0, high: 0 }),
+        draw: () => drawFrame(),
       });
     } else {
       animationId = requestAnimationFrame(render);

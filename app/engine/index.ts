@@ -6,4 +6,5 @@ export { advanceEngineTick, createRenderSnapshot } from "./frame";
 export { createSeededRandom } from "./prng";
 export { createInitialEngineState, reduceEvent } from "./reducer";
 export { createEngineStore, engine } from "./store";
+export { SIM_HZ, TICK_MS, AUDIO_TICK_INTERVAL, DEFAULT_SEED } from "./types";
 export type * from "./types";
