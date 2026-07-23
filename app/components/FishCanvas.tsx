@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import {
   createSeededRandom,
+  deck,
   engine,
   FixedStepClock,
   installCaptureBridge,
@@ -751,8 +752,10 @@ export function FishCanvas({ audio, onFps }: FishCanvasProps) {
     const motions = new Float32Array(MAX_SOURCE_FISH);
     const velocities = new Float32Array(MAX_SOURCE_FISH);
     const populations = new Float32Array(MAX_SOURCE_FISH);
-    const speciesScales = [0.72, 1.1, 0.92, 1.14, 0.82, 1.2, 0.9, 0.8];
-    const speciesMotions = [0, 1, 3, 1, 3, 2, 3, 0];
+    // deck v0: scale/motion are read from the deck (app/engine/deck.ts); every
+    // other per-species value stays internal (FISHVJ_DESIGN_V2.md §7.1).
+    const speciesScales = deck.speciesScales;
+    const speciesMotions = deck.speciesMotions;
 
     const random = createSeededRandom(engine.getState().seed);
     for (let index = 0; index < MAX_SOURCE_FISH; index += 1) {

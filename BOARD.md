@@ -33,27 +33,25 @@
 付随して作成したもの: flag-gate (`?capture=1`) された in-app capture bridge、`capture/manifest.json`
 (v2 §9.2 網羅)、依存ゼロの CDP / PNG / SSIM / hash harness、contact sheet、A/B sheet。
 
-## 3. S1b golden gate — PASS（2026-07-23）
+## 3. S1b — 完了・PASS（2026-07-23）
 
 指示文 `docs/S1B_INSTRUCTIONS.md` / 検証 `docs/S1B_VERIFY.md`。
 
-**main HEAD（SSOT移行）は pre-SSOT 視覚から退行していないことを機械判定済み。**
+**main HEAD（SSOT移行 + deck v0）は pre-SSOT 視覚から退行していないことを機械判定済み。§7.2「見た目完全不変」成立。**
 
 | gate | 結果 |
 |---|---|
 | コード等価証明 | シェーダ5/5 byte一致・CSS 0差・遷移数式60fps一致・placement同一seed/順 |
-| semantic hash trace（golden vs current） | 131/131 完全一致 |
-| SSIM（v2 §9.1/§9.3、閾値 0.990/0.995） | mean 0.999998 / min 0.999997、全frame 1920×1080 |
-| CI 5 gate | 全 exit 0 |
+| golden gate（SSOT移行後） | hash 131/131一致、mean SSIM 0.999998 / min 0.999997 |
+| golden gate（deck v0後） | hash 131/131一致、mean SSIM 0.999999 / min 0.999998 |
+| CI 5 gate（test:engine 11-11） | 全 exit 0 |
 
 - golden baseline = `2275308` + T0-A（patch `capture/golden/t0a-baseline-2275308.patch`）。base専用 `app/capture-bus.ts` で base の遷移数式を固定tick化、`?capture=1` gate。**mainには入れない**。
 - 発見した唯一の fidelity 差（`swarmTransitionStartTick` 初期値）は bus 側で修正、pixelでなくhashが捕捉。
-- storage（judgment 1）: metadata を repo `capture/golden/`、full-res 78×2 は GitHub Release `golden-t0a-2275308-chrome150`（tar.gz、sha256 記録）。golden は環境固定資産（browser/GPU更新→再基準化）。
-- 基準worktree `~/dev/fishvj-base`（patch適用済）は再利用のため残置。
-
-### 未決（zDOG判断）
-**deck v0（手順5、未着手）**: `speciesScales`/`speciesMotions` を deck JSON へ外部化 + validator。抽出前後で本golden gate + CI を再通過させて初めて §7.2「見た目完全不変」を主張できる。
-今回の authorized scope（手順1〜3 + storage + BOARD + PR）に deck v0 は含めていない。**S1bに畳んで続けるか、S2の前後どちらに置くか**を指示待ち。
+- deck v0: `app/engine/deck.ts` + `decks/gyogen-v0.json`（scale/motionのみ外部化・validator・sha256 content hash）。FishCanvas は `deck.speciesScales`/`Motions` を読む。値は旧literal同一。
+- storage（judgment 1）: metadata を repo `capture/golden/`、golden pinned frames は GitHub Release `golden-t0a-2275308-chrome150`（golden-only tar.gz 99MB、sha256 記録）。golden は環境固定資産（browser/GPU更新→再基準化）。current は main から再生成可。
+- 基準worktree `~/dev/fishvj-base`（patch適用済）は S2以降の再gate用に残置。
+- PR #8（golden gate + deck v0）。merge判断は zDOG。
 
 ## 4. 既知の差異・注記
 
@@ -68,9 +66,11 @@
 
 ## 5. 次キュー
 
-1. **S1b（進行中）** — committed golden / SSIM harness (v2 §9.1準拠、`2275308` + T0-A 基準点の正式構築込み) + deck v0 外部化。
-   指示文 `docs/S1B_INSTRUCTIONS.md`。「見た目完全不変」(v2 §7.2) の主張は **S1b gate 通過後に初めて行う**。
-2. **S2** — v2 §11.2 (T0-B / Recorder / Playback / Hash / Test)。zDOG は当初 S2 を先にと発話したが、golden gate を先に張るため S1b を先行に確定 (2026-07-23)。
+1. ~~**S1b**~~ — **完了**（§3）。golden/SSIM gate + deck v0、§7.2 成立。PR #8 は zDOG merge待ち。
+2. **S2（次）** — v2 §11.2 (T0-B / Recorder / Playback / Hash / Test)。
+   - T0-B: audio smoothing を固定tick化、15Hz量子化、soft slew limiter。
+   - semantic hash を §5.2 完全版へ拡張（beat/audio/space/verb/deck ID/atlas hash）。現状は S1部分集合。
+   - CC指示文は未作成。着手時に `docs/S2_INSTRUCTIONS.md` を起票。
 3. **instrument S1b以降** — `FISHVJ_INSTRUMENT_V1.md` §9 の Sprint積算。
 
 ## 6. 7/29 再開者 (Sol) への注意

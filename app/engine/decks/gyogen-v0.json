@@ -1,0 +1,26 @@
+{
+  "v": 0,
+  "id": "gyogen-v0",
+  "name": "魚曼荼羅",
+  "species": [
+    { "index": 0, "scale": 0.72, "motion": "SCHOOL" },
+    { "index": 1, "scale": 1.1, "motion": "GLIDE" },
+    { "index": 2, "scale": 0.92, "motion": "FLOAT" },
+    { "index": 3, "scale": 1.14, "motion": "GLIDE" },
+    { "index": 4, "scale": 0.82, "motion": "FLOAT" },
+    { "index": 5, "scale": 1.2, "motion": "WAVE" },
+    { "index": 6, "scale": 0.9, "motion": "FLOAT" },
+    { "index": 7, "scale": 0.8, "motion": "SCHOOL" }
+  ],
+  "flashLimit": { "level": "soft", "maxFlashHz": 3 },
+  "internal": {
+    "atlas": { "status": "internal-v0", "layout": "4x2" },
+    "speciesCount": { "status": "internal-v0", "value": 8 },
+    "motionFamilies": { "status": "internal-v0", "value": 4 },
+    "modes": { "status": "internal-v0" },
+    "macros": { "status": "internal-v0" },
+    "scenes": { "status": "internal-v0" },
+    "swarms": { "status": "internal-v0" }
+  },
+  "verbs": []
+}
