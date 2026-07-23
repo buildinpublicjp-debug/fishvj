@@ -13,6 +13,8 @@ import {
   assertRange,
   CROSSFADER_MAX,
   floorMod,
+  GAIN_MAX,
+  GAIN_MIN,
   OPACITY_MAX,
   Q16_ONE,
   RATE_MAX,
@@ -27,6 +29,8 @@ export type LoopMode = "wrap" | "pingpong" | "hold";
 
 export type Ramped = { valueQ16: number; targetQ16: number; startQ16: number; startTick: number };
 
+export type EqBand = "LOW" | "MID" | "HI";
+
 export type DeckState = {
   stackHash: string | null;
   durationTicks: number;
@@ -36,6 +40,10 @@ export type DeckState = {
   direction: Direction;
   rate: Ramped;
   opacity: Ramped;
+  // EQ gains as ramped gainQ16 (§4.2 canonical, §6.1 8-tick ramp). Center = 1.0.
+  eqLow: Ramped;
+  eqMid: Ramped;
+  eqHi: Ramped;
   cueTick: number;
   hotCues: (number | null)[];
 };
@@ -66,6 +74,9 @@ function initialDeck(): DeckState {
     direction: "forward",
     rate: ramped(Q16_ONE),
     opacity: ramped(OPACITY_MAX),
+    eqLow: ramped(Q16_ONE),
+    eqMid: ramped(Q16_ONE),
+    eqHi: ramped(Q16_ONE),
     cueTick: 0,
     hotCues: Array(8).fill(null),
   };
@@ -108,7 +119,14 @@ export type TransportEvent =
   | { type: "transport"; action: "hotCue"; deck: DeckId; index: number; op: "trigger" | "clear" }
   | { type: "transport"; action: "jogSeek"; deck: DeckId; deltaQ16Frames: number };
 
-export type InstrumentEvent = DeckEvent | TransportEvent;
+export type EqStateEvent = {
+  type: "eq";
+  deck: DeckId;
+  band: EqBand;
+  gainQ16: number;
+};
+
+export type InstrumentEvent = DeckEvent | TransportEvent | EqStateEvent;
 
 const beginRamp = (r: Ramped, targetQ16: number, tick: number): Ramped => ({
   valueQ16: r.valueQ16,
@@ -181,8 +199,17 @@ function reduceTransport(state: InstrumentState, event: TransportEvent): Instrum
   }
 }
 
+function reduceEq(state: InstrumentState, event: EqStateEvent): InstrumentState {
+  assertRange(event.gainQ16, GAIN_MIN, GAIN_MAX, "eq gain");
+  const deck = state[event.deck];
+  const field = event.band === "LOW" ? "eqLow" : event.band === "MID" ? "eqMid" : "eqHi";
+  return { ...state, [event.deck]: { ...deck, [field]: beginRamp(deck[field], event.gainQ16, state.tick) } };
+}
+
 export function reduceInstrument(state: InstrumentState, event: InstrumentEvent): InstrumentState {
-  return event.type === "deck" ? reduceDeck(state, event) : reduceTransport(state, event);
+  if (event.type === "deck") return reduceDeck(state, event);
+  if (event.type === "eq") return reduceEq(state, event);
+  return reduceTransport(state, event);
 }
 
 // --- per-tick advance -----------------------------------------------------
@@ -228,7 +255,16 @@ export function advanceInstrumentTick(state: InstrumentState): InstrumentState {
       }
       playheadQ17 = wrapPlayhead(deck, playheadQ17);
     }
-    return { ...deck, rate, opacity, playheadQ17, direction };
+    return {
+      ...deck,
+      rate,
+      opacity,
+      eqLow: step(deck.eqLow),
+      eqMid: step(deck.eqMid),
+      eqHi: step(deck.eqHi),
+      playheadQ17,
+      direction,
+    };
   };
 
   return {
