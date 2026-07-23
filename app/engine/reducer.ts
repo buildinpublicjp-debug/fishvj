@@ -26,6 +26,20 @@ export function createInitialEngineState(seed = DEFAULT_SEED): EngineState {
     swarmTo: 0,
     swarmMix: 1,
     swarmTransitionStartTick: 0,
+    bpm: 0,
+    beatPhase: 0,
+    confidence: 0,
+    flux: 0,
+    energy: 0,
+    rawKick: 0,
+    rawBass: 0,
+    rawMid: 0,
+    rawHigh: 0,
+    smoothKick: 0,
+    smoothBass: 0,
+    smoothHigh: 0,
+    kickLuma: 0,
+    highLuma: 0,
   };
 }
 
@@ -80,8 +94,21 @@ export function reduceEvent(state: EngineState, event: EngineEvent): EngineState
         swarm: defaults.swarm,
       };
     }
+    case "beat": {
+      if (event.payload.kind === "bands") {
+        const [rawKick, rawBass, rawMid, rawHigh] = event.payload.bands;
+        return { ...state, rawKick, rawBass, rawMid, rawHigh };
+      }
+      return {
+        ...state,
+        bpm: event.payload.bpm,
+        beatPhase: event.payload.phase,
+        confidence: event.payload.confidence,
+        flux: event.payload.flux,
+        energy: event.payload.energy,
+      };
+    }
     case "verb":
-    case "beat":
     case "space":
       return state;
   }

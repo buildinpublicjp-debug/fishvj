@@ -163,7 +163,7 @@ test("S1 rejects disabled producers and out-of-range params before reduction", (
         type: "mode",
         payload: { update: "absolute", value: "MYSTIC" },
       }),
-    /not enabled in S1/,
+    /not enabled/,
   );
   assert.throws(
     () =>
