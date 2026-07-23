@@ -1,0 +1,32 @@
+{
+  "purpose": "FishVJ S1b golden baseline environment record",
+  "createdOn": "2026-07-23",
+  "baselineCommit": "2275308460f48d4031fa550fafc80e7b2611f900",
+  "baselinePatch": "capture/golden/t0a-baseline-2275308.patch",
+  "currentCommit": "7c8a059",
+  "seed": 1179210568,
+  "simHz": 60,
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "deviceScaleFactor": 1
+  },
+  "canvas": {
+    "width": 1356,
+    "height": 761
+  },
+  "os": "macOS 26.2",
+  "machine": "Apple M1",
+  "browser": "Chrome/150.0.7871.181",
+  "gpu": {
+    "vendor": "Google Inc. (Apple)",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)"
+  },
+  "node": "v22.23.1",
+  "manifest": "capture/manifest.json",
+  "frames": 78,
+  "hashSamples": 131,
+  "releaseTag": "golden-t0a-2275308-chrome150",
+  "releaseAsset": "golden-t0a-2275308-chrome150.tar.gz",
+  "invalidation": "browser/GPU更新起因の不一致は golden失効→再基準化。コード退行と混同しない。"
+}
