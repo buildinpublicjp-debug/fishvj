@@ -3,7 +3,7 @@
   "createdOn": "2026-07-23",
   "baselineCommit": "2275308460f48d4031fa550fafc80e7b2611f900",
   "baselinePatch": "capture/golden/t0a-baseline-2275308.patch",
-  "currentCommit": "7c8a059",
+  "currentCommit": "deck-v0 on agent/fishvj-s1b-golden",
   "seed": 1179210568,
   "simHz": 60,
   "viewport": {
@@ -28,5 +28,7 @@
   "hashSamples": 131,
   "releaseTag": "golden-t0a-2275308-chrome150",
   "releaseAsset": "golden-t0a-2275308-chrome150.tar.gz",
-  "invalidation": "browser/GPU更新起因の不一致は golden失効→再基準化。コード退行と混同しない。"
+  "invalidation": "browser/GPU更新起因の不一致は golden失効→再基準化。コード退行と混同しない。",
+  "releaseAssetContents": "golden pinned baseline: frames/golden (78) + golden.trace.json + golden.samples.json. current is regenerable from main HEAD.",
+  "deckV0": "re-gated 2026-07-23: golden vs (main + deck v0) hash 131/131, mean SSIM 0.999999, min 0.999998 — visually unchanged (§7.2 holds)."
 }

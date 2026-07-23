@@ -3,8 +3,10 @@ import test from "node:test";
 
 import { FixedStepClock } from "../app/engine/clock";
 import { ParamEventCoalescer } from "../app/engine/coalesce";
+import { deck, loadDeck } from "../app/engine/deck";
 import { createSeededRandom } from "../app/engine/prng";
 import { createEngineStore } from "../app/engine/store";
+import { sha256Hex } from "../app/engine/sha256";
 import type { EngineEventInput } from "../app/engine/types";
 
 test("the frozen FishVJ seed produces a stable mulberry32 stream", () => {
@@ -182,5 +184,40 @@ test("S1 rejects disabled producers and out-of-range params before reduction", (
         payload: {},
       } as unknown as EngineEventInput),
     /unknown EngineEvent type/,
+  );
+});
+
+test("deck v0 externalizes exactly the pre-deck scale and motion literals", () => {
+  // The values FishCanvas used inline before deck v0, unchanged.
+  assert.deepEqual(deck.speciesScales, [0.72, 1.1, 0.92, 1.14, 0.82, 1.2, 0.9, 0.8]);
+  assert.deepEqual(deck.speciesMotions, [0, 1, 3, 1, 3, 2, 3, 0]);
+  assert.equal(deck.id, "gyogen-v0");
+  assert.match(deck.contentHash, /^sha256:[0-9a-f]{64}$/);
+});
+
+test("deck v0 validation rejects reorder, wrong length and bad motion", () => {
+  const base = {
+    v: 0,
+    id: "test",
+    name: "t",
+    species: Array.from({ length: 8 }, (_, index) => ({
+      index,
+      scale: 1,
+      motion: "SCHOOL" as const,
+    })),
+  };
+  assert.doesNotThrow(() => loadDeck(base));
+  assert.throws(() => loadDeck({ ...base, v: 1 }), /schema version must be 0/);
+  assert.throws(() => loadDeck({ ...base, species: base.species.slice(0, 7) }), /length 8/);
+  const reordered = base.species.map((s, i) => ({ ...s, index: (i + 1) % 8 }));
+  assert.throws(() => loadDeck({ ...base, species: reordered }), /ascending, fixed/);
+  const badMotion = base.species.map((s) => ({ ...s, motion: "DRIFT" }));
+  assert.throws(() => loadDeck({ ...base, species: badMotion }), /motion is invalid/);
+});
+
+test("sha256Hex matches the well-known abc digest", () => {
+  assert.equal(
+    sha256Hex("abc"),
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
   );
 });
