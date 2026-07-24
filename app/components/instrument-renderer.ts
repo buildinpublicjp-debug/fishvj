@@ -24,25 +24,30 @@ uniform vec2 uHas;        // deck loaded flags
 uniform float uOA, uOB, uX;
 uniform vec3 uEqA, uEqB;  // LOW/MID/HI gains
 
-vec3 pattern(vec2 uv, float phase, vec3 tint){
+// seed differentiates deck geometry so decks A/B are distinct content, not just
+// a tint of the same pattern (seed 0 = concentric mandala, seed 1 = flowing
+// diagonal weave).
+vec3 pattern(vec2 uv, float phase, vec3 tint, float seed){
   vec2 c = uv - 0.5;
   float r = length(c);
   float a = atan(c.y, c.x);
-  float bands = sin((uv.x*7.0 + uv.y*3.0 + phase*0.25)*3.14159);
-  float rings = sin(r*22.0 - phase*0.5 + uTime*0.4);
-  float spokes = cos(a*6.0 + phase*0.15);
-  float v = 0.5 + 0.32*bands*rings + 0.14*spokes;
+  float f = 5.0 + seed*5.0;
+  float bands = sin((uv.x*f + uv.y*(2.0+seed*3.0) + phase*0.25)*3.14159);
+  float rings = sin(r*(20.0 - seed*12.0) - phase*0.5 + uTime*0.4);
+  float spokes = cos(a*(6.0 + seed*6.0) + phase*0.15 + seed*1.7);
+  float diag = sin((uv.x - uv.y)*(6.0 + seed*10.0) + phase*0.35 - uTime*0.3);
+  float v = 0.5 + mix(0.34*bands*rings + 0.14*spokes, 0.30*diag + 0.16*bands, seed);
   return tint * clamp(0.25 + 0.85*v, 0.0, 1.4);
 }
 
 // 3-band EQ approximated from concentric procedural samples.
-vec3 eq(vec2 uv, float phase, vec3 tint, vec3 g){
-  vec3 full = pattern(uv, phase, tint);
+vec3 eq(vec2 uv, float phase, vec3 tint, vec3 g, float seed){
+  vec3 full = pattern(uv, phase, tint, seed);
   vec3 g1 = vec3(0.0), g2 = vec3(0.0);
   for(int i=0;i<6;i++){
     float ang = float(i)*1.0472;
-    g1 += pattern(uv + vec2(cos(ang),sin(ang))*0.010, phase, tint);
-    g2 += pattern(uv + vec2(cos(ang),sin(ang))*0.030, phase, tint);
+    g1 += pattern(uv + vec2(cos(ang),sin(ang))*0.010, phase, tint, seed);
+    g2 += pattern(uv + vec2(cos(ang),sin(ang))*0.030, phase, tint, seed);
   }
   g1/=6.0; g2/=6.0;
   vec3 low = g2, mid = g1-g2, hi = full-g1;
@@ -50,8 +55,8 @@ vec3 eq(vec2 uv, float phase, vec3 tint, vec3 g){
 }
 
 void main(){
-  vec3 A = uHas.x>0.5 ? eq(vUv, uPhase.x, uTintA, uEqA) : vec3(0.0);
-  vec3 B = uHas.y>0.5 ? eq(vUv, uPhase.y, uTintB, uEqB) : vec3(0.0);
+  vec3 A = uHas.x>0.5 ? eq(vUv, uPhase.x, uTintA, uEqA, 0.0) : vec3(0.0);
+  vec3 B = uHas.y>0.5 ? eq(vUv, uPhase.y, uTintB, uEqB, 1.0) : vec3(0.0);
   float aA = uHas.x>0.5 ? uOA : 0.0;
   float aB = uHas.y>0.5 ? uOB : 0.0;
   vec3 pA = A*uOA, pB = B*uOB;   // premultiplied by channel opacity
