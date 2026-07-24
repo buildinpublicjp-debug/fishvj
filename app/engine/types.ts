@@ -2,6 +2,17 @@ export const SIM_HZ = 60;
 export const TICK_MS = 1000 / SIM_HZ;
 export const DEFAULT_SEED = 0x46495348;
 
+// T0-B (FISHVJ_DESIGN_V2.md §2.2). Audio bands are quantized to 15Hz and
+// injected every 4 ticks; smoothing time constants are derived from the 60fps
+// coefficients; the luma-facing values pass through a soft slew limiter.
+export const AUDIO_HZ = 15;
+export const AUDIO_TICK_INTERVAL = SIM_HZ / AUDIO_HZ; // 4
+export const TAU_KICK_SEC = 0.075;
+export const TAU_BASS_SEC = 0.111;
+export const TAU_HIGH_SEC = 0.093;
+export const SLEW_KICK_PER_SEC = 4.0;
+export const SLEW_HIGH_PER_SEC = 2.0;
+
 export type ModeName = "MYSTIC" | "SENSUAL" | "EUPHORIC";
 export type SceneMode = "MANDALA" | "FREE_SWIM";
 export type ColorPreset = "CLEAN" | "PUNCH" | "ACID" | "DEEP";
@@ -109,6 +120,22 @@ export type EngineState = {
   swarmTo: number;
   swarmMix: number;
   swarmTransitionStartTick: number;
+  // Beat/audio state (T0-B). Owned by the engine so it is deterministic,
+  // hashed, and reproduced identically on replay.
+  bpm: number;
+  beatPhase: number;
+  confidence: number;
+  flux: number;
+  energy: number;
+  rawKick: number;
+  rawBass: number;
+  rawMid: number;
+  rawHigh: number;
+  smoothKick: number;
+  smoothBass: number;
+  smoothHigh: number;
+  kickLuma: number;
+  highLuma: number;
 };
 
 export type AudioLevels = {
@@ -119,7 +146,6 @@ export type AudioLevels = {
 };
 
 export type FrameContext = {
-  audio?: Pick<AudioLevels, "kick" | "bass" | "high">;
   width?: number;
   height?: number;
 };
