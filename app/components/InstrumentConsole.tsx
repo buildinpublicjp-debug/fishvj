@@ -17,7 +17,8 @@ export function InstrumentConsole() {
   const snap = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   const programRef = useRef<HTMLCanvasElement>(null);
-  const previewRef = useRef<HTMLCanvasElement>(null);
+  const monitorARef = useRef<HTMLCanvasElement>(null);
+  const monitorBRef = useRef<HTMLCanvasElement>(null);
   const snapRef = useRef<InstrumentSnapshot>(snap);
   useEffect(() => {
     snapRef.current = snap;
@@ -32,16 +33,18 @@ export function InstrumentConsole() {
     store.dispatch({ type: "deck", action: "load", deck: "B", ...loadedStackArg(STACKS[1]) });
     store.dispatch({ type: "transport", action: "playing", deck: "A", value: true });
     store.dispatch({ type: "transport", action: "playing", deck: "B", value: true });
-    store.dispatch({ type: "deck", action: "crossfader", valueQ16: Math.round(0.35 * 65536) });
+    store.dispatch({ type: "deck", action: "crossfader", valueQ16: Math.round(0.5 * 65536) });
   }, [store]);
 
   // Fixed 60Hz simulation advance + render loop.
   useEffect(() => {
     const clock = new FixedStepClock();
     const programCanvas = programRef.current!;
-    const previewCanvas = previewRef.current!;
+    const monitorACanvas = monitorARef.current!;
+    const monitorBCanvas = monitorBRef.current!;
     const program = createCompositor(programCanvas);
-    const preview = createCompositor(previewCanvas);
+    const monitorA = createCompositor(monitorACanvas);
+    const monitorB = createCompositor(monitorBCanvas);
     let outputComp: Compositor | null = null;
     let outputCanvas: HTMLCanvasElement | null = null;
     let raf = 0;
@@ -61,8 +64,10 @@ export function InstrumentConsole() {
       const t = (now - start) / 1000;
       sizeTo(program, programCanvas);
       program.render(s, "program", t);
-      sizeTo(preview, previewCanvas);
-      preview.render(s, s.previewDeck === "A" ? "previewA" : "previewB", t);
+      sizeTo(monitorA, monitorACanvas);
+      monitorA.render(s, "previewA", t);
+      sizeTo(monitorB, monitorBCanvas);
+      monitorB.render(s, "previewB", t);
       if (outputComp && outputCanvas) {
         if (outputCanvas.isConnected) {
           outputCanvas.width = outputCanvas.clientWidth || 1920;
@@ -83,7 +88,8 @@ export function InstrumentConsole() {
     return () => {
       cancelAnimationFrame(raf);
       program.dispose();
-      preview.dispose();
+      monitorA.dispose();
+      monitorB.dispose();
       outputComp?.dispose();
     };
   }, [store, outputOpen]);
@@ -189,9 +195,13 @@ export function InstrumentConsole() {
             )}
           </div>
           <div className="preview-row">
-            <div className="preview-stage">
-              <span className="tag">PREVIEW · DECK {snap.previewDeck}</span>
-              <canvas ref={previewRef} />
+            <div className="monitor deck-A-mon">
+              <span className="tag">DECK A</span>
+              <canvas ref={monitorARef} />
+            </div>
+            <div className="monitor deck-B-mon">
+              <span className="tag">DECK B</span>
+              <canvas ref={monitorBRef} />
             </div>
             <div className="inst-mixer">
               <div className="crossfader">

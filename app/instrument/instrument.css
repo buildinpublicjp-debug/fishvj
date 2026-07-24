@@ -78,9 +78,13 @@
 .output-stage .tag { position: absolute; top: 8px; left: 10px; color: var(--dim); letter-spacing: 0.14em; font-size: 10px; }
 .output-stage .launch-count { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .output-stage .launch-count b { font-size: 64px; font-weight: 800; color: var(--accent); text-shadow: 0 0 24px rgba(23,194,255,0.5); }
-.preview-row { display: grid; grid-template-columns: 1fr 220px; gap: 12px; }
-.preview-stage { position: relative; aspect-ratio: 16/9; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.preview-stage canvas { width: 100%; height: 100%; display: block; }
+.preview-row { display: grid; grid-template-columns: 1fr 1fr 240px; gap: 12px; }
+.monitor { position: relative; aspect-ratio: 16/9; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.monitor canvas { width: 100%; height: 100%; display: block; }
+.monitor.deck-A-mon { border-color: rgba(255,91,176,0.5); }
+.monitor.deck-B-mon { border-color: rgba(58,208,255,0.5); }
+.monitor.deck-A-mon .tag { color: var(--a-tint); }
+.monitor.deck-B-mon .tag { color: var(--b-tint); }
 
 .inst-mixer { display: flex; flex-direction: column; gap: 10px; }
 .mixer-eq { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

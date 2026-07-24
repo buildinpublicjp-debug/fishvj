@@ -24,20 +24,27 @@ uniform vec2 uHas;        // deck loaded flags
 uniform float uOA, uOB, uX;
 uniform vec3 uEqA, uEqB;  // LOW/MID/HI gains
 
-// seed differentiates deck geometry so decks A/B are distinct content, not just
-// a tint of the same pattern (seed 0 = concentric mandala, seed 1 = flowing
-// diagonal weave).
+// Decks are deliberately different KINDS of image so a mix reads as two layers,
+// not a tint of one pattern. Deck A (seed 0) is a smooth flowing warm field;
+// deck B (seed 1) is a sparse bright lattice on near-black, so its accents punch
+// through when composited over A.
 vec3 pattern(vec2 uv, float phase, vec3 tint, float seed){
   vec2 c = uv - 0.5;
   float r = length(c);
   float a = atan(c.y, c.x);
-  float f = 5.0 + seed*5.0;
-  float bands = sin((uv.x*f + uv.y*(2.0+seed*3.0) + phase*0.25)*3.14159);
-  float rings = sin(r*(20.0 - seed*12.0) - phase*0.5 + uTime*0.4);
-  float spokes = cos(a*(6.0 + seed*6.0) + phase*0.15 + seed*1.7);
-  float diag = sin((uv.x - uv.y)*(6.0 + seed*10.0) + phase*0.35 - uTime*0.3);
-  float v = 0.5 + mix(0.34*bands*rings + 0.14*spokes, 0.30*diag + 0.16*bands, seed);
-  return tint * clamp(0.25 + 0.85*v, 0.0, 1.4);
+  if (seed < 0.5) {
+    float bands = sin((uv.x*7.0 + uv.y*3.0 + phase*0.25)*3.14159);
+    float rings = sin(r*20.0 - phase*0.5 + uTime*0.4);
+    float spokes = cos(a*6.0 + phase*0.15);
+    float v = 0.5 + 0.34*bands*rings + 0.14*spokes;
+    return tint * clamp(0.28 + 0.8*v, 0.0, 1.4);
+  }
+  float gx = sin((uv.x*22.0 + phase*0.3)*3.14159);
+  float gy = sin((uv.y*13.0 - phase*0.2)*3.14159);
+  float dots = pow(max(0.0, gx*gy), 6.0);
+  float diag = pow(max(0.0, sin((uv.x - uv.y)*18.0 + phase*0.4 - uTime*0.3)), 5.0) * 0.6;
+  float v = dots + diag;
+  return tint * clamp(v * 1.9, 0.0, 1.6);
 }
 
 // 3-band EQ approximated from concentric procedural samples.
