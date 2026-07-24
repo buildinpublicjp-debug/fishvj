@@ -32,6 +32,12 @@ export type DeckSnapshot = {
   direction: "forward" | "reverse";
   opacity: number;
   eq: { LOW: number; MID: number; HI: number };
+  // Ramp targets. UI sliders bind to these (they follow the finger instantly);
+  // the ramped values above are what the renderer applies. Binding sliders to
+  // the ramped value makes React fight the drag with ~130ms of rubber-banding.
+  rateTarget: number;
+  opacityTarget: number;
+  eqTarget: { LOW: number; MID: number; HI: number };
 };
 
 export type InstrumentSnapshot = {
@@ -39,6 +45,7 @@ export type InstrumentSnapshot = {
   controlGrammar: ControlGrammar;
   previewDeck: DeckId;
   crossfader: number;
+  crossfaderTarget: number;
   A: DeckSnapshot;
   B: DeckSnapshot;
   pendingLaunch: { deck: DeckId; targetTick: number; ticksRemaining: number } | null;
@@ -56,6 +63,13 @@ const deckSnapshot = (deck: InstrumentState["A"]): DeckSnapshot => ({
     LOW: deck.eqLow.valueQ16 / Q16_ONE,
     MID: deck.eqMid.valueQ16 / Q16_ONE,
     HI: deck.eqHi.valueQ16 / Q16_ONE,
+  },
+  rateTarget: deck.rate.targetQ16 / Q16_ONE,
+  opacityTarget: deck.opacity.targetQ16 / Q16_ONE,
+  eqTarget: {
+    LOW: deck.eqLow.targetQ16 / Q16_ONE,
+    MID: deck.eqMid.targetQ16 / Q16_ONE,
+    HI: deck.eqHi.targetQ16 / Q16_ONE,
   },
 });
 
@@ -82,6 +96,7 @@ export function createInstrumentStore(bpm = 138): InstrumentStore {
     controlGrammar: state.controlGrammar,
     previewDeck: state.previewDeck,
     crossfader: state.crossfader.valueQ16 / Q16_ONE,
+    crossfaderTarget: state.crossfader.targetQ16 / Q16_ONE,
     A: deckSnapshot(state.A),
     B: deckSnapshot(state.B),
     pendingLaunch: pending
@@ -127,7 +142,7 @@ export function createInstrumentStore(bpm = 138): InstrumentStore {
       }
       state = advanceInstrumentTick(state);
       recache();
-      if (state.tick % 3 === 0) notify(); // ~20Hz to React
+      if (state.tick % 2 === 0) notify(); // ~30Hz to React (canvases read at 60Hz)
       return cached;
     },
     getState: () => state,

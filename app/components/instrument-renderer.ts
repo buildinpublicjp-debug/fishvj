@@ -47,16 +47,20 @@ vec3 pattern(vec2 uv, float phase, vec3 tint, float seed){
   return tint * clamp(v * 1.9, 0.0, 1.6);
 }
 
-// 3-band EQ approximated from concentric procedural samples.
+// 3-band EQ approximated from concentric procedural samples. The flat case
+// (all gains 1) skips the taps entirely — the identity HI+MID+LOW = full means
+// flat EQ is exactly the plain pattern, and the taps are the expensive part
+// (9 pattern() evaluations per deck per pixel).
 vec3 eq(vec2 uv, float phase, vec3 tint, vec3 g, float seed){
   vec3 full = pattern(uv, phase, tint, seed);
+  if (abs(g.x-1.0) + abs(g.y-1.0) + abs(g.z-1.0) < 0.004) return clamp(full, 0.0, 1.0);
   vec3 g1 = vec3(0.0), g2 = vec3(0.0);
-  for(int i=0;i<6;i++){
-    float ang = float(i)*1.0472;
+  for(int i=0;i<4;i++){
+    float ang = float(i)*1.5708;
     g1 += pattern(uv + vec2(cos(ang),sin(ang))*0.010, phase, tint, seed);
     g2 += pattern(uv + vec2(cos(ang),sin(ang))*0.030, phase, tint, seed);
   }
-  g1/=6.0; g2/=6.0;
+  g1/=4.0; g2/=4.0;
   vec3 low = g2, mid = g1-g2, hi = full-g1;
   return clamp(g.x*low + g.y*mid + g.z*hi, 0.0, 1.0);
 }

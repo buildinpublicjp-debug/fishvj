@@ -25,6 +25,7 @@ export function InstrumentConsole() {
   });
   const outputWinRef = useRef<Window | null>(null);
   const [outputOpen, setOutputOpen] = useState(false);
+  const [fps, setFps] = useState(0);
 
   // Load and play both decks on mount so the surface is alive on open (an empty
   // surface renders black, which reads as "nothing works").
@@ -49,6 +50,9 @@ export function InstrumentConsole() {
     let outputCanvas: HTMLCanvasElement | null = null;
     let raf = 0;
     const start = performance.now();
+    let fpsAccum = 0;
+    let fpsFrames = 0;
+    let lastNow = start;
 
     const sizeTo = (comp: Compositor, canvas: HTMLCanvasElement) => {
       const r = canvas.getBoundingClientRect();
@@ -58,6 +62,14 @@ export function InstrumentConsole() {
     };
 
     const frame = (now: number) => {
+      fpsAccum += now - lastNow;
+      lastNow = now;
+      fpsFrames += 1;
+      if (fpsAccum >= 500) {
+        setFps(Math.round((fpsFrames * 1000) / fpsAccum));
+        fpsAccum = 0;
+        fpsFrames = 0;
+      }
       clock.accumulate(now);
       for (let i = clock.takeTicks(5); i > 0; i -= 1) store.advanceTick();
       const s = store.getSnapshot();
@@ -143,8 +155,8 @@ export function InstrumentConsole() {
       else if (k === "p") playPause("B");
       else if (k === "z") cue("A");
       else if (k === "m") cue("B");
-      else if (k === "arrowleft") setCross(Math.max(0, snapRef.current.crossfader - 0.05));
-      else if (k === "arrowright") setCross(Math.min(1, snapRef.current.crossfader + 0.05));
+      else if (k === "arrowleft") setCross(Math.max(0, snapRef.current.crossfaderTarget - 0.05));
+      else if (k === "arrowright") setCross(Math.min(1, snapRef.current.crossfaderTarget + 0.05));
       else if (k >= "1" && k <= "8") hotCue("A", Number(k) - 1);
     };
     window.addEventListener("keydown", onKey);
@@ -161,6 +173,7 @@ export function InstrumentConsole() {
     <main className="inst-shell">
       <header className="inst-top">
         <div className="inst-brand">FISH<span>VJ</span> · INSTRUMENT</div>
+        <div className="inst-badge">{fps} FPS</div>
         <div className="inst-badge">tick {snap.tick}</div>
         <div className="inst-badge">BPM {Math.round(snap.bpm)}</div>
         <div className="grow" />
@@ -210,15 +223,15 @@ export function InstrumentConsole() {
                   <span>CROSSFADER</span>
                   <span className="deck-B-tint">B</span>
                 </div>
-                <input type="range" min={0} max={1} step={0.001} value={snap.crossfader}
+                <input type="range" min={0} max={1} step={0.001} value={snap.crossfaderTarget}
                   onChange={(e) => setCross(Number(e.target.value))} aria-label="Crossfader" />
               </div>
               <div className="ctl">
                 <label><span>OPACITY A</span><span>{Math.round(snap.A.opacity * 100)}%</span></label>
-                <input type="range" min={0} max={1} step={0.001} value={snap.A.opacity}
+                <input type="range" min={0} max={1} step={0.001} value={snap.A.opacityTarget}
                   onChange={(e) => setOpacity("A", Number(e.target.value))} aria-label="Opacity A" />
                 <label><span>OPACITY B</span><span>{Math.round(snap.B.opacity * 100)}%</span></label>
-                <input type="range" min={0} max={1} step={0.001} value={snap.B.opacity}
+                <input type="range" min={0} max={1} step={0.001} value={snap.B.opacityTarget}
                   onChange={(e) => setOpacity("B", Number(e.target.value))} aria-label="Opacity B" />
               </div>
             </div>
@@ -287,7 +300,7 @@ function DeckStrip({
         </div>
         <div className="ctl">
           <label><span>RATE</span><span>{snap.rate.toFixed(2)}×</span></label>
-          <input type="range" min={0.5} max={2} step={0.01} value={snap.rate}
+          <input type="range" min={0.5} max={2} step={0.01} value={snap.rateTarget}
             onChange={(e) => setRate(deck, Number(e.target.value))} aria-label={`Rate ${deck}`} />
         </div>
         <div className="hotcues">
@@ -314,7 +327,7 @@ function EqPanel({
       {(["LOW", "MID", "HI"] as const).map((band) => (
         <div className="ctl" key={band}>
           <label><span>{band}</span><span>{snap.eq[band].toFixed(2)}</span></label>
-          <input type="range" min={0} max={RAW_MAX} step={1} value={gainToRaw(snap.eq[band])}
+          <input type="range" min={0} max={RAW_MAX} step={1} value={gainToRaw(snap.eqTarget[band])}
             onChange={(e) => setEq(deck, band, Number(e.target.value))} aria-label={`EQ ${deck} ${band}`} />
         </div>
       ))}
