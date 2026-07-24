@@ -84,9 +84,11 @@ frozen 2文書（v2 / INSTRUMENT_V1）の実装スコープを、機材待ち以
 | S5 | spatial EQ / Web MIDI / FLX4 / mode | #11 | S5_VERIFY |
 | S6 | quantized launch / source IF / instrument.bin | #12 | S6_VERIFY |
 | S3 | CV v0 ソフト（homography/absdiff/8×8/ring） | #13 | S3_VERIFY |
+| 楽器UI v0 | 演奏surface `/instrument`（deck A/B・mixer・EQ・crossfader・DJ/VJ・VJ launch・keyboard fallback） | #14 | INSTRUMENT_UI_VERIFY |
 
-- CI: **test:engine 53/53**（engine11 + replay4 + instrument9 + s5 11 + s6 11 + cv7）、lint/tsc/build/SSR 全 exit 0。
-- golden: 全 sprint で fish 視覚不変（hash 131/131、mean SSIM ≥0.999999）。npm 依存追加ゼロ。
+- CI: **test:engine 58/58**（+ instrument-ui 5）、lint/tsc/build/SSR 全 exit 0。
+- golden: 全 sprint + 楽器UI で fish 視覚不変（console route 無変更、hash 131/131、mean SSIM ≥0.999999）。npm 依存追加ゼロ。
+- 楽器UI: `/instrument` 新route、console route(`/`)は1行も変更なし。surface全景 `docs/design/instrument/instrument-surface-v0.png`。§7.1 switch invariance / §7.4 composite / §8.3-7 drift0 を自動テスト。
 
 ### 残: hardware-gated 一覧（実機 sprint で解錠）
 - **S4**: WebCodecs access bench（§6.4 5値・120-frame fixture）、dual-output multi-display（§7.4）、WebGL stack 実描画。

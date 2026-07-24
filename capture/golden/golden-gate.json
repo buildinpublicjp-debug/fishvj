@@ -7,7 +7,7 @@
     "hashSamples": 131,
     "hashTraceIdentical": true,
     "rawSamplesIdentical": false,
-    "byteIdenticalFrames": 31,
+    "byteIdenticalFrames": 32,
     "dimensionsOk": true,
     "meanSsim": 0.999999,
     "minSsim": 0.999998,
@@ -359,11 +359,11 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 0.999999,
-      "minWindow": 0.997595,
-      "identical": false,
-      "diffPixels": 1234,
-      "maxChannelDiff": 2
+      "ssim": 1,
+      "minWindow": 1,
+      "identical": true,
+      "diffPixels": 0,
+      "maxChannelDiff": 0
     },
     {
       "tick": 930,
@@ -371,10 +371,10 @@
       "width": 1920,
       "height": 1080,
       "dimensionsOk": true,
-      "ssim": 0.999999,
-      "minWindow": 0.997595,
+      "ssim": 0.999998,
+      "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 1234,
+      "diffPixels": 2384,
       "maxChannelDiff": 2
     },
     {
@@ -384,10 +384,10 @@
       "height": 1080,
       "dimensionsOk": true,
       "ssim": 1,
-      "minWindow": 0.997982,
+      "minWindow": 0.999679,
       "identical": false,
-      "diffPixels": 599,
-      "maxChannelDiff": 2
+      "diffPixels": 66,
+      "maxChannelDiff": 1
     },
     {
       "tick": 970,
@@ -396,10 +396,10 @@
       "height": 1080,
       "dimensionsOk": true,
       "ssim": 0.999999,
-      "minWindow": 0.997982,
+      "minWindow": 0.998359,
       "identical": false,
-      "diffPixels": 1124,
-      "maxChannelDiff": 2
+      "diffPixels": 591,
+      "maxChannelDiff": 1
     },
     {
       "tick": 990,
@@ -410,7 +410,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -422,7 +422,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2554,
+      "diffPixels": 3087,
       "maxChannelDiff": 2
     },
     {
@@ -434,7 +434,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2554,
+      "diffPixels": 3113,
       "maxChannelDiff": 2
     },
     {
@@ -446,7 +446,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2554,
+      "diffPixels": 3110,
       "maxChannelDiff": 2
     },
     {
@@ -458,7 +458,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -470,7 +470,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -482,7 +482,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -494,7 +494,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -506,7 +506,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -518,7 +518,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -530,7 +530,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -542,7 +542,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -554,7 +554,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -566,7 +566,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -578,7 +578,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -590,7 +590,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -602,7 +602,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -614,7 +614,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -626,7 +626,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -638,7 +638,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -650,7 +650,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -662,7 +662,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -674,7 +674,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -686,7 +686,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -698,7 +698,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -710,7 +710,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -722,7 +722,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -734,7 +734,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -746,7 +746,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -758,7 +758,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -770,7 +770,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -782,7 +782,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -794,7 +794,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -806,7 +806,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -818,7 +818,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -830,7 +830,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -842,7 +842,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -854,7 +854,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -866,7 +866,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -878,7 +878,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -890,7 +890,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {
@@ -902,7 +902,7 @@
       "ssim": 0.999998,
       "minWindow": 0.996685,
       "identical": false,
-      "diffPixels": 2521,
+      "diffPixels": 3054,
       "maxChannelDiff": 2
     },
     {

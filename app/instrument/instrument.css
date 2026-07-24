@@ -1,0 +1,101 @@
+/* Instrument surface v0 — scoped to /instrument. Does not touch globals.css, so
+   the console route and its golden gate are unaffected. Dark-stage contrast,
+   latency-first (no heavy decoration). */
+.inst-shell {
+  --bg: #05070d;
+  --panel: #0b1018;
+  --line: #1b2433;
+  --ink: #e8eef7;
+  --dim: #7f8da3;
+  --accent: #17c2ff;
+  --a-tint: #ff5bb0;
+  --b-tint: #3ad0ff;
+  --warn: #ff4d4d;
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 44px 1fr auto;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans, system-ui), sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+
+.inst-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  background: #04060a;
+}
+.inst-brand { font-weight: 800; letter-spacing: 0.14em; }
+.inst-brand span { color: var(--accent); }
+.inst-top .grow { flex: 1; }
+.inst-badge { color: var(--dim); font-variant-numeric: tabular-nums; }
+.inst-grammar { display: flex; gap: 6px; }
+.inst-grammar button {
+  padding: 5px 14px; border: 1px solid var(--line); background: var(--panel);
+  color: var(--dim); border-radius: 6px; font-weight: 700; cursor: pointer;
+}
+.inst-grammar button.on { color: #041018; background: var(--accent); border-color: var(--accent); }
+
+.inst-main {
+  display: grid;
+  grid-template-columns: 300px 1fr 300px;
+  gap: 12px;
+  padding: 12px;
+  min-height: 0;
+}
+
+.inst-deck { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.inst-deck h2 { margin: 0; font-size: 11px; letter-spacing: 0.16em; color: var(--dim); }
+.deck-A h2 { color: var(--a-tint); }
+.deck-B h2 { color: var(--b-tint); }
+.deck-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 9px; }
+.deck-load { display: flex; gap: 6px; }
+.deck-load button, .deck-btn {
+  flex: 1; padding: 7px; border: 1px solid var(--line); background: #0d1420; color: var(--ink);
+  border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+.deck-btn.on { background: var(--accent); color: #041018; border-color: var(--accent); }
+.deck-btn.danger { border-color: var(--warn); color: var(--warn); }
+.playhead { height: 8px; border-radius: 4px; background: #0d1420; overflow: hidden; border: 1px solid var(--line); }
+.playhead i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--a-tint)); }
+.deck-meta { display: flex; justify-content: space-between; color: var(--dim); font-variant-numeric: tabular-nums; }
+.hotcues { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.hotcues button { aspect-ratio: 1; border: 1px solid var(--line); background: #0d1420; color: var(--dim); border-radius: 4px; cursor: pointer; font-size: 10px; }
+.hotcues button.set { border-color: var(--accent); color: var(--accent); }
+.ctl { display: flex; flex-direction: column; gap: 3px; }
+.ctl label { display: flex; justify-content: space-between; color: var(--dim); }
+.ctl input[type="range"] { width: 100%; }
+
+.inst-outputs { display: grid; grid-template-rows: 1fr auto; gap: 12px; min-height: 0; }
+.output-stage { position: relative; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-height: 0; }
+.output-stage canvas { width: 100%; height: 100%; display: block; }
+.output-stage .tag { position: absolute; top: 8px; left: 10px; color: var(--dim); letter-spacing: 0.14em; font-size: 10px; }
+.output-stage .launch-count { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.output-stage .launch-count b { font-size: 64px; font-weight: 800; color: var(--accent); text-shadow: 0 0 24px rgba(23,194,255,0.5); }
+.preview-row { display: grid; grid-template-columns: 1fr 220px; gap: 12px; }
+.preview-stage { position: relative; aspect-ratio: 16/9; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.preview-stage canvas { width: 100%; height: 100%; display: block; }
+
+.inst-mixer { display: flex; flex-direction: column; gap: 10px; }
+.mixer-eq { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.eq-col { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.eq-col h3 { margin: 0; font-size: 10px; color: var(--dim); letter-spacing: 0.14em; }
+.crossfader { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.crossfader .ends { display: flex; justify-content: space-between; color: var(--dim); }
+.deck-A-tint { color: var(--a-tint); }
+.deck-B-tint { color: var(--b-tint); }
+
+.inst-transport { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--line); background: #04060a; }
+.inst-transport button { padding: 8px 16px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; cursor: pointer; font-weight: 700; }
+.inst-transport button.primary { background: var(--accent); color: #041018; border-color: var(--accent); }
+.inst-transport .grow { flex: 1; }
+.inst-transport .hint { color: var(--dim); font-size: 11px; }
+
+.output-window-body { margin: 0; background: #000; overflow: hidden; }
+.output-window-body canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; }
