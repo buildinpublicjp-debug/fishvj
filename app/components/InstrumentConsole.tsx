@@ -7,7 +7,8 @@ import { encodeQ16 } from "../engine/instrument/fixed";
 import { createInstrumentStore, type InstrumentSnapshot } from "../engine/instrument/store";
 import type { DeckId } from "../engine/instrument/transport";
 import { createCompositor, type Compositor, type OutputMode } from "./instrument-renderer";
-import { loadedStackArg, STACKS } from "./instrument-fixtures";
+import { loadedStackArg, STACK_MEDIA, STACKS } from "./instrument-fixtures";
+import { FrameSource } from "./instrument-frames";
 
 const RAW_CENTER = 8192;
 const RAW_MAX = 16383;
@@ -54,6 +55,21 @@ export function InstrumentConsole() {
     let fpsFrames = 0;
     let lastNow = start;
 
+    // Real frame playback (§6.4 independent-frames path): one FrameSource per
+    // deck, keyed by the loaded stack's contentHash via STACK_MEDIA.
+    const sources: { A: FrameSource | null; B: FrameSource | null } = { A: null, B: null };
+    const sourceHash: { A: string | null; B: string | null } = { A: null, B: null };
+    const frameFor = (deck: "A" | "B", stackHash: string | null, framePosition: number) => {
+      if (sourceHash[deck] !== stackHash) {
+        sources[deck]?.dispose();
+        sources[deck] = null;
+        sourceHash[deck] = stackHash;
+        const media = stackHash ? STACK_MEDIA.get(stackHash) : undefined;
+        if (media) sources[deck] = new FrameSource(media.base, media.count);
+      }
+      return sources[deck]?.get(framePosition) ?? null;
+    };
+
     const sizeTo = (comp: Compositor, canvas: HTMLCanvasElement) => {
       const r = canvas.getBoundingClientRect();
       const w = Math.max(2, Math.floor(r.width));
@@ -74,17 +90,21 @@ export function InstrumentConsole() {
       for (let i = clock.takeTicks(5); i > 0; i -= 1) store.advanceTick();
       const s = store.getSnapshot();
       const t = (now - start) / 1000;
+      const frames = {
+        A: frameFor("A", s.A.stackHash, s.A.framePosition),
+        B: frameFor("B", s.B.stackHash, s.B.framePosition),
+      };
       sizeTo(program, programCanvas);
-      program.render(s, "program", t);
+      program.render(s, "program", t, frames);
       sizeTo(monitorA, monitorACanvas);
-      monitorA.render(s, "previewA", t);
+      monitorA.render(s, "previewA", t, frames);
       sizeTo(monitorB, monitorBCanvas);
-      monitorB.render(s, "previewB", t);
+      monitorB.render(s, "previewB", t, frames);
       if (outputComp && outputCanvas) {
         if (outputCanvas.isConnected) {
           outputCanvas.width = outputCanvas.clientWidth || 1920;
           outputCanvas.height = outputCanvas.clientHeight || 1080;
-          outputComp.render(s, "program", t);
+          outputComp.render(s, "program", t, frames);
         }
       }
       raf = requestAnimationFrame(frame);
@@ -99,6 +119,8 @@ export function InstrumentConsole() {
 
     return () => {
       cancelAnimationFrame(raf);
+      sources.A?.dispose();
+      sources.B?.dispose();
       program.dispose();
       monitorA.dispose();
       monitorB.dispose();

@@ -1,8 +1,9 @@
 // Instrument program/preview compositor (raw WebGL2, one fullscreen pass).
 //
-// Deck content is a procedural stand-in driven by each deck's playhead (real
-// video stacks are WebCodecs-gated). The 3-band EQ is approximated from
-// multi-tap samples of that procedural field, and the two decks are combined
+// Deck content is either a REAL frame stack (ImageBitmap textures via the
+// §6.4-benched independent-frames path) or a procedural stand-in driven by the
+// deck playhead. The 3-band EQ is approximated with multi-tap samples (flat EQ
+// short-circuits via the HI+MID+LOW=full identity), and the two decks combine
 // with the §7.4 premultiplied linear cross-dissolve. The exact 5-tap binomial
 // pyramid EQ lives in app/engine/instrument/eq.ts as the tested reference; this
 // shader is a lightweight port for the live surface. One renderer per output
@@ -21,13 +22,13 @@ uniform float uTime;
 uniform vec2 uPhase;      // deck A/B playhead frame position
 uniform vec3 uTintA, uTintB;
 uniform vec2 uHas;        // deck loaded flags
+uniform vec2 uUseTex;     // deck has a real frame texture
+uniform sampler2D uTexA, uTexB;
 uniform float uOA, uOB, uX;
 uniform vec3 uEqA, uEqB;  // LOW/MID/HI gains
 
-// Decks are deliberately different KINDS of image so a mix reads as two layers,
-// not a tint of one pattern. Deck A (seed 0) is a smooth flowing warm field;
-// deck B (seed 1) is a sparse bright lattice on near-black, so its accents punch
-// through when composited over A.
+// Procedural stand-ins: deck A (seed 0) smooth mandala field, deck B (seed 1)
+// sparse bright lattice on near-black so overlap reads as two layers.
 vec3 pattern(vec2 uv, float phase, vec3 tint, float seed){
   vec2 c = uv - 0.5;
   float r = length(c);
@@ -47,27 +48,46 @@ vec3 pattern(vec2 uv, float phase, vec3 tint, float seed){
   return tint * clamp(v * 1.9, 0.0, 1.6);
 }
 
-// 3-band EQ approximated from concentric procedural samples. The flat case
-// (all gains 1) skips the taps entirely — the identity HI+MID+LOW = full means
-// flat EQ is exactly the plain pattern, and the taps are the expensive part
-// (9 pattern() evaluations per deck per pixel).
-vec3 eq(vec2 uv, float phase, vec3 tint, vec3 g, float seed){
-  vec3 full = pattern(uv, phase, tint, seed);
+vec3 srcA(vec2 uv){
+  if (uUseTex.x > 0.5) return texture(uTexA, vec2(uv.x, 1.0 - uv.y)).rgb;
+  return pattern(uv, uPhase.x, uTintA, 0.0);
+}
+vec3 srcB(vec2 uv){
+  if (uUseTex.y > 0.5) return texture(uTexB, vec2(uv.x, 1.0 - uv.y)).rgb;
+  return pattern(uv, uPhase.y, uTintB, 1.0);
+}
+
+// 3-band EQ approximation. Flat gains (all 1) short-circuit — the identity
+// HI+MID+LOW = full means flat EQ is exactly the source, and the taps are the
+// expensive part.
+vec3 eqA(vec2 uv, vec3 g){
+  vec3 full = srcA(uv);
   if (abs(g.x-1.0) + abs(g.y-1.0) + abs(g.z-1.0) < 0.004) return clamp(full, 0.0, 1.0);
   vec3 g1 = vec3(0.0), g2 = vec3(0.0);
   for(int i=0;i<4;i++){
     float ang = float(i)*1.5708;
-    g1 += pattern(uv + vec2(cos(ang),sin(ang))*0.010, phase, tint, seed);
-    g2 += pattern(uv + vec2(cos(ang),sin(ang))*0.030, phase, tint, seed);
+    g1 += srcA(uv + vec2(cos(ang),sin(ang))*0.010);
+    g2 += srcA(uv + vec2(cos(ang),sin(ang))*0.030);
   }
   g1/=4.0; g2/=4.0;
-  vec3 low = g2, mid = g1-g2, hi = full-g1;
-  return clamp(g.x*low + g.y*mid + g.z*hi, 0.0, 1.0);
+  return clamp(g.x*g2 + g.y*(g1-g2) + g.z*(full-g1), 0.0, 1.0);
+}
+vec3 eqB(vec2 uv, vec3 g){
+  vec3 full = srcB(uv);
+  if (abs(g.x-1.0) + abs(g.y-1.0) + abs(g.z-1.0) < 0.004) return clamp(full, 0.0, 1.0);
+  vec3 g1 = vec3(0.0), g2 = vec3(0.0);
+  for(int i=0;i<4;i++){
+    float ang = float(i)*1.5708;
+    g1 += srcB(uv + vec2(cos(ang),sin(ang))*0.010);
+    g2 += srcB(uv + vec2(cos(ang),sin(ang))*0.030);
+  }
+  g1/=4.0; g2/=4.0;
+  return clamp(g.x*g2 + g.y*(g1-g2) + g.z*(full-g1), 0.0, 1.0);
 }
 
 void main(){
-  vec3 A = uHas.x>0.5 ? eq(vUv, uPhase.x, uTintA, uEqA, 0.0) : vec3(0.0);
-  vec3 B = uHas.y>0.5 ? eq(vUv, uPhase.y, uTintB, uEqB, 1.0) : vec3(0.0);
+  vec3 A = uHas.x>0.5 ? eqA(vUv, uEqA) : vec3(0.0);
+  vec3 B = uHas.y>0.5 ? eqB(vUv, uEqB) : vec3(0.0);
   float aA = uHas.x>0.5 ? uOA : 0.0;
   float aB = uHas.y>0.5 ? uOB : 0.0;
   vec3 pA = A*uOA, pB = B*uOB;   // premultiplied by channel opacity
@@ -78,9 +98,10 @@ void main(){
 }`;
 
 export type OutputMode = "program" | "previewA" | "previewB";
+export type DeckFrames = { A?: ImageBitmap | null; B?: ImageBitmap | null };
 
 export type Compositor = {
-  render(snapshot: InstrumentSnapshot, mode: OutputMode, timeSec: number): void;
+  render(snapshot: InstrumentSnapshot, mode: OutputMode, timeSec: number, frames?: DeckFrames): void;
   resize(w: number, h: number): void;
   dispose(): void;
 };
@@ -110,12 +131,38 @@ export function createCompositor(canvas: HTMLCanvasElement): Compositor {
 
   const u = (name: string) => gl.getUniformLocation(prog, name);
   const uTime = u("uTime"), uPhase = u("uPhase"), uTintA = u("uTintA"), uTintB = u("uTintB");
-  const uHas = u("uHas"), uOA = u("uOA"), uOB = u("uOB"), uX = u("uX"), uEqA = u("uEqA"), uEqB = u("uEqB");
+  const uHas = u("uHas"), uUseTex = u("uUseTex"), uOA = u("uOA"), uOB = u("uOB"), uX = u("uX");
+  const uEqA = u("uEqA"), uEqB = u("uEqB");
+  gl.uniform1i(u("uTexA"), 0);
+  gl.uniform1i(u("uTexB"), 1);
   const A_TINT: [number, number, number] = [1.0, 0.36, 0.69];
   const B_TINT: [number, number, number] = [0.23, 0.82, 1.0];
 
+  const makeTex = () => {
+    const tex = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+  };
+  const texA = makeTex();
+  const texB = makeTex();
+  let lastA: ImageBitmap | null = null;
+  let lastB: ImageBitmap | null = null;
+
+  const uploadIfChanged = (unit: number, tex: WebGLTexture, bmp: ImageBitmap | null, last: ImageBitmap | null) => {
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    if (bmp && bmp !== last) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+    }
+    return bmp;
+  };
+
   return {
-    render(s, mode, timeSec) {
+    render(s, mode, timeSec, frames) {
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -125,6 +172,9 @@ export function createCompositor(canvas: HTMLCanvasElement): Compositor {
       gl.uniform3fv(uTintB, B_TINT);
       gl.uniform3f(uEqA, s.A.eq.LOW, s.A.eq.MID, s.A.eq.HI);
       gl.uniform3f(uEqB, s.B.eq.LOW, s.B.eq.MID, s.B.eq.HI);
+      lastA = uploadIfChanged(0, texA, frames?.A ?? null, lastA);
+      lastB = uploadIfChanged(1, texB, frames?.B ?? null, lastB);
+      gl.uniform2f(uUseTex, frames?.A ? 1 : 0, frames?.B ? 1 : 0);
       if (mode === "program") {
         gl.uniform2f(uHas, s.A.stackHash ? 1 : 0, s.B.stackHash ? 1 : 0);
         gl.uniform1f(uOA, s.A.opacity);
@@ -146,6 +196,8 @@ export function createCompositor(canvas: HTMLCanvasElement): Compositor {
     },
     dispose() {
       gl.deleteBuffer(buf);
+      gl.deleteTexture(texA);
+      gl.deleteTexture(texB);
       gl.deleteProgram(prog);
     },
   };

@@ -44,3 +44,4 @@ next-env.d.ts
 /capture/frames/
 /capture/runs/
 /capture/ab/
+/public/bench/

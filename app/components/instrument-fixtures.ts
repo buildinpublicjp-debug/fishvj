@@ -35,6 +35,13 @@ export const STACKS: StackManifestV0[] = [
   makeStack("fixture-drift", "DRIFT", 90),
 ];
 
+// Media backing for stacks that have real frame assets (the §6.4-benched
+// independent-frames path). Stacks without an entry fall back to the
+// procedural pattern. GYOGEN's frames are rendered from the fish engine itself.
+export const STACK_MEDIA = new Map<string, { base: string; count: number }>([
+  [STACKS[0].contentHash, { base: "/bench/frame-", count: 120 }],
+]);
+
 export const loadedStackArg = (stack: StackManifestV0) => ({
   stackHash: stack.contentHash,
   stack: { durationTicks: stack.prep.durationTicks, loop: stack.prep.loop },

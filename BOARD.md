@@ -91,7 +91,8 @@ frozen 2文書（v2 / INSTRUMENT_V1）の実装スコープを、機材待ち以
 - 楽器UI: `/instrument` 新route、console route(`/`)は1行も変更なし。surface全景 `docs/design/instrument/instrument-surface-v0.png`。§7.1 switch invariance / §7.4 composite / §8.3-7 drift0 を自動テスト。
 
 ### 残: hardware-gated 一覧（実機 sprint で解錠）
-- **S4**: WebCodecs access bench（§6.4 5値・120-frame fixture）、dual-output multi-display（§7.4）、WebGL stack 実描画。
+- ~~S4: WebCodecs access bench~~ — **解錠済 (2026-07-24)**。対象機=このM1+Chrome で §6.4 実測: 独立フレーム decode+upload cold p95 **6.1ms**（契約16.7ms）、warm 0.8ms、reverse 5.8ms → **独立フレーム経路で確定**。indexed stream(webm+video seek)は seek p95 187ms で不採用。結果 `capture/bench-access.json`。**実フレーム再生を /instrument に配線済み**（魚エンジン産120枚が deck A で実再生、60fps維持）。
+- **S4残**: dual-output multi-display permission（§7.4）。
 - **S5**: FLX4 F-B01〜11（keepalive 必要性 F-B03 / SysEx / LED / 実機 I/O・jitter F-B04）。`sysex:false`・keepalive 無しが正の既定。
 - **S6**: live camera 実収録、hosted provider 実接続（fixture 代替済）、background removal 実推論。
 - **S3**: 実 camera（`requestVideoFrameCallback`）、projector、lag 実測、4点 calib UI、§10.6 minimum acceptance 全項目。
