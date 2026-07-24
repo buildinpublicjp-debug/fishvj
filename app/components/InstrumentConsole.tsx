@@ -25,6 +25,16 @@ export function InstrumentConsole() {
   const outputWinRef = useRef<Window | null>(null);
   const [outputOpen, setOutputOpen] = useState(false);
 
+  // Load and play both decks on mount so the surface is alive on open (an empty
+  // surface renders black, which reads as "nothing works").
+  useEffect(() => {
+    store.dispatch({ type: "deck", action: "load", deck: "A", ...loadedStackArg(STACKS[0]) });
+    store.dispatch({ type: "deck", action: "load", deck: "B", ...loadedStackArg(STACKS[1]) });
+    store.dispatch({ type: "transport", action: "playing", deck: "A", value: true });
+    store.dispatch({ type: "transport", action: "playing", deck: "B", value: true });
+    store.dispatch({ type: "deck", action: "crossfader", valueQ16: Math.round(0.35 * 65536) });
+  }, [store]);
+
   // Fixed 60Hz simulation advance + render loop.
   useEffect(() => {
     const clock = new FixedStepClock();
