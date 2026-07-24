@@ -92,6 +92,7 @@ frozen 2文書（v2 / INSTRUMENT_V1）の実装スコープを、機材待ち以
 
 ### 残: hardware-gated 一覧（実機 sprint で解錠）
 - ~~S4: WebCodecs access bench~~ — **解錠済 (2026-07-24)**。対象機=このM1+Chrome で §6.4 実測: 独立フレーム decode+upload cold p95 **6.1ms**（契約16.7ms）、warm 0.8ms、reverse 5.8ms → **独立フレーム経路で確定**。indexed stream(webm+video seek)は seek p95 187ms で不採用。結果 `capture/bench-access.json`。**実フレーム再生を /instrument に配線済み**（魚エンジン産120枚が deck A で実再生、60fps維持）。
+  **stack bank 6世界**（MYSTIC/ACID12/OCEAN/DIVE/VORTEX/RUSH、`capture/gen-stacks.mjs` で魚エンジンから再生成可、WebP 計80MB gitignore）を両デッキに配備。任意の組で実ミックス、60fps。
 - **S4残**: dual-output multi-display permission（§7.4）。
 - **S5**: FLX4 F-B01〜11（keepalive 必要性 F-B03 / SysEx / LED / 実機 I/O・jitter F-B04）。`sysex:false`・keepalive 無しが正の既定。
 - **S6**: live camera 実収録、hosted provider 実接続（fixture 代替済）、background removal 実推論。

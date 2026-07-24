@@ -8,6 +8,7 @@ export class FrameSource {
   constructor(
     readonly baseUrl: string,
     readonly count: number,
+    readonly ext = ".webp",
     readonly cacheSize = 30,
     readonly prefetch = 4,
   ) {}
@@ -22,7 +23,7 @@ export class FrameSource {
   private ensure(i: number) {
     if (this.cache.has(i) || this.pending.has(i)) return;
     this.pending.add(i);
-    fetch(`${this.baseUrl}${String(i).padStart(3, "0")}.png`)
+    fetch(`${this.baseUrl}${String(i).padStart(3, "0")}${this.ext}`)
       .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
       .then((blob) => createImageBitmap(blob))
       .then((bmp) => {

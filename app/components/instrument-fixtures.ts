@@ -30,17 +30,25 @@ function makeStack(id: string, name: string, count: number): StackManifestV0 {
   return s;
 }
 
-export const STACKS: StackManifestV0[] = [
-  makeStack("gyogen-v0", "GYOGEN", 120),
-  makeStack("fixture-drift", "DRIFT", 90),
-];
+// The stack bank: six visually distinct worlds rendered from the fish engine
+// itself (capture/gen-stacks.mjs → public/stacks/<id>/frame-XXX.webp).
+const BANK = [
+  { id: "mystic-mandala", name: "MYSTIC" },
+  { id: "acid-euphoric", name: "ACID12" },
+  { id: "deep-swim", name: "OCEAN" },
+  { id: "infinite-dive", name: "DIVE" },
+  { id: "sensual-vortex", name: "VORTEX" },
+  { id: "school-rush", name: "RUSH" },
+] as const;
 
-// Media backing for stacks that have real frame assets (the §6.4-benched
+export const STACKS: StackManifestV0[] = BANK.map((b) => makeStack(b.id, b.name, 120));
+
+// Media backing for stacks with real frame assets (the §6.4-benched
 // independent-frames path). Stacks without an entry fall back to the
-// procedural pattern. GYOGEN's frames are rendered from the fish engine itself.
-export const STACK_MEDIA = new Map<string, { base: string; count: number }>([
-  [STACKS[0].contentHash, { base: "/bench/frame-", count: 120 }],
-]);
+// procedural pattern.
+export const STACK_MEDIA = new Map<string, { base: string; count: number }>(
+  STACKS.map((s, i) => [s.contentHash, { base: `/stacks/${BANK[i].id}/frame-`, count: 120 }]),
+);
 
 export const loadedStackArg = (stack: StackManifestV0) => ({
   stackHash: stack.contentHash,

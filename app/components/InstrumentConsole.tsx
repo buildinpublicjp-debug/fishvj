@@ -32,7 +32,7 @@ export function InstrumentConsole() {
   // surface renders black, which reads as "nothing works").
   useEffect(() => {
     store.dispatch({ type: "deck", action: "load", deck: "A", ...loadedStackArg(STACKS[0]) });
-    store.dispatch({ type: "deck", action: "load", deck: "B", ...loadedStackArg(STACKS[1]) });
+    store.dispatch({ type: "deck", action: "load", deck: "B", ...loadedStackArg(STACKS[2]) });
     store.dispatch({ type: "transport", action: "playing", deck: "A", value: true });
     store.dispatch({ type: "transport", action: "playing", deck: "B", value: true });
     store.dispatch({ type: "deck", action: "crossfader", valueQ16: Math.round(0.5 * 65536) });
